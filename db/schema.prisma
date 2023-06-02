@@ -108,6 +108,7 @@ model ItemType {
   id                          Int      @id @default(autoincrement())
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
+  name                        String
   storage_advice              String
   suggested_life_span_seconds BigInt
 
