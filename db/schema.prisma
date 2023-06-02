@@ -21,8 +21,11 @@ model User {
   hashedPassword String?
   role           String   @default("USER")
 
-  tokens   Token[]
-  sessions Session[]
+  tokens       Token[]
+  sessions     Session[]
+  groceryTrips GroceryTrip[]
+  items        Item[]
+  reminders    Reminder[]
 }
 
 model Session {
@@ -45,8 +48,6 @@ model Token {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   hashedToken String
-  // type        String
-  // See note below about TokenType enum
   type        TokenType
   expiresAt   DateTime
   sentTo      String
@@ -60,6 +61,66 @@ model Token {
 // NOTE: It's highly recommended to use an enum for the token type
 //       but enums only work in Postgres.
 //       See: https://blitzjs.com/docs/database-overview#switch-to-postgre-sql
+
 enum TokenType {
   RESET_PASSWORD
+}
+
+model Item {
+  id               Int            @id @default(autoincrement())
+  name             String
+  description      String
+  price            Float
+  quantity         Int
+  unit             String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  status           ItemStatusType
+  percent_consumed Decimal        @db.Decimal(3, 2)
+  user             User           @relation(fields: [userId], references: [id])
+  userId           Int
+  itemType         ItemType       @relation(fields: [itemTypeId], references: [id])
+  itemTypeId       Int
+  groceryTrip      GroceryTrip    @relation(fields: [groceryTripId], references: [id])
+  groceryTripId    Int
+  reminders        Reminder[]
+}
+
+enum ItemStatusType {
+  BAD
+  EATEN
+  FRESH
+}
+
+model GroceryTrip {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String
+  description String
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+
+  items Item[]
+}
+
+model ItemType {
+  id                          Int      @id @default(autoincrement())
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  storage_advice              String
+  suggested_life_span_seconds BigInt
+
+  items Item[]
+}
+
+model Reminder {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  time      DateTime
+  item      Item     @relation(fields: [itemId], references: [id])
+  itemId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
 }
