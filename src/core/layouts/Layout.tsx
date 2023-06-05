@@ -1,7 +1,24 @@
 import Head from "next/head"
-import React, { FC } from "react"
-import { BlitzLayout } from "@blitzjs/next"
-import { AppShell, Navbar, Header } from "@mantine/core"
+import React from "react"
+import { BlitzLayout, Routes } from "@blitzjs/next"
+import { ActionIcon, AppShell, Header, Navbar, useMantineColorScheme } from "@mantine/core"
+import Link from "next/link"
+import { NavLink, Navigation } from "../components/Navigation"
+
+const links: NavLink[] = [
+  {
+    name: "Inventory",
+    href: Routes.ItemsPage(),
+  },
+  {
+    name: "Grocery Trips",
+    href: Routes.GroceryTripsPage(),
+  },
+  {
+    name: "Profile",
+    href: "/",
+  },
+]
 
 const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
   title,
@@ -15,14 +32,16 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
       </Head>
       <AppShell
         padding="md"
-        // navbar={
-        //   <Navbar width={{ base: 300 }} height={500} p="xs">
-        //     {/* Navbar content */}
-        //   </Navbar>
-        // }
+        navbar={
+          <Navbar width={{ base: 300 }} p="xs">
+            <Navigation navLinks={links} />
+          </Navbar>
+        }
         header={
           <Header height={60} p="xs">
-            <p>Broccoli App</p>
+            <Link href="/">
+              <p>Broccoli App</p>
+            </Link>
           </Header>
         }
         styles={(theme) => ({
@@ -37,5 +56,6 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
     </>
   )
 }
+export const dynamic = "force-dynamic"
 
 export default Layout

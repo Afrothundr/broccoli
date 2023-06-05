@@ -9,9 +9,10 @@ const LoginPage: BlitzPage = () => {
   return (
     <Layout title="Log In">
       <LoginForm
-        onSuccess={(_user) => {
-          const next = router.query.next ? decodeURIComponent(router.query.next as string) : "/"
-          return router.push(next)
+        onSuccess={(user) => {
+          // const next = router.query.next ? decodeURIComponent(router.query.next as string) : "/"
+          return router.push(`users/${user.id}`)
+          // return router.push(next)
         }}
       />
     </Layout>

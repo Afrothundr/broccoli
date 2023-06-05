@@ -1,8 +1,8 @@
 import { ErrorFallbackProps, ErrorComponent, ErrorBoundary, AppProps } from "@blitzjs/next"
-import { AuthenticationError, AuthorizationError } from "blitz"
-import React from "react"
+import { AuthenticationError, AuthorizationError, setCookie } from "blitz"
+import React, { useState } from "react"
 import { withBlitz } from "src/blitz-client"
-import { MantineProvider } from "@mantine/core"
+import { ColorScheme, ColorSchemeProvider, MantineProvider } from "@mantine/core"
 import "src/styles/globals.css"
 
 function RootErrorFallback({ error }: ErrorFallbackProps) {
@@ -27,19 +27,24 @@ function RootErrorFallback({ error }: ErrorFallbackProps) {
 
 function MyApp({ Component, pageProps }: AppProps) {
   const getLayout = Component.getLayout || ((page) => page)
+  const [colorScheme, setColorScheme] = useState<ColorScheme>("light")
+  const toggleColorScheme = (value?: ColorScheme) =>
+    setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"))
   return (
     <ErrorBoundary FallbackComponent={RootErrorFallback}>
       {getLayout(
-        <MantineProvider
-          withGlobalStyles
-          withNormalizeCSS
-          theme={{
-            /** Put your mantine theme override here */
-            colorScheme: "light",
-          }}
-        >
-          <Component {...pageProps} />
-        </MantineProvider>
+        <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
+          <MantineProvider
+            withGlobalStyles
+            withNormalizeCSS
+            theme={{
+              /** Put your mantine theme override here */
+              colorScheme: "light",
+            }}
+          >
+            <Component {...pageProps} />
+          </MantineProvider>
+        </ColorSchemeProvider>
       )}
     </ErrorBoundary>
   )

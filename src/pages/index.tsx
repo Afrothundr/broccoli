@@ -1,11 +1,13 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import Layout from "src/core/layouts/Layout"
 import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 import logout from "src/auth/mutations/logout"
 import { useMutation } from "@blitzjs/rpc"
 import { Routes, BlitzPage } from "@blitzjs/next"
 import styles from "src/styles/Home.module.css"
+import { Button } from "@mantine/core"
+import { redirect } from "next/navigation"
+import { useRouter } from "next/router"
 
 /*
  * This file is just for a pleasant getting started page for your new app.
@@ -15,18 +17,18 @@ import styles from "src/styles/Home.module.css"
 const UserInfo = () => {
   const currentUser = useCurrentUser()
   const [logoutMutation] = useMutation(logout)
-
+  const router = useRouter()
   if (currentUser) {
     return (
       <>
-        <button
-          className={styles.button}
+        <Button
+          color="red"
           onClick={async () => {
             await logoutMutation()
           }}
         >
           Logout
-        </button>
+        </Button>
         <div>
           User id: <code>{currentUser.id}</code>
           <br />
@@ -48,7 +50,7 @@ const UserInfo = () => {
   }
 }
 
-const Home: BlitzPage = () => {
+const Page: BlitzPage = () => {
   return (
     <div>
       <h1>Hello, world!</h1>
@@ -60,4 +62,4 @@ const Home: BlitzPage = () => {
   )
 }
 
-export default Home
+export default Page
