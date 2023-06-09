@@ -1,29 +1,18 @@
 import Head from "next/head"
 import React from "react"
-import { BlitzLayout, Routes } from "@blitzjs/next"
-import { ActionIcon, AppShell, Header, Navbar, useMantineColorScheme } from "@mantine/core"
+import { BlitzLayout } from "@blitzjs/next"
+import { ActionIcon, AppShell, Flex, Header, Navbar, useMantineColorScheme } from "@mantine/core"
 import Link from "next/link"
-import { NavLink, Navigation } from "../components/Navigation"
-
-const links: NavLink[] = [
-  {
-    name: "Inventory",
-    href: Routes.ItemsPage(),
-  },
-  {
-    name: "Grocery Trips",
-    href: Routes.GroceryTripsPage(),
-  },
-  {
-    name: "Profile",
-    href: "/",
-  },
-]
+import { Navigation } from "../components/Navigation"
+import { IconSunLow, IconMoon } from "@tabler/icons-react"
 
 const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
   title,
   children,
 }) => {
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme()
+  const dark = colorScheme === "dark"
+
   return (
     <>
       <Head>
@@ -34,14 +23,25 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
         padding="md"
         navbar={
           <Navbar width={{ base: 300 }} p="xs">
-            <Navigation navLinks={links} />
+            <Navigation />
           </Navbar>
         }
         header={
           <Header height={60} p="xs">
-            <Link href="/">
-              <p>Broccoli App</p>
-            </Link>
+            <Flex justify="space-between" align="center">
+              <Link href="/">
+                <span>Broccoli App</span>
+              </Link>
+              <ActionIcon
+                size="lg"
+                variant="outline"
+                color={dark ? "yellow" : "blue"}
+                onClick={() => toggleColorScheme()}
+                title="Toggle color scheme"
+              >
+                {dark ? <IconSunLow /> : <IconMoon />}
+              </ActionIcon>
+            </Flex>
           </Header>
         }
         styles={(theme) => ({

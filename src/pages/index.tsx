@@ -5,9 +5,10 @@ import logout from "src/auth/mutations/logout"
 import { useMutation } from "@blitzjs/rpc"
 import { Routes, BlitzPage } from "@blitzjs/next"
 import styles from "src/styles/Home.module.css"
-import { Button } from "@mantine/core"
+import { Button, Container } from "@mantine/core"
 import { redirect } from "next/navigation"
 import { useRouter } from "next/router"
+import { HeroTitle } from "src/core/components/HeroTitle"
 
 /*
  * This file is just for a pleasant getting started page for your new app.
@@ -50,16 +51,10 @@ const UserInfo = () => {
   }
 }
 
-const Page: BlitzPage = () => {
-  return (
-    <div>
-      <h1>Hello, world!</h1>
-
-      <Suspense fallback="Loading...">
-        <UserInfo />
-      </Suspense>
-    </div>
-  )
+const Home: BlitzPage = () => {
+  return <HeroTitle />
 }
 
-export default Page
+export const dynamic = "force-dynamic"
+
+export default Home

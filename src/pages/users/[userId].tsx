@@ -9,33 +9,21 @@ import { useParam } from "@blitzjs/next"
 import Layout from "src/core/layouts/Layout"
 import getUser from "src/users/queries/getUser"
 import deleteUser from "src/users/mutations/deleteUser"
-import { useMantineColorScheme, ActionIcon } from "@mantine/core"
 
 export const User = () => {
   const router = useRouter()
   const userId = useParam("userId", "number")
   const [deleteUserMutation] = useMutation(deleteUser)
   const [user] = useQuery(getUser, { id: userId })
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme()
-  const dark = colorScheme === "dark"
 
   return (
-    <>
+    <Layout>
       <Head>
         <title>User {user.id}</title>
       </Head>
 
       <div>
         <h1>User {user.id}</h1>
-        <ActionIcon
-          size="lg"
-          variant="outline"
-          color={dark ? "yellow" : "blue"}
-          onClick={() => toggleColorScheme()}
-          title="Toggle color scheme"
-        >
-          {dark ? <span>dark</span> : <span>dark</span>}
-        </ActionIcon>
         <pre>{JSON.stringify(user, null, 2)}</pre>
 
         <Link href={Routes.EditUserPage({ userId: user.id })}>Edit</Link>
@@ -53,7 +41,7 @@ export const User = () => {
           Delete
         </button>
       </div>
-    </>
+    </Layout>
   )
 }
 
@@ -72,6 +60,5 @@ const ShowUserPage = () => {
 }
 
 ShowUserPage.authenticate = true
-ShowUserPage.getLayout = (page) => <Layout>{page}</Layout>
 
 export default ShowUserPage

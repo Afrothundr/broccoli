@@ -26,26 +26,17 @@ function RootErrorFallback({ error }: ErrorFallbackProps) {
 }
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const getLayout = Component.getLayout || ((page) => page)
   const [colorScheme, setColorScheme] = useState<ColorScheme>("light")
+  console.log(colorScheme)
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"))
   return (
     <ErrorBoundary FallbackComponent={RootErrorFallback}>
-      {getLayout(
-        <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
-          <MantineProvider
-            withGlobalStyles
-            withNormalizeCSS
-            theme={{
-              /** Put your mantine theme override here */
-              colorScheme: "light",
-            }}
-          >
-            <Component {...pageProps} />
-          </MantineProvider>
-        </ColorSchemeProvider>
-      )}
+      <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
+        <MantineProvider withGlobalStyles withNormalizeCSS theme={{ colorScheme }}>
+          <Component {...pageProps} />
+        </MantineProvider>
+      </ColorSchemeProvider>
     </ErrorBoundary>
   )
 }
