@@ -11,5 +11,5 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "cSpell.words": ["Mantine"]
+  "cSpell.words": ["blitzjs", "Mantine"]
 }
