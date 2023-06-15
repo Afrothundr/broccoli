@@ -1,12 +1,10 @@
-import { Suspense } from "react"
 import Link from "next/link"
 import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 import logout from "src/auth/mutations/logout"
 import { useMutation } from "@blitzjs/rpc"
 import { Routes, BlitzPage } from "@blitzjs/next"
 import styles from "src/styles/Home.module.css"
-import { Button, Container } from "@mantine/core"
-import { redirect } from "next/navigation"
+import { Button } from "@mantine/core"
 import { useRouter } from "next/router"
 import { HeroTitle } from "src/core/components/HeroTitle"
 

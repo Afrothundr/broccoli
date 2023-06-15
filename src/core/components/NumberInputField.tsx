@@ -1,30 +1,24 @@
-import { TextInput, createStyles, rem } from "@mantine/core"
+import { NumberInput, TextInput, createStyles, rem } from "@mantine/core"
 import { forwardRef, ComponentPropsWithoutRef, PropsWithoutRef } from "react"
 import { useField, UseFieldConfig } from "react-final-form"
 
-export interface LabeledTextFieldProps extends PropsWithoutRef<JSX.IntrinsicElements["input"]> {
+export interface PriceInputProps extends PropsWithoutRef<JSX.IntrinsicElements["input"]> {
   /** Field name. */
   name: string
   /** Field label. */
   label: string
-  /** Field type. Doesn't include radio buttons and checkboxes */
-  type?: "text" | "password" | "email" | "number"
   outerProps?: PropsWithoutRef<JSX.IntrinsicElements["div"]>
   labelProps?: ComponentPropsWithoutRef<"label">
   fieldProps?: UseFieldConfig<string>
 }
 
-export const LabeledTextField = forwardRef<HTMLInputElement, LabeledTextFieldProps>(
+export const PriceInputField = forwardRef<HTMLInputElement, PriceInputProps>(
   ({ name, label, outerProps, fieldProps, labelProps, type, ...props }, ref) => {
     const {
       input,
       meta: { touched, error, submitError, submitting },
     } = useField(name, {
-      parse:
-        type === "number"
-          ? (Number as any)
-          : // Converting `""` to `null` ensures empty values will be set to null in the DB
-            (v) => (v === "" ? null : v),
+      parse: Number as any,
       ...fieldProps,
     })
 
@@ -32,13 +26,19 @@ export const LabeledTextField = forwardRef<HTMLInputElement, LabeledTextFieldPro
 
     return (
       <div {...outerProps}>
-        <TextInput
-          {...input}
+        <NumberInput
           disabled={submitting}
           label={label}
           placeholder={label}
           ref={ref}
-          type={type}
+          precision={2}
+          defaultValue={0}
+          parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+          formatter={(value) =>
+            !Number.isNaN(parseFloat(value))
+              ? `$ ${value}`.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",")
+              : "$ "
+          }
         />
         {touched && normalizedError && (
           <div role="alert" style={{ color: "red" }}>
@@ -50,4 +50,4 @@ export const LabeledTextField = forwardRef<HTMLInputElement, LabeledTextFieldPro
   }
 )
 
-export default LabeledTextField
+export default PriceInputField

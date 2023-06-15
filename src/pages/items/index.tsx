@@ -6,6 +6,8 @@ import { usePaginatedQuery } from "@blitzjs/rpc"
 import { useRouter } from "next/router"
 import Layout from "src/core/layouts/Layout"
 import getItems from "src/items/queries/getItems"
+import { Table } from "@mantine/core"
+import dayjs from "dayjs"
 
 const ITEMS_PER_PAGE = 100
 
@@ -20,16 +22,39 @@ export const ItemsList = () => {
 
   const goToPreviousPage = () => router.push({ query: { page: page - 1 } })
   const goToNextPage = () => router.push({ query: { page: page + 1 } })
+  // const ItemsTable = useReactTable()
+  const rows = items.map((item) => (
+    <tr key={item.id}>
+      <td>{item.name}</td>
+      <td>{item.quantity}</td>
+      <td>{item.itemType.name}</td>
+      <td>{item.status}</td>
+      <td>{dayjs(item.createdAt).format("M/D")}</td>
+    </tr>
+  ))
 
   return (
     <div>
-      <ul>
+      <Table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>How Much</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Date Purchased</th>
+          </tr>
+        </thead>
+        <tbody>{rows}</tbody>
+      </Table>
+      {/* <ul>
         {items.map((item) => (
           <li key={item.id}>
             <Link href={Routes.ShowItemPage({ itemId: item.id })}>{item.name}</Link>
           </li>
         ))}
-      </ul>
+      </ul> */}
+      {/* {items.length > 0 && <ItemsTable />} */}
 
       <button disabled={page === 0} onClick={goToPreviousPage}>
         Previous
@@ -62,3 +87,6 @@ const ItemsPage = () => {
 }
 
 export default ItemsPage
+function useReactTable() {
+  throw new Error("Function not implemented.")
+}

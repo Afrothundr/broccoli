@@ -27,7 +27,7 @@ export const UsersList = () => {
         {users.map((user) => (
           <li key={user.id}>
             <Link href={Routes.ShowUserPage({ userId: user.id })}>
-              {user.name} - {user.id}
+              {user.firstName} {user.lastName} - {user.id}
             </Link>
           </li>
         ))}

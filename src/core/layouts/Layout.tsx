@@ -20,7 +20,7 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <AppShell
-        padding="md"
+        padding="sm"
         navbar={
           <Navbar width={{ base: 300 }} p="xs">
             <Navigation />

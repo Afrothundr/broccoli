@@ -39,7 +39,7 @@ export const EditUser = () => {
             submitText="Update User"
             schema={UpdateUserSchema}
             initialValues={user}
-            onSubmit={async (values) => {
+            onSubmit={async ({ id, ...values }) => {
               try {
                 const updated = await updateUserMutation({
                   id: user.id,
@@ -63,7 +63,7 @@ export const EditUser = () => {
 
 const EditUserPage = () => {
   return (
-    <div>
+    <Layout>
       <Suspense fallback={<div>Loading...</div>}>
         <EditUser />
       </Suspense>
@@ -71,7 +71,7 @@ const EditUserPage = () => {
       <p>
         <Link href={Routes.UsersPage()}>Users</Link>
       </p>
-    </div>
+    </Layout>
   )
 }
 

@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation"
 import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 
 export interface NavLink {
-  route: RouteUrlObject
+  route: RouteUrlObject | string
   name: string
 }
 
@@ -26,22 +26,15 @@ export function Navigation() {
     },
     {
       name: "Profile",
-      route: currentUser ? Routes.EditUserPage({ userId: currentUser.id }) : Routes.LoginPage(),
+      route: currentUser ? `/users/${currentUser.id}` : Routes.LoginPage(),
     },
   ]
-  const pathname = usePathname()
 
   return (
     <>
       {links.map((link) => {
-        const isActive = pathname.startsWith(link.route.href)
-
         return (
-          <Link
-            href={link.route}
-            key={link.name}
-            className={classNames({ ["bg-indigo-500"]: isActive })}
-          >
+          <Link href={link.route} key={link.name}>
             {link.name}
           </Link>
         )
