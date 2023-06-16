@@ -123,7 +123,7 @@ export function HeroTitle() {
               variant="gradient"
               gradient={{ from: "green", to: "teal" }}
             >
-              GetStarted
+              Get Started
             </Button>
           </Link>
 
