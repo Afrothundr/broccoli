@@ -19,6 +19,7 @@ export const PriceInputField = forwardRef<HTMLInputElement, PriceInputProps>(
       meta: { touched, error, submitError, submitting },
     } = useField(name, {
       parse: Number as any,
+      type: "number",
       ...fieldProps,
     })
 
@@ -27,6 +28,7 @@ export const PriceInputField = forwardRef<HTMLInputElement, PriceInputProps>(
     return (
       <div {...outerProps}>
         <NumberInput
+          {...{ ...input, type: "text" }}
           disabled={submitting}
           label={label}
           placeholder={label}

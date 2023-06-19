@@ -27,7 +27,10 @@ export function Form<S extends z.ZodType<any, any>>({
   return (
     <FinalForm
       initialValues={initialValues}
-      validate={validateZodSchema(schema)}
+      validate={(values) => {
+        console.log(values, "values")
+        return validateZodSchema(schema)(values)
+      }}
       onSubmit={onSubmit}
       render={({ handleSubmit, submitting, submitError }) => (
         <form onSubmit={handleSubmit} className="form" {...props}>

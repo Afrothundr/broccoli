@@ -21,6 +21,7 @@ const NewItemPage = () => {
           schema={CreateItemSchema}
           // initialValues={{}}
           onSubmit={async (values) => {
+            console.log(values, "values")
             try {
               const item = await createItemMutation(values)
               await router.push(Routes.ShowItemPage({ itemId: item.id }))

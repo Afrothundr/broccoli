@@ -25,6 +25,7 @@ export const ItemTypeMultiSelect = forwardRef<HTMLInputElement, ItemTypeMultiSel
     return (
       <div {...outerProps}>
         <MultiSelect
+          {...input}
           data={data}
           disabled={submitting}
           label={label}

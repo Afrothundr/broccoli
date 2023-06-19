@@ -1,6 +1,4 @@
 import { useQuery } from "@blitzjs/rpc"
-import { ItemStatusType } from "@prisma/client"
-import React, { Suspense } from "react"
 import { Form, FormProps } from "src/core/components/Form"
 import ItemTypeMultiSelect from "src/core/components/ItemTypeMultiSelect"
 import { LabeledTextField } from "src/core/components/LabeledTextField"

@@ -24,7 +24,7 @@ export default resolver.pipe(
           where,
           orderBy,
           include: {
-            itemType: {
+            itemTypes: {
               select: {
                 name: true,
                 storage_advice: true,

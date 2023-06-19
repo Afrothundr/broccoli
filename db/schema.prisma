@@ -68,23 +68,34 @@ enum TokenType {
 }
 
 model Item {
-  id               Int            @id @default(autoincrement())
-  name             String
-  description      String
-  price            Float
-  quantity         Int
-  unit             String
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  status           ItemStatusType
-  percent_consumed Decimal        @db.Decimal(3, 2)
-  user             User           @relation(fields: [userId], references: [id])
-  userId           Int
-  itemType         ItemType       @relation(fields: [itemTypeId], references: [id])
-  itemTypeId       Int
-  groceryTrip      GroceryTrip    @relation(fields: [groceryTripId], references: [id])
-  groceryTripId    Int
-  reminders        Reminder[]
+  id              Int            @id @default(autoincrement())
+  name            String
+  description     String
+  price           Float
+  quantity        Int
+  unit            String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  status          ItemStatusType
+  percentConsumed Decimal        @db.Decimal(3, 2)
+  user            User           @relation(fields: [userId], references: [id])
+  userId          Int
+  groceryTrip     GroceryTrip    @relation(fields: [groceryTripId], references: [id])
+  groceryTripId   Int
+  reminders       Reminder[]
+
+  itemTypes ItemType[]
+}
+
+model ItemType {
+  id                          Int      @id @default(autoincrement())
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  name                        String
+  storage_advice              String
+  suggested_life_span_seconds BigInt
+
+  items Item[]
 }
 
 enum ItemStatusType {
@@ -101,17 +112,6 @@ model GroceryTrip {
   description String
   user        User     @relation(fields: [userId], references: [id])
   userId      Int
-
-  items Item[]
-}
-
-model ItemType {
-  id                          Int      @id @default(autoincrement())
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
-  name                        String
-  storage_advice              String
-  suggested_life_span_seconds BigInt
 
   items Item[]
 }
