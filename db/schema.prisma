@@ -70,14 +70,14 @@ enum TokenType {
 model Item {
   id              Int            @id @default(autoincrement())
   name            String
-  description     String
+  description     String         @default("")
   price           Float
   quantity        Int
-  unit            String
+  unit            String         @default("")
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
-  status          ItemStatusType
-  percentConsumed Decimal        @db.Decimal(3, 2)
+  status          ItemStatusType @default(FRESH)
+  percentConsumed Decimal        @default(100.00)
   user            User           @relation(fields: [userId], references: [id])
   userId          Int
   groceryTrip     GroceryTrip    @relation(fields: [groceryTripId], references: [id])
@@ -109,7 +109,7 @@ model GroceryTrip {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   name        String
-  description String
+  description String   @default("")
   user        User     @relation(fields: [userId], references: [id])
   userId      Int
 

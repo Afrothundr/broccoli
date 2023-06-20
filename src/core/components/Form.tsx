@@ -27,8 +27,9 @@ export function Form<S extends z.ZodType<any, any>>({
   return (
     <FinalForm
       initialValues={initialValues}
-      validate={(values) => {
-        console.log(values, "values")
+      validate={async (values) => {
+        const validation = await validateZodSchema(schema)(values)
+        // console.log(validation, "validation")
         return validateZodSchema(schema)(values)
       }}
       onSubmit={onSubmit}

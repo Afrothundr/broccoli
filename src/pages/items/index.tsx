@@ -8,13 +8,18 @@ import Layout from "src/core/layouts/Layout"
 import getItems from "src/items/queries/getItems"
 import { Table } from "@mantine/core"
 import dayjs from "dayjs"
+import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 
 const ITEMS_PER_PAGE = 100
 
 export const ItemsList = () => {
   const router = useRouter()
   const page = Number(router.query.page) || 0
+  const user = useCurrentUser()
   const [{ items, hasMore }] = usePaginatedQuery(getItems, {
+    where: {
+      userId: user?.id,
+    },
     orderBy: { id: "asc" },
     skip: ITEMS_PER_PAGE * page,
     take: ITEMS_PER_PAGE,
@@ -27,7 +32,7 @@ export const ItemsList = () => {
     <tr key={item.id}>
       <td>{item.name}</td>
       <td>{item.quantity}</td>
-      <td>{item.itemType.name}</td>
+      <td>{item.itemTypes.map((type) => type.name).join(",")}</td>
       <td>{item.status}</td>
       <td>{dayjs(item.createdAt).format("M/D")}</td>
     </tr>

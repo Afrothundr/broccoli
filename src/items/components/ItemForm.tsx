@@ -1,23 +1,20 @@
-import { useQuery } from "@blitzjs/rpc"
 import { Form, FormProps } from "src/core/components/Form"
 import ItemTypeMultiSelect from "src/core/components/ItemTypeMultiSelect"
 import { LabeledTextField } from "src/core/components/LabeledTextField"
 import PriceInputField from "src/core/components/NumberInputField"
-import getItemTypes from "src/item-types/queries/getItemTypes"
 import Qty from "js-quantities"
 
 import { z } from "zod"
 import SelectInputField from "src/core/components/SelectInputField"
+import { SelectItem } from "@mantine/core"
 export { FORM_ERROR } from "src/core/components/Form"
 
-export function ItemForm<S extends z.ZodType<any, any>>(props: FormProps<S>) {
-  const [{ itemTypes }] = useQuery(getItemTypes, {
-    orderBy: { name: "asc" },
-  })
-  const itemTypeData = itemTypes.map((item) => ({
-    label: item.name,
-    value: item.id.toString(),
-  }))
+interface ExtendedItemFormProps {
+  itemTypeData: SelectItem[]
+}
+export function ItemForm<S extends z.ZodType<any, any>>(
+  props: FormProps<S> & ExtendedItemFormProps
+) {
   const unitData = [
     {
       label: "",
@@ -47,7 +44,12 @@ export function ItemForm<S extends z.ZodType<any, any>>(props: FormProps<S>) {
         step={0.5}
       />
       <SelectInputField name="unit" label="Unit" placeholder="Unit" data={unitData} />
-      <ItemTypeMultiSelect name="itemType" label="Type" placeholder="Type" data={itemTypeData} />
+      <ItemTypeMultiSelect
+        name="itemTypes"
+        label="Type"
+        placeholder="Type"
+        data={props.itemTypeData}
+      />
       {/* template: <__component__ name="__fieldName__" label="__Field_Name__" placeholder="__Field_Name__"  type="__inputType__" /> */}
     </Form>
   )

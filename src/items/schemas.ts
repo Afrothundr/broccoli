@@ -2,12 +2,14 @@ import { z } from "zod"
 
 export const CreateItemSchema = z.object({
   description: z.string().optional(),
-  grocerTripId: z.number(),
-  itemTypeId: z.number(),
+  groceryTripId: z.number(),
+  itemTypes: z.string().array(),
+  userId: z.number(),
   name: z.string(),
   price: z.number(),
   quantity: z.number(),
   unit: z.string().optional(),
+  reminderSpanSeconds: z.bigint(),
   // template: __fieldName__: z.__zodType__(),1
 })
 export const UpdateItemSchema = z.object({

@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Item" ALTER COLUMN "description" SET DEFAULT '',
+ALTER COLUMN "unit" SET DEFAULT '',
+ALTER COLUMN "status" SET DEFAULT 'FRESH',
+ALTER COLUMN "percentConsumed" SET DEFAULT 100.00;

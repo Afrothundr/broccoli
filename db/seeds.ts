@@ -21,12 +21,29 @@ const itemTypes = [
     suggested_life_span_seconds: dayjs.duration({ weeks: 1 }).asSeconds(),
   },
 ]
+
+const groceryTrips = [
+  {
+    name: "Sample Grocery Trip",
+  },
+]
 const seed = async () => {
   // for (let i = 0; i < 5; i++) {
   //   await db.project.create({ data: { name: "Project " + i } })
   // }
   itemTypes.forEach(async (itemType) => {
     await db.itemType.create({ data: { ...itemType } })
+  })
+
+  groceryTrips.forEach(async (groceryTrip) => {
+    await db.groceryTrip.create({
+      data: {
+        ...groceryTrip,
+        user: {
+          connect: { id: 2 },
+        },
+      },
+    })
   })
 }
 
