@@ -11,6 +11,7 @@ export { FORM_ERROR } from "src/core/components/Form"
 
 interface ExtendedItemFormProps {
   itemTypeData: SelectItem[]
+  groceryTripData: SelectItem[]
 }
 export function ItemForm<S extends z.ZodType<any, any>>(
   props: FormProps<S> & ExtendedItemFormProps
@@ -49,6 +50,13 @@ export function ItemForm<S extends z.ZodType<any, any>>(
         label="Type"
         placeholder="Type"
         data={props.itemTypeData}
+      />
+      <SelectInputField
+        name="groceryTripId"
+        label="Grocery Trip"
+        placeholder="Grocery Trip"
+        data={props.groceryTripData}
+        required
       />
       {/* template: <__component__ name="__fieldName__" label="__Field_Name__" placeholder="__Field_Name__"  type="__inputType__" /> */}
     </Form>

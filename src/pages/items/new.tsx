@@ -9,6 +9,8 @@ import { ItemForm, FORM_ERROR } from "src/items/components/ItemForm"
 import { Suspense } from "react"
 import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 import getItemTypes from "src/item-types/queries/getItemTypes"
+import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
+import dayjs from "dayjs"
 
 const NewItemPage = () => {
   const router = useRouter()
@@ -16,11 +18,18 @@ const NewItemPage = () => {
   const [{ itemTypes }] = useQuery(getItemTypes, {
     orderBy: { name: "asc" },
   })
+  const [{ groceryTrips }] = useQuery(getGroceryTrips, {
+    orderBy: { name: "desc" },
+  })
   const user = useCurrentUser()
 
   const itemTypeData = itemTypes.map((item) => ({
     label: item.name,
     value: item.id.toString(),
+  }))
+  const groceryTripsData = groceryTrips.map((trip) => ({
+    label: `${trip.name} - ${dayjs(trip.createdAt).format("MM/DD/YY")}`,
+    value: trip.id.toString(),
   }))
 
   return (
@@ -30,9 +39,9 @@ const NewItemPage = () => {
         <ItemForm
           submitText="Create Item"
           itemTypeData={itemTypeData}
+          groceryTripData={groceryTripsData}
           schema={CreateItemSchema.omit({
             userId: true,
-            groceryTripId: true,
             reminderSpanSeconds: true,
           })}
           // initialValues={{}}
@@ -41,8 +50,7 @@ const NewItemPage = () => {
             try {
               const item = await createItemMutation({
                 ...values,
-                // TODO: Add grocery trip selection to form
-                groceryTripId: 2,
+                groceryTripId: values.groceryTripId,
                 userId: user?.id || 0,
                 reminderSpanSeconds:
                   itemTypes.find((item) => item.id == parseInt(values.itemTypes[0] || ""))

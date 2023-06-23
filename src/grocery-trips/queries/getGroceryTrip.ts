@@ -10,7 +10,16 @@ const GetGroceryTrip = z.object({
 
 export default resolver.pipe(resolver.zod(GetGroceryTrip), resolver.authorize(), async ({ id }) => {
   // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-  const groceryTrip = await db.groceryTrip.findFirst({ where: { id } })
+  const groceryTrip = await db.groceryTrip.findFirst({
+    where: { id },
+    include: {
+      items: {
+        include: {
+          itemTypes: true,
+        },
+      },
+    },
+  })
 
   if (!groceryTrip) throw new NotFoundError()
 

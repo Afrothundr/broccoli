@@ -20,6 +20,11 @@ const itemTypes = [
     storage_advice: 'Store loosely wrapped in a refrigerator crisper drawer set to "High-Humidity"',
     suggested_life_span_seconds: dayjs.duration({ weeks: 1 }).asSeconds(),
   },
+  {
+    name: "Citrus",
+    storage_advice: "Store in a refrigerator at 41°F to 42°F,",
+    suggested_life_span_seconds: dayjs.duration({ weeks: 2, days: 3 }).asSeconds(),
+  },
 ]
 
 const groceryTrips = [

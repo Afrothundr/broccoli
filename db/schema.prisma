@@ -77,7 +77,7 @@ model Item {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   status          ItemStatusType @default(FRESH)
-  percentConsumed Decimal        @default(100.00)
+  percentConsumed Decimal        @default(0)
   user            User           @relation(fields: [userId], references: [id])
   userId          Int
   groceryTrip     GroceryTrip    @relation(fields: [groceryTripId], references: [id])

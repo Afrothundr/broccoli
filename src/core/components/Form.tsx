@@ -30,6 +30,7 @@ export function Form<S extends z.ZodType<any, any>>({
       validate={async (values) => {
         const validation = await validateZodSchema(schema)(values)
         // console.log(validation, "validation")
+        // console.log(values, "values")
         return validateZodSchema(schema)(values)
       }}
       onSubmit={onSubmit}

@@ -24,7 +24,13 @@ export const SelectInputField = forwardRef<HTMLInputElement, SelectInputFieldPro
 
     return (
       <div {...outerProps}>
-        <NativeSelect data={data} disabled={submitting} label={label} placeholder={label} />
+        <NativeSelect
+          {...input}
+          data={data}
+          disabled={submitting}
+          label={label}
+          placeholder={label}
+        />
         {touched && normalizedError && (
           <div role="alert" style={{ color: "red" }}>
             {normalizedError}

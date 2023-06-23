@@ -24,7 +24,7 @@ export default resolver.pipe(
         groceryTrip: {
           connectOrCreate: {
             where: {
-              id: input.groceryTripId,
+              id: parseInt(input.groceryTripId),
             },
             create: {
               name: "New Grocery Trip",

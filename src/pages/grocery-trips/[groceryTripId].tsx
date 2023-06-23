@@ -2,44 +2,57 @@ import { Suspense } from "react"
 import { Routes } from "@blitzjs/next"
 import Head from "next/head"
 import Link from "next/link"
-import { useRouter } from "next/router"
-import { useQuery, useMutation } from "@blitzjs/rpc"
+import { useQuery } from "@blitzjs/rpc"
 import { useParam } from "@blitzjs/next"
 
 import Layout from "src/core/layouts/Layout"
 import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
-import deleteGroceryTrip from "src/grocery-trips/mutations/deleteGroceryTrip"
+import dayjs from "dayjs"
+import { Group, Table, rem } from "@mantine/core"
+import { IconArrowBack } from "@tabler/icons-react"
 
 export const GroceryTrip = () => {
-  const router = useRouter()
   const groceryTripId = useParam("groceryTripId", "number")
-  const [deleteGroceryTripMutation] = useMutation(deleteGroceryTrip)
   const [groceryTrip] = useQuery(getGroceryTrip, { id: groceryTripId })
+
+  const rows = groceryTrip.items.map((item) => (
+    <tr key={item.id}>
+      <td>
+        <Link href={Routes.ShowItemPage({ itemId: item.id })}>{item.name}</Link>
+      </td>
+      <td>{item.quantity}</td>
+      <td>{item.itemTypes.map((type) => type.name).join(",")}</td>
+      <td>{item.status}</td>
+      <td>{dayjs(item.createdAt).format("M/D")}</td>
+    </tr>
+  ))
 
   return (
     <>
       <Head>
-        <title>GroceryTrip {groceryTrip.id}</title>
+        <title>Grocery Trip: {groceryTrip.id}</title>
       </Head>
 
       <div>
-        <h1>GroceryTrip {groceryTrip.id}</h1>
-        <pre>{JSON.stringify(groceryTrip, null, 2)}</pre>
+        <Group mb={rem("2rem")}>
+          <h1>{groceryTrip.name}</h1>
+          <Link href={Routes.EditGroceryTripPage({ groceryTripId: groceryTrip.id })}>Edit</Link>
+        </Group>
 
-        <Link href={Routes.EditGroceryTripPage({ groceryTripId: groceryTrip.id })}>Edit</Link>
-
-        <button
-          type="button"
-          onClick={async () => {
-            if (window.confirm("This will be deleted")) {
-              await deleteGroceryTripMutation({ id: groceryTrip.id })
-              await router.push(Routes.GroceryTripsPage())
-            }
-          }}
-          style={{ marginLeft: "0.5rem" }}
-        >
-          Delete
-        </button>
+        <div>
+          <Table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>How Much</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Date Purchased</th>
+              </tr>
+            </thead>
+            <tbody>{rows}</tbody>
+          </Table>
+        </div>
       </div>
     </>
   )
@@ -48,9 +61,9 @@ export const GroceryTrip = () => {
 const ShowGroceryTripPage = () => {
   return (
     <div>
-      <p>
-        <Link href={Routes.GroceryTripsPage()}>GroceryTrips</Link>
-      </p>
+      <Group>
+        <IconArrowBack /> <Link href={Routes.GroceryTripsPage()}>Back</Link>
+      </Group>
 
       <Suspense fallback={<div>Loading...</div>}>
         <GroceryTrip />

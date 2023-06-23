@@ -18,7 +18,17 @@ export default resolver.pipe(
       skip,
       take,
       count: () => db.groceryTrip.count({ where }),
-      query: (paginateArgs) => db.groceryTrip.findMany({ ...paginateArgs, where, orderBy }),
+      query: (paginateArgs) =>
+        db.groceryTrip.findMany({
+          ...paginateArgs,
+          where,
+          orderBy,
+          include: {
+            _count: {
+              select: { items: true },
+            },
+          },
+        }),
     })
 
     return {

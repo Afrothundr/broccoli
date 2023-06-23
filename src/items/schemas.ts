@@ -2,7 +2,7 @@ import { z } from "zod"
 
 export const CreateItemSchema = z.object({
   description: z.string().optional(),
-  groceryTripId: z.number(),
+  groceryTripId: z.string(),
   itemTypes: z.string().array(),
   userId: z.number(),
   name: z.string(),

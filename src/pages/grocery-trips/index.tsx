@@ -6,6 +6,7 @@ import { usePaginatedQuery } from "@blitzjs/rpc"
 import { useRouter } from "next/router"
 import Layout from "src/core/layouts/Layout"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
+import { Indicator, Text } from "@mantine/core"
 
 const ITEMS_PER_PAGE = 100
 
@@ -31,7 +32,17 @@ export const GroceryTripsList = () => {
                 groceryTripId: groceryTrip.id,
               })}
             >
-              {groceryTrip.name}
+              <Indicator
+                inline
+                label={groceryTrip._count.items}
+                size={24}
+                withBorder
+                color="green"
+                radius="md"
+                offset={-8}
+              >
+                <Text>{groceryTrip.name}</Text>
+              </Indicator>
             </Link>
           </li>
         ))}
