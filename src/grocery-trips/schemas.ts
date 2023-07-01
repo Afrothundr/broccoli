@@ -1,7 +1,10 @@
 import { z } from "zod"
 
 export const CreateGroceryTripSchema = z.object({
-  // template: __fieldName__: z.__zodType__(),
+  userId: z.number(),
+  name: z.string(),
+  description: z.string().optional(),
+  createdAt: z.date(),
 })
 export const UpdateGroceryTripSchema = z.object({
   id: z.number(),
