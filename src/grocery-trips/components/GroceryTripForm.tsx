@@ -9,6 +9,13 @@ export { FORM_ERROR } from "src/core/components/Form"
 export function GroceryTripForm<S extends z.ZodType<any, any>>(props: FormProps<S>) {
   return (
     <Form<S> {...props}>
+      <Field
+        component={DatePickerInput}
+        name="createdAt"
+        asterisk
+        label="Date"
+        defaultValue={new Date()}
+      />
       <LabeledTextField name="name" label="Name" required placeholder="name" type="text" />
       <LabeledTextField
         name="description"
@@ -16,7 +23,6 @@ export function GroceryTripForm<S extends z.ZodType<any, any>>(props: FormProps<
         placeholder="Description"
         type="text"
       />
-      <Field component={DatePickerInput} name="createdAt" label="Date" defaultValue={new Date()} />
     </Form>
   )
 }

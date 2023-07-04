@@ -1,15 +1,15 @@
-import { Suspense } from "react"
-import { Routes } from "@blitzjs/next"
+import { Routes, useParam } from "@blitzjs/next"
+import { useQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
-import { useQuery } from "@blitzjs/rpc"
-import { useParam } from "@blitzjs/next"
+import { Suspense } from "react"
 
+import { Group, NavLink, Table, Text, Title } from "@mantine/core"
+import { IconArrowBack } from "@tabler/icons-react"
+import dayjs from "dayjs"
+import { useRouter } from "next/router"
 import Layout from "src/core/layouts/Layout"
 import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
-import dayjs from "dayjs"
-import { Group, Table, rem } from "@mantine/core"
-import { IconArrowBack } from "@tabler/icons-react"
 
 export const GroceryTrip = () => {
   const groceryTripId = useParam("groceryTripId", "number")
@@ -34,10 +34,15 @@ export const GroceryTrip = () => {
       </Head>
 
       <div>
-        <Group mb={rem("2rem")}>
-          <h1>{groceryTrip.name}</h1>
+        <Group>
+          <Title order={1}>
+            {dayjs(groceryTrip.createdAt).format("M/D")} - {groceryTrip.name}
+          </Title>
           <Link href={Routes.EditGroceryTripPage({ groceryTripId: groceryTrip.id })}>Edit</Link>
         </Group>
+        <Text c="dimmed" my="sm">
+          {groceryTrip.description}
+        </Text>
 
         <div>
           <Table>
@@ -59,10 +64,16 @@ export const GroceryTrip = () => {
 }
 
 const ShowGroceryTripPage = () => {
+  const router = useRouter()
+
   return (
     <div>
       <Group>
-        <IconArrowBack /> <Link href={Routes.GroceryTripsPage()}>Back</Link>
+        <NavLink
+          label="Back"
+          onClick={() => router.push(Routes.GroceryTripsPage())}
+          icon={<IconArrowBack size="1rem" stroke={1.5} />}
+        />
       </Group>
 
       <Suspense fallback={<div>Loading...</div>}>
