@@ -37,6 +37,7 @@
     "@mantine/notifications": "6.0.13",
     "@prisma/client": "4.6.1",
     "@tabler/icons-react": "2.21.0",
+    "@tanstack/match-sorter-utils": "8.8.4",
     "@tanstack/react-table": "8.9.2",
     "blitz": "2.0.0-beta.29",
     "classnames": "2.3.2",

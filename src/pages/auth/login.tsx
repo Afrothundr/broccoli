@@ -1,22 +1,30 @@
-import { BlitzPage } from "@blitzjs/next"
-import Layout from "src/core/layouts/Layout"
-import { LoginForm } from "src/auth/components/LoginForm"
+import { BlitzPage, Routes } from "@blitzjs/next"
+import { Anchor, Text } from "@mantine/core"
+import Link from "next/link"
 import { useRouter } from "next/router"
+import { LoginForm } from "src/auth/components/LoginForm"
+import { AuthLayout } from "./layout"
 
 const LoginPage: BlitzPage = () => {
   const router = useRouter()
 
   return (
-    <Layout title="Log In">
+    <>
       <LoginForm
         onSuccess={(user) => {
-          // const next = router.query.next ? decodeURIComponent(router.query.next as string) : "/"
           return router.push(`/users/${user.id}`)
-          // return router.push(next)
         }}
       />
-    </Layout>
+      <Text ta="center" mt="lg">
+        Don&apos;t have an account?{" "}
+        <Link href={Routes.SignupPage()}>
+          <Anchor<"a"> weight={700}>Sign Up</Anchor>
+        </Link>
+      </Text>
+    </>
   )
 }
+
+LoginPage.getLayout = (page) => <AuthLayout title="Welcome to Broccoli">{page}</AuthLayout>
 
 export default LoginPage

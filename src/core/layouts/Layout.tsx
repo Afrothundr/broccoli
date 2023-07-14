@@ -5,6 +5,7 @@ import {
   Burger,
   Flex,
   Header,
+  Loader,
   MediaQuery,
   Navbar,
   useMantineColorScheme,
@@ -13,7 +14,7 @@ import {
 import { IconMoon, IconSunLow } from "@tabler/icons-react"
 import Head from "next/head"
 import Link from "next/link"
-import React, { useState } from "react"
+import React, { Suspense, useState } from "react"
 import { Navigation } from "../components/Navigation"
 
 const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
@@ -35,7 +36,9 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
         padding="sm"
         navbar={
           <Navbar p="md" hiddenBreakpoint="sm" hidden={!opened} width={{ sm: 200, lg: 300 }}>
-            <Navigation />
+            <Suspense fallback={<Loader />}>
+              <Navigation />
+            </Suspense>
           </Navbar>
         }
         header={

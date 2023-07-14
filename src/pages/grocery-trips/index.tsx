@@ -1,13 +1,25 @@
 import { Routes } from "@blitzjs/next"
 import { useMutation, usePaginatedQuery } from "@blitzjs/rpc"
-import { ActionIcon, Container, Indicator, Modal, Text, Tooltip } from "@mantine/core"
+import {
+  ActionIcon,
+  Anchor,
+  Button,
+  Container,
+  Group,
+  Input,
+  Modal,
+  NumberInput,
+  Tooltip,
+} from "@mantine/core"
+import { DatePickerInput } from "@mantine/dates"
 import { GroceryTrip } from "@prisma/client"
 import { IconShoppingCartPlus } from "@tabler/icons-react"
+import { rankItem } from "@tanstack/match-sorter-utils"
 import {
   Column,
   ColumnDef,
+  FilterFn,
   Table as ReactTable,
-  createColumnHelper,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -15,11 +27,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import dayjs from "dayjs"
+import isBetween from "dayjs/plugin/isBetween"
 import { FORM_ERROR } from "final-form"
 import Head from "next/head"
 import Link from "next/link"
 import router, { useRouter } from "next/router"
-import { Suspense, useState } from "react"
+import { Suspense, useMemo, useState } from "react"
 import Layout from "src/core/layouts/Layout"
 import { GroceryTripForm } from "src/grocery-trips/components/GroceryTripForm"
 import createGroceryTrip from "src/grocery-trips/mutations/createGroceryTrip"
@@ -27,8 +40,8 @@ import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import { CreateGroceryTripSchema } from "src/grocery-trips/schemas"
 import styles from "src/styles/GroceryTripsPage.module.css"
 import { useCurrentUser } from "src/users/hooks/useCurrentUser"
+dayjs.extend(isBetween)
 
-const ITEMS_PER_PAGE = 100
 type GroceryTripWithAddedCount = GroceryTrip & {
   _count: {
     items: number
@@ -37,86 +50,140 @@ type GroceryTripWithAddedCount = GroceryTrip & {
 
 export const GroceryTripsList = () => {
   const router = useRouter()
+  const [itemsPerPage, setItemsPerPage] = useState(100)
   const page = Number(router.query.page) || 0
   const [{ groceryTrips, hasMore }] = usePaginatedQuery(getGroceryTrips, {
     orderBy: { id: "asc" },
-    skip: ITEMS_PER_PAGE * page,
-    take: ITEMS_PER_PAGE,
+    skip: itemsPerPage * page,
+    take: itemsPerPage,
   })
 
   const goToPreviousPage = () => router.push({ query: { page: page - 1 } })
   const goToNextPage = () => router.push({ query: { page: page + 1 } })
+  const setPage = (pageNumber: number) => router.push({ query: { page: pageNumber } })
 
-  const columnHelper = createColumnHelper<GroceryTripWithAddedCount>()
-
-  const columns = [
-    columnHelper.accessor((row) => row.createdAt, {
-      id: "date",
-      cell: (info) => dayjs(info.getValue()).format("M/D"),
-      footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor("name", {
-      cell: ({ row }) => (
-        <Link
-          href={Routes.ShowGroceryTripPage({
-            groceryTripId: row.original.id,
-          })}
-        >
-          <Text>{row.original.name}</Text>
-        </Link>
-      ),
-      footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor("description", {
-      cell: (info) => info.getValue(),
-      footer: (info) => info.column.id,
-    }),
-    columnHelper.accessor((row) => row._count.items, {
-      id: "items",
-      cell: (info) => info.getValue(),
-      footer: (info) => info.column.id,
-    }),
-  ]
+  const columns: ColumnDef<GroceryTripWithAddedCount, any>[] = useMemo(
+    () => [
+      {
+        header: "Date",
+        accessorKey: "createdAt",
+        cell: (value) => dayjs(value.getValue()).format("MM/D"),
+        filterFn: filterDates,
+      },
+      {
+        header: "Name",
+        accessorKey: "name",
+        cell: ({ row }) => (
+          <Link
+            href={Routes.ShowGroceryTripPage({
+              groceryTripId: row.original.id,
+            })}
+          >
+            <Anchor>{row.original.name}</Anchor>
+          </Link>
+        ),
+      },
+      {
+        Header: "Description",
+        accessorKey: "description",
+      },
+      {
+        Header: "Items",
+        accessorKey: "_count.items",
+      },
+    ],
+    []
+  )
 
   return (
     <div>
-      <ul>
-        {groceryTrips.map((groceryTrip) => (
-          <li key={groceryTrip.id}>
-            <Link
-              href={Routes.ShowGroceryTripPage({
-                groceryTripId: groceryTrip.id,
-              })}
-            >
-              <Indicator
-                inline
-                label={groceryTrip._count.items}
-                size={24}
-                withBorder
-                color="green"
-                radius="md"
-                offset={-8}
-              >
-                <Text>{groceryTrip.name}</Text>
-              </Indicator>
-            </Link>
-          </li>
-        ))}
-      </ul>
       <Table
         {...{
           data: groceryTrips,
           columns,
         }}
       />
-      <button disabled={page === 0} onClick={goToPreviousPage}>
-        Previous
-      </button>
-      <button disabled={!hasMore} onClick={goToNextPage}>
-        Next
-      </button>
+      <Group mt="sm">
+        <Button variant="subtle" radius="xl" onClick={() => setPage(0)} disabled={page === 0}>
+          {"<<"}
+        </Button>
+        <Button
+          variant="subtle"
+          radius="xl"
+          onClick={() => goToPreviousPage()}
+          disabled={page === 0}
+        >
+          {"<"}
+        </Button>
+        <Button variant="subtle" radius="xl" onClick={() => goToNextPage()} disabled={!hasMore}>
+          {">"}
+        </Button>
+        <Button
+          variant="subtle"
+          radius="xl"
+          // onClick={() => setPage(table.getPageCount() - 1)}
+          disabled={!hasMore}
+        >
+          {">>"}
+        </Button>
+        <span className="flex items-center gap-1">
+          <div>Page</div>
+          <strong>{page + 1}</strong>
+        </span>
+        <span className="flex items-center gap-1">
+          | Go to page:
+          <input
+            type="number"
+            defaultValue={page + 1}
+            onChange={(e) => {
+              const page = e.target.value ? Number(e.target.value) - 1 : 0
+              return setPage(page)
+            }}
+            className="border p-1 rounded w-16"
+          />
+        </span>
+        <select
+          value={itemsPerPage}
+          onChange={(e) => {
+            setItemsPerPage(Number(e.target.value))
+          }}
+        >
+          {[10, 20, 30, 40, 50].map((pageSize) => (
+            <option key={pageSize} value={pageSize}>
+              Show {pageSize}
+            </option>
+          ))}
+        </select>
+      </Group>
     </div>
   )
+}
+
+const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+  // Rank the item
+  const itemRank = rankItem(row.getValue(columnId), value)
+
+  // Store the itemRank info
+  addMeta({
+    itemRank,
+  })
+
+  // Return if the item should be filtered in/out
+  return itemRank.passed
+}
+
+const filterDates: FilterFn<any> = (row, columnId, value, addMeta) => {
+  const date = dayjs(row.getValue(columnId))
+  const [start, end] = value as Date[]
+  //If one filter defined and date is null filter it
+  if ((start || end) && !date) return false
+  if (start && !end) {
+    return dayjs(start).isBefore(date)
+  } else if (!start && end) {
+    return dayjs(end).isAfter(date)
+  } else if (start && end) {
+    return date.isBetween(start, end, "day")
+  } else return true
 }
 
 const GroceryTripsPage = () => {
@@ -127,14 +194,10 @@ const GroceryTripsPage = () => {
   return (
     <Layout>
       <Head>
-        <title>GroceryTrips</title>
+        <title>Grocery Trips</title>
       </Head>
 
       <Container size="lg" className={styles.groceryTripsContainer}>
-        <p>
-          <Link href={Routes.NewGroceryTripPage()}>Create GroceryTrip</Link>
-        </p>
-
         <Suspense fallback={<div>Loading...</div>}>
           <GroceryTripsList />
         </Suspense>
@@ -190,17 +253,19 @@ function Table({
   const table = useReactTable({
     data,
     columns,
-    // Pipeline
+    filterFns: {
+      fuzzy: fuzzyFilter,
+      date: filterDates,
+    },
+    globalFilterFn: fuzzyFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    //
     debugTable: true,
   })
 
   return (
-    <div className="p-2">
-      <div className="h-2" />
+    <Container ml="xs">
       <table>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -240,105 +305,42 @@ function Table({
           })}
         </tbody>
       </table>
-      <div className="h-2" />
-      <div className="flex items-center gap-2">
-        <button
-          className="border rounded p-1"
-          onClick={() => table.setPageIndex(0)}
-          disabled={!table.getCanPreviousPage()}
-        >
-          {"<<"}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          {"<"}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          {">"}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-          disabled={!table.getCanNextPage()}
-        >
-          {">>"}
-        </button>
-        <span className="flex items-center gap-1">
-          <div>Page</div>
-          <strong>
-            {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-          </strong>
-        </span>
-        <span className="flex items-center gap-1">
-          | Go to page:
-          <input
-            type="number"
-            defaultValue={table.getState().pagination.pageIndex + 1}
-            onChange={(e) => {
-              const page = e.target.value ? Number(e.target.value) - 1 : 0
-              table.setPageIndex(page)
-            }}
-            className="border p-1 rounded w-16"
-          />
-        </span>
-        <select
-          value={table.getState().pagination.pageSize}
-          onChange={(e) => {
-            table.setPageSize(Number(e.target.value))
-          }}
-        >
-          {[10, 20, 30, 40, 50].map((pageSize) => (
-            <option key={pageSize} value={pageSize}>
-              Show {pageSize}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>{table.getRowModel().rows.length} Rows</div>
-      <pre>{JSON.stringify(table.getState().pagination, null, 2)}</pre>
-    </div>
+    </Container>
   )
 }
 function Filter({ column, table }: { column: Column<any, any>; table: ReactTable<any> }) {
   const firstValue = table.getPreFilteredRowModel().flatRows[0]?.getValue(column.id)
-
   const columnFilterValue = column.getFilterValue()
 
-  return typeof firstValue === "number" ? (
-    <div className="flex space-x-2">
-      <input
-        type="number"
+  if (typeof firstValue === "number") {
+    return (
+      <NumberInput
         value={(columnFilterValue as [number, number])?.[0] ?? ""}
-        onChange={(e) =>
-          column.setFilterValue((old: [number, number]) => [e.target.value, old?.[1]])
-        }
+        onChange={(value) => column.setFilterValue((old: [number, number]) => [value, old?.[1]])}
         placeholder={`Min`}
-        className="w-24 border shadow rounded"
+        min={0}
       />
-      <input
-        type="number"
-        value={(columnFilterValue as [number, number])?.[1] ?? ""}
-        onChange={(e) =>
-          column.setFilterValue((old: [number, number]) => [old?.[0], e.target.value])
-        }
-        placeholder={`Max`}
-        className="w-24 border shadow rounded"
+    )
+  }
+  if (firstValue instanceof Date) {
+    const dateValues = (columnFilterValue as Date[]) ?? [null, null]
+    const value1 = dateValues[0] || null
+    const value2 = dateValues[1] || null
+    return (
+      <DatePickerInput
+        type="range"
+        value={[value1, value2]}
+        onChange={(date) => column.setFilterValue(date || undefined)}
+        placeholder="Search..."
       />
-    </div>
-  ) : (
-    <input
+    )
+  }
+  return (
+    <Input
       type="text"
       value={(columnFilterValue ?? "") as string}
       onChange={(e) => column.setFilterValue(e.target.value)}
       placeholder={`Search...`}
-      className="w-36 border shadow rounded"
     />
   )
 }

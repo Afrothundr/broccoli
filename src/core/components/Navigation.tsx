@@ -1,13 +1,8 @@
 "use client"
 
 import { Routes } from "@blitzjs/next"
-import { ClassNames } from "@emotion/react"
-import { Loader } from "@mantine/core"
 import { RouteUrlObject } from "blitz"
-import classNames from "classnames"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Suspense } from "react"
 import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 
 export interface NavLink {
@@ -33,7 +28,7 @@ export function Navigation() {
   ]
 
   return (
-    <Suspense fallback={<Loader />}>
+    <>
       {links.map((link) => {
         return (
           <Link href={link.route} key={link.name}>
@@ -41,6 +36,6 @@ export function Navigation() {
           </Link>
         )
       })}
-    </Suspense>
+    </>
   )
 }
