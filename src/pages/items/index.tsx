@@ -1,24 +1,24 @@
-import { Suspense } from "react"
+import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
-import Head from "next/head"
-import Link from "next/link"
 import { usePaginatedQuery } from "@blitzjs/rpc"
-import { useRouter } from "next/router"
-import Layout from "src/core/layouts/Layout"
-import getItems from "src/items/queries/getItems"
 import { Table } from "@mantine/core"
 import dayjs from "dayjs"
-import { useCurrentUser } from "src/users/hooks/useCurrentUser"
+import Head from "next/head"
+import Link from "next/link"
+import { useRouter } from "next/router"
+import { Suspense } from "react"
+import Layout from "src/core/layouts/Layout"
+import getItems from "src/items/queries/getItems"
 
 const ITEMS_PER_PAGE = 100
 
 export const ItemsList = () => {
   const router = useRouter()
   const page = Number(router.query.page) || 0
-  const user = useCurrentUser()
+  const { userId } = useSession()
   const [{ items, hasMore }] = usePaginatedQuery(getItems, {
     where: {
-      userId: user?.id,
+      userId: userId ?? 0,
     },
     orderBy: { id: "asc" },
     skip: ITEMS_PER_PAGE * page,
@@ -91,7 +91,5 @@ const ItemsPage = () => {
   )
 }
 
+ItemsPage.authenticate = { redirectTo: Routes.LoginPage() }
 export default ItemsPage
-function useReactTable() {
-  throw new Error("Function not implemented.")
-}

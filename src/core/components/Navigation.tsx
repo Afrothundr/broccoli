@@ -1,18 +1,23 @@
 "use client"
 
+import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
+import { NavLink } from "@mantine/core"
 import { RouteUrlObject } from "blitz"
 import Link from "next/link"
-import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 
-export interface NavLink {
+export interface NavLinkProps {
   route: RouteUrlObject | string
   name: string
 }
 
 export function Navigation() {
-  const currentUser = useCurrentUser()
-  const links: NavLink[] = [
+  const { userId } = useSession()
+  const links: NavLinkProps[] = [
+    {
+      name: "Dashboard",
+      route: Routes.DashboardsPage(),
+    },
     {
       name: "Inventory",
       route: Routes.ItemsPage(),
@@ -23,7 +28,7 @@ export function Navigation() {
     },
     {
       name: "Profile",
-      route: currentUser ? `/users/${currentUser.id}` : Routes.LoginPage(),
+      route: userId ? `/users/${userId}` : Routes.LoginPage(),
     },
   ]
 
@@ -32,7 +37,7 @@ export function Navigation() {
       {links.map((link) => {
         return (
           <Link href={link.route} key={link.name}>
-            {link.name}
+            <NavLink label={link.name} />
           </Link>
         )
       })}

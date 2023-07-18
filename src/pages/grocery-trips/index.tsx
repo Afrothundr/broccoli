@@ -1,3 +1,4 @@
+import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { useMutation, usePaginatedQuery } from "@blitzjs/rpc"
 import {
@@ -39,7 +40,6 @@ import createGroceryTrip from "src/grocery-trips/mutations/createGroceryTrip"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import { CreateGroceryTripSchema } from "src/grocery-trips/schemas"
 import styles from "src/styles/GroceryTripsPage.module.css"
-import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 dayjs.extend(isBetween)
 
 type GroceryTripWithAddedCount = GroceryTrip & {
@@ -50,10 +50,14 @@ type GroceryTripWithAddedCount = GroceryTrip & {
 
 export const GroceryTripsList = () => {
   const router = useRouter()
+  const { userId } = useSession()
   const [itemsPerPage, setItemsPerPage] = useState(100)
   const page = Number(router.query.page) || 0
   const [{ groceryTrips, hasMore }] = usePaginatedQuery(getGroceryTrips, {
     orderBy: { id: "asc" },
+    where: {
+      userId: userId ?? undefined,
+    },
     skip: itemsPerPage * page,
     take: itemsPerPage,
   })
@@ -188,7 +192,7 @@ const filterDates: FilterFn<any> = (row, columnId, value, addMeta) => {
 
 const GroceryTripsPage = () => {
   const [modalOpened, setModalOpened] = useState(false)
-  const user = useCurrentUser()
+  const { userId } = useSession()
   const [createGroceryTripMutation] = useMutation(createGroceryTrip)
 
   return (
@@ -227,7 +231,7 @@ const GroceryTripsPage = () => {
             try {
               const groceryTrip = await createGroceryTripMutation({
                 ...values,
-                userId: user?.id || 0,
+                userId: userId ?? 0,
               })
               await router.push(Routes.ShowGroceryTripPage({ groceryTripId: groceryTrip.id }))
             } catch (error: any) {

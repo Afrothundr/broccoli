@@ -10,7 +10,7 @@ const SignupPage: BlitzPage = () => {
 
   return (
     <>
-      <SignupForm onSuccess={() => router.push(Routes.ItemsPage())} />
+      <SignupForm />
       <Text ta="center" mt="lg">
         Have an account?{" "}
         <Link href={Routes.LoginPage()}>
@@ -21,7 +21,7 @@ const SignupPage: BlitzPage = () => {
   )
 }
 
-SignupPage.redirectAuthenticatedTo = "/grocery-trips"
+SignupPage.redirectAuthenticatedTo = Routes.DashboardsPage()
 SignupPage.getLayout = (page) => <AuthLayout title="Sign Up to Broccoli">{page}</AuthLayout>
 
 export default SignupPage
