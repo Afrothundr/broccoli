@@ -1,4 +1,4 @@
-import { useSession } from "@blitzjs/auth"
+import { BlitzPage, useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { useMutation, usePaginatedQuery } from "@blitzjs/rpc"
 import {
@@ -7,40 +7,28 @@ import {
   Button,
   Container,
   Group,
-  Input,
   Modal,
   NumberInput,
+  Select,
+  Text,
   Tooltip,
 } from "@mantine/core"
-import { DatePickerInput } from "@mantine/dates"
 import { GroceryTrip } from "@prisma/client"
 import { IconShoppingCartPlus } from "@tabler/icons-react"
-import { rankItem } from "@tanstack/match-sorter-utils"
-import {
-  Column,
-  ColumnDef,
-  FilterFn,
-  Table as ReactTable,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  useReactTable,
-} from "@tanstack/react-table"
+import { ColumnDef } from "@tanstack/react-table"
 import dayjs from "dayjs"
-import isBetween from "dayjs/plugin/isBetween"
 import { FORM_ERROR } from "final-form"
-import Head from "next/head"
 import Link from "next/link"
 import router, { useRouter } from "next/router"
 import { Suspense, useMemo, useState } from "react"
+import BroccoliTable from "src/core/components/Table"
 import Layout from "src/core/layouts/Layout"
+import { filterDates } from "src/core/utils"
 import { GroceryTripForm } from "src/grocery-trips/components/GroceryTripForm"
 import createGroceryTrip from "src/grocery-trips/mutations/createGroceryTrip"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import { CreateGroceryTripSchema } from "src/grocery-trips/schemas"
 import styles from "src/styles/GroceryTripsPage.module.css"
-dayjs.extend(isBetween)
 
 type GroceryTripWithAddedCount = GroceryTrip & {
   _count: {
@@ -88,11 +76,11 @@ export const GroceryTripsList = () => {
         ),
       },
       {
-        Header: "Description",
+        header: "Description",
         accessorKey: "description",
       },
       {
-        Header: "Items",
+        header: "Items",
         accessorKey: "_count.items",
       },
     ],
@@ -101,13 +89,13 @@ export const GroceryTripsList = () => {
 
   return (
     <div>
-      <Table
+      <BroccoliTable
         {...{
           data: groceryTrips,
           columns,
         }}
       />
-      <Group mt="sm">
+      <Group mt="sm" position="center">
         <Button variant="subtle" radius="xl" onClick={() => setPage(0)} disabled={page === 0}>
           {"<<"}
         </Button>
@@ -130,77 +118,45 @@ export const GroceryTripsList = () => {
         >
           {">>"}
         </Button>
-        <span className="flex items-center gap-1">
-          <div>Page</div>
-          <strong>{page + 1}</strong>
-        </span>
-        <span className="flex items-center gap-1">
-          | Go to page:
-          <input
-            type="number"
-            defaultValue={page + 1}
-            onChange={(e) => {
-              const page = e.target.value ? Number(e.target.value) - 1 : 0
-              return setPage(page)
-            }}
-            className="border p-1 rounded w-16"
-          />
-        </span>
-        <select
-          value={itemsPerPage}
-          onChange={(e) => {
-            setItemsPerPage(Number(e.target.value))
+      </Group>
+      <Group position="right">
+        <Text>
+          Page <strong>{page + 1}</strong>
+        </Text>
+
+        <Text className="flex items-center gap-1">| Go to page:</Text>
+        <NumberInput
+          defaultValue={page + 1}
+          onChange={(value) => {
+            const page = value || 0
+            return setPage(page)
           }}
-        >
-          {[10, 20, 30, 40, 50].map((pageSize) => (
-            <option key={pageSize} value={pageSize}>
-              Show {pageSize}
-            </option>
-          ))}
-        </select>
+        />
+      </Group>
+      <Group position="right" mt="sm">
+        <Select
+          value={itemsPerPage.toString()}
+          placeholder={itemsPerPage.toString()}
+          data={[10, 20, 30, 40, 50].map((pageSize) => ({
+            label: `Show ${pageSize}`,
+            value: pageSize.toString(),
+          }))}
+          onChange={(value) => {
+            setItemsPerPage(Number(value))
+          }}
+        />
       </Group>
     </div>
   )
 }
 
-const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
-  // Rank the item
-  const itemRank = rankItem(row.getValue(columnId), value)
-
-  // Store the itemRank info
-  addMeta({
-    itemRank,
-  })
-
-  // Return if the item should be filtered in/out
-  return itemRank.passed
-}
-
-const filterDates: FilterFn<any> = (row, columnId, value, addMeta) => {
-  const date = dayjs(row.getValue(columnId))
-  const [start, end] = value as Date[]
-  //If one filter defined and date is null filter it
-  if ((start || end) && !date) return false
-  if (start && !end) {
-    return dayjs(start).isBefore(date)
-  } else if (!start && end) {
-    return dayjs(end).isAfter(date)
-  } else if (start && end) {
-    return date.isBetween(start, end, "day")
-  } else return true
-}
-
-const GroceryTripsPage = () => {
+const GroceryTripsPage: BlitzPage = () => {
   const [modalOpened, setModalOpened] = useState(false)
   const { userId } = useSession()
   const [createGroceryTripMutation] = useMutation(createGroceryTrip)
 
   return (
-    <Layout>
-      <Head>
-        <title>Grocery Trips</title>
-      </Head>
-
+    <>
       <Container size="lg" className={styles.groceryTripsContainer}>
         <Suspense fallback={<div>Loading...</div>}>
           <GroceryTripsList />
@@ -243,110 +199,10 @@ const GroceryTripsPage = () => {
           }}
         />
       </Modal>
-    </Layout>
+    </>
   )
 }
 
-function Table({
-  data,
-  columns,
-}: {
-  data: GroceryTripWithAddedCount[]
-  columns: ColumnDef<GroceryTripWithAddedCount>[]
-}) {
-  const table = useReactTable({
-    data,
-    columns,
-    filterFns: {
-      fuzzy: fuzzyFilter,
-      date: filterDates,
-    },
-    globalFilterFn: fuzzyFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    debugTable: true,
-  })
-
-  return (
-    <Container ml="xs">
-      <table>
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <th key={header.id} colSpan={header.colSpan}>
-                    {header.isPlaceholder ? null : (
-                      <div>
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {header.column.getCanFilter() ? (
-                          <div>
-                            <Filter column={header.column} table={table} />
-                          </div>
-                        ) : null}
-                      </div>
-                    )}
-                  </th>
-                )
-              })}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => {
-            return (
-              <tr key={row.id}>
-                {row.getVisibleCells().map((cell) => {
-                  return (
-                    <td key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  )
-                })}
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </Container>
-  )
-}
-function Filter({ column, table }: { column: Column<any, any>; table: ReactTable<any> }) {
-  const firstValue = table.getPreFilteredRowModel().flatRows[0]?.getValue(column.id)
-  const columnFilterValue = column.getFilterValue()
-
-  if (typeof firstValue === "number") {
-    return (
-      <NumberInput
-        value={(columnFilterValue as [number, number])?.[0] ?? ""}
-        onChange={(value) => column.setFilterValue((old: [number, number]) => [value, old?.[1]])}
-        placeholder={`Min`}
-        min={0}
-      />
-    )
-  }
-  if (firstValue instanceof Date) {
-    const dateValues = (columnFilterValue as Date[]) ?? [null, null]
-    const value1 = dateValues[0] || null
-    const value2 = dateValues[1] || null
-    return (
-      <DatePickerInput
-        type="range"
-        value={[value1, value2]}
-        onChange={(date) => column.setFilterValue(date || undefined)}
-        placeholder="Search..."
-      />
-    )
-  }
-  return (
-    <Input
-      type="text"
-      value={(columnFilterValue ?? "") as string}
-      onChange={(e) => column.setFilterValue(e.target.value)}
-      placeholder={`Search...`}
-    />
-  )
-}
+GroceryTripsPage.getLayout = (page) => <Layout title="Grocery Trips">{page}</Layout>
 
 export default GroceryTripsPage
