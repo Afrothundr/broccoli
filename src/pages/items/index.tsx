@@ -1,14 +1,18 @@
 import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { usePaginatedQuery } from "@blitzjs/rpc"
-import { Table } from "@mantine/core"
+import { Badge, Group } from "@mantine/core"
 import dayjs from "dayjs"
+import isBetween from "dayjs/plugin/isBetween"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { Suspense } from "react"
+import { Suspense, useMemo } from "react"
+import BroccoliTable from "src/core/components/BroccoliTable"
 import Layout from "src/core/layouts/Layout"
+import { filterDates } from "src/core/utils"
 import getItems from "src/items/queries/getItems"
+dayjs.extend(isBetween)
 
 const ITEMS_PER_PAGE = 100
 
@@ -38,28 +42,62 @@ export const ItemsList = () => {
     </tr>
   ))
 
+  const columns = useMemo(
+    () => [
+      {
+        header: "Name",
+        accessorKey: "name",
+      },
+      {
+        header: "How Much",
+        accessorKey: "quantity",
+      },
+      {
+        header: "Type",
+        accessorKey: "itemTypes",
+        cell: ({ row }) => (
+          <Group>
+            {row.original.itemTypes.map((itemType) => (
+              <Badge variant="filled" key={itemType.name + row.original.id}>
+                {itemType.name}
+              </Badge>
+            ))}
+          </Group>
+        ),
+      },
+      {
+        header: "Status",
+        accessorKey: "status",
+        cell: ({ row }) => {
+          const purchaseDate = dayjs(row.original.createdAt)
+          const expirationDate = dayjs(purchaseDate).second(row.original.suggested_lifespan_seconds)
+
+          const isBad = dayjs().isAfter(expirationDate)
+          return (
+            <Badge variant="filled" color={row.original.status === "BAD" ? "red" : "green"}>
+              {row.original.status}
+            </Badge>
+          )
+        },
+      },
+      {
+        header: "Date Purchased",
+        accessorKey: "createdAt",
+        cell: (value) => dayjs(value.getValue()).format("MM/D"),
+        filterFn: filterDates,
+      },
+    ],
+    []
+  )
+
   return (
     <div>
-      <Table>
-        <thead>
-          <tr>
-            <th></th>
-            <th>How Much</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Date Purchased</th>
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </Table>
-      {/* <ul>
-        {items.map((item) => (
-          <li key={item.id}>
-            <Link href={Routes.ShowItemPage({ itemId: item.id })}>{item.name}</Link>
-          </li>
-        ))}
-      </ul> */}
-      {/* {items.length > 0 && <ItemsTable />} */}
+      <BroccoliTable
+        {...{
+          data: items,
+          columns,
+        }}
+      />
 
       <button disabled={page === 0} onClick={goToPreviousPage}>
         Previous

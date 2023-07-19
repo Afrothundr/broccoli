@@ -13,15 +13,13 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core"
-import { GroceryTrip } from "@prisma/client"
 import { IconShoppingCartPlus } from "@tabler/icons-react"
-import { ColumnDef } from "@tanstack/react-table"
 import dayjs from "dayjs"
 import { FORM_ERROR } from "final-form"
 import Link from "next/link"
 import router, { useRouter } from "next/router"
 import { Suspense, useMemo, useState } from "react"
-import BroccoliTable from "src/core/components/Table"
+import BroccoliTable from "src/core/components/BroccoliTable"
 import Layout from "src/core/layouts/Layout"
 import { filterDates } from "src/core/utils"
 import { GroceryTripForm } from "src/grocery-trips/components/GroceryTripForm"
@@ -29,12 +27,6 @@ import createGroceryTrip from "src/grocery-trips/mutations/createGroceryTrip"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import { CreateGroceryTripSchema } from "src/grocery-trips/schemas"
 import styles from "src/styles/GroceryTripsPage.module.css"
-
-type GroceryTripWithAddedCount = GroceryTrip & {
-  _count: {
-    items: number
-  }
-}
 
 export const GroceryTripsList = () => {
   const router = useRouter()
@@ -54,7 +46,7 @@ export const GroceryTripsList = () => {
   const goToNextPage = () => router.push({ query: { page: page + 1 } })
   const setPage = (pageNumber: number) => router.push({ query: { page: pageNumber } })
 
-  const columns: ColumnDef<GroceryTripWithAddedCount, any>[] = useMemo(
+  const columns = useMemo(
     () => [
       {
         header: "Date",

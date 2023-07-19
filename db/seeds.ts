@@ -1,6 +1,6 @@
 import dayjs from "dayjs"
-import db from "./index"
 import duration from "dayjs/plugin/duration"
+import db from "./index"
 
 /*
  * This seed function is executed when you run `blitz db seed`.
@@ -45,7 +45,7 @@ const seed = async () => {
       data: {
         ...groceryTrip,
         user: {
-          connect: { id: 2 },
+          connect: { id: 1 },
         },
       },
     })

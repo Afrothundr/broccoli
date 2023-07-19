@@ -23,7 +23,7 @@ export const filterDates: FilterFn<any> = (row, columnId, value, addMeta) => {
 
   let timeSyncedStart
   let timeSyncedEnd
-  //If one filter defined and date is null filter it
+
   if ((start || end) && !date) return false
   if (start && !end) {
     timeSyncedStart = dayjs(start).startOf("day")
