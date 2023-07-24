@@ -26,6 +26,7 @@ import { GroceryTripForm } from "src/grocery-trips/components/GroceryTripForm"
 import createGroceryTrip from "src/grocery-trips/mutations/createGroceryTrip"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import { CreateGroceryTripSchema } from "src/grocery-trips/schemas"
+import actionStyles from "src/styles/ActionItem.module.css"
 import styles from "src/styles/GroceryTripsPage.module.css"
 
 export const GroceryTripsList = () => {
@@ -155,7 +156,7 @@ const GroceryTripsPage: BlitzPage = () => {
         </Suspense>
         <Tooltip label="Add new grocery trip" openDelay={500}>
           <ActionIcon
-            className={styles.actionButton}
+            className={actionStyles.actionButton}
             color="green"
             size="xl"
             radius="xl"

@@ -1,4 +1,4 @@
-import { Input, Table as MantineTable, NumberInput, Text } from "@mantine/core"
+import { Table as MantineTable, NumberInput, Select, Text } from "@mantine/core"
 import { DatePickerInput } from "@mantine/dates"
 import {
   Column,
@@ -6,10 +6,12 @@ import {
   Table as ReactTable,
   flexRender,
   getCoreRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import { useMemo } from "react"
 import { filterDates, fuzzyFilter } from "../utils"
 
 type TableProps<T> = {
@@ -29,6 +31,8 @@ function BroccoliTable<T>({ data, columns }: TableProps<T>) {
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+    manualPagination: true,
     debugTable: true,
   })
 
@@ -80,6 +84,12 @@ function BroccoliTable<T>({ data, columns }: TableProps<T>) {
 function Filter({ column, table }: { column: Column<any, any>; table: ReactTable<any> }) {
   const firstValue = table.getPreFilteredRowModel().flatRows[0]?.getValue(column.id)
   const columnFilterValue = column.getFilterValue()
+  const uniqueValues = column.getFacetedUniqueValues()
+
+  const sortedUniqueValues = useMemo(
+    () => (typeof firstValue === "number" ? [] : Array.from(uniqueValues.keys()).sort()),
+    [uniqueValues, firstValue]
+  )
 
   if (typeof firstValue === "number") {
     return (
@@ -104,12 +114,23 @@ function Filter({ column, table }: { column: Column<any, any>; table: ReactTable
       />
     )
   }
+  console.log(sortedUniqueValues, "val")
+
+  const formattedValues = sortedUniqueValues.map((val) => {
+    if (Array.isArray(val)) {
+      return val[0]?.name || ""
+    }
+    return val
+  })
   return (
-    <Input
-      type="text"
+    <Select
       value={(columnFilterValue ?? "") as string}
-      onChange={(e) => column.setFilterValue(e.target.value)}
+      onChange={(value) => column.setFilterValue(value)}
       placeholder={`Search...`}
+      searchable
+      clearable
+      nothingFound="No options"
+      data={formattedValues}
     />
   )
 }

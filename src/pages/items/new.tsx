@@ -38,31 +38,14 @@ const NewItemPage = () => {
 
   const createItemStatusUpdate = ({
     data,
-    triggerTime,
+    triggerTimeInSeconds,
   }: {
-    triggerTime: {
-      seconds?: string
-      minutes?: string
-      hours?: string
-      dayOfTheMonth?: string
-      month?: string
-      dayOfWeek?: string
-    }
+    triggerTimeInSeconds: number
     data: Item
   }) => {
-    const {
-      seconds = "*",
-      minutes = "*",
-      hours = "*",
-      dayOfTheMonth = "*",
-      month = "*",
-      dayOfWeek = "*",
-    } = triggerTime
     return new CronJob(
-      // `${seconds} ${minutes} ${hours} ${dayOfTheMonth} ${month} ${dayOfWeek}`,
-      dayjs().add(30, "seconds").toDate(),
+      dayjs().add(triggerTimeInSeconds, "seconds").toDate(),
       function () {
-        console.log("DB update started")
         updateItemStatusInDB(data).catch((err) => console.error(err))
       },
       () => console.log(`item ${data.id} updated`),
@@ -71,7 +54,6 @@ const NewItemPage = () => {
   }
 
   const updateItemStatusInDB = async (data) => {
-    console.log(data, "cron")
     await updateItemMutation({
       ...data,
       status: "BAD",
@@ -90,9 +72,10 @@ const NewItemPage = () => {
             userId: true,
             reminderSpanSeconds: true,
           })}
-          // initialValues={{}}
+          initialValues={{
+            groceryTripId: groceryTripsData[0]?.value,
+          }}
           onSubmit={async (values) => {
-            console.log(values, "values")
             try {
               const itemType = itemTypes.find(
                 (item) => item.id == parseInt(values.itemTypes[0] || "")
@@ -104,26 +87,10 @@ const NewItemPage = () => {
                 reminderSpanSeconds: itemType?.suggested_life_span_seconds || BigInt(-1),
               })
 
-              if (item && values.itemTypes[0] && itemType) {
-                const triggerTime = dayjs().second(
-                  Number(
-                    itemTypes.find((item) => item.id == parseInt(values.itemTypes[0] || ""))
-                      ?.suggested_life_span_seconds
-                  )
-                )
-                const formattedTime = triggerTime.format("s-m-h-d-m").split("-")
-                console.log(item.id)
-                const cron = createItemStatusUpdate({
-                  // triggerTime: {
-                  //   seconds: formattedTime[0],
-                  //   minutes: formattedTime[1],
-                  //   hours: formattedTime[2],
-                  //   dayOfTheMonth: formattedTime[3],
-                  //   month: (parseInt(formattedTime[4] || "-1") - 1).toString(),
-                  // },
-                  triggerTime: {
-                    minutes: "22",
-                  },
+              if (item && itemType) {
+                const triggerTimeInSeconds = Number(itemType?.suggested_life_span_seconds)
+                createItemStatusUpdate({
+                  triggerTimeInSeconds,
                   data: { ...item, status: ItemStatusType.BAD },
                 })
               }
