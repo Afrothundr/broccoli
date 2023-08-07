@@ -85,13 +85,14 @@ model Item {
   reminders       Reminder[]
 
   itemTypes ItemType[]
+  Job       Job[]
 }
 
 model ItemType {
   id                          Int      @id @default(autoincrement())
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
-  name                        String
+  name                        String   @unique
   storage_advice              String
   suggested_life_span_seconds BigInt
 
@@ -102,6 +103,7 @@ enum ItemStatusType {
   BAD
   EATEN
   FRESH
+  OLD
 }
 
 model GroceryTrip {
@@ -125,4 +127,15 @@ model Reminder {
   itemId    Int
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
+}
+
+model Job {
+  id           Int            @id @default(autoincrement())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  scheduledFor DateTime
+  executedAt   DateTime
+  item         Item           @relation(fields: [itemId], references: [id])
+  itemId       Int
+  payload      ItemStatusType
 }

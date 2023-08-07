@@ -114,7 +114,6 @@ function Filter({ column, table }: { column: Column<any, any>; table: ReactTable
       />
     )
   }
-  console.log(sortedUniqueValues, "val")
 
   const formattedValues = sortedUniqueValues.map((val) => {
     if (Array.isArray(val)) {
