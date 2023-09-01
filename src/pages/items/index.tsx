@@ -13,12 +13,12 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core"
-import { Item, ItemStatusType } from "@prisma/client"
+import { ItemStatusType } from "@prisma/client"
 import { IconShoppingCartPlus } from "@tabler/icons-react"
-import { CronJob } from "cron"
 import dayjs from "dayjs"
-import router, { useRouter } from "next/router"
+import { useRouter } from "next/router"
 import { Suspense, useMemo, useState } from "react"
+import itemUpdaterQueue from "src/api/itemUpdaterQueue"
 import BroccoliTable from "src/core/components/BroccoliTable"
 import Layout from "src/core/layouts/Layout"
 import { filterDates } from "src/core/utils"
@@ -30,6 +30,7 @@ import updateItem from "src/items/mutations/updateItem"
 import getItems from "src/items/queries/getItems"
 import { CreateItemSchema } from "src/items/schemas"
 import styles from "src/styles/ActionItem.module.css"
+import getItemStatusColor from "src/utils/ItemStatusTypeHelpers"
 
 export const ItemsList = () => {
   const router = useRouter()
@@ -75,13 +76,11 @@ export const ItemsList = () => {
       {
         header: "Status",
         accessorKey: "status",
-        cell: ({ row }) => {
-          return (
-            <Badge variant="filled" color={row.original.status === "BAD" ? "red" : "green"}>
-              {row.original.status}
-            </Badge>
-          )
-        },
+        cell: ({ row }) => (
+          <Badge variant="filled" color={getItemStatusColor(row.original.status)}>
+            {row.original.status}
+          </Badge>
+        ),
       },
       {
         header: "Date Purchased",
@@ -178,30 +177,6 @@ const ItemsPage = () => {
     value: trip.id.toString(),
   }))
 
-  const createItemStatusUpdate = ({
-    data,
-    triggerTimeInSeconds,
-  }: {
-    triggerTimeInSeconds: number
-    data: Item
-  }) => {
-    return new CronJob(
-      dayjs().add(triggerTimeInSeconds, "seconds").toDate(),
-      function () {
-        updateItemStatusInDB(data).catch((err) => console.error(err))
-      },
-      () => console.log(`item ${data.id} updated`),
-      true
-    )
-  }
-
-  const updateItemStatusInDB = async (data) => {
-    await updateItemMutation({
-      ...data,
-      status: "BAD",
-    })
-  }
-
   return (
     <>
       <Container size="lg">
@@ -251,14 +226,23 @@ const ItemsPage = () => {
               })
 
               if (item && itemType) {
-                const triggerTimeInSeconds = Number(itemType?.suggested_life_span_seconds)
-                createItemStatusUpdate({
-                  triggerTimeInSeconds,
-                  data: { ...item, status: ItemStatusType.BAD },
-                })
+                const triggerTimeInMilliseconds =
+                  Number(itemType.suggested_life_span_seconds) * 1000
+                await Promise.all([
+                  itemUpdaterQueue({
+                    ids: [item.id],
+                    status: ItemStatusType.BAD,
+                    delay: triggerTimeInMilliseconds,
+                  }),
+                  itemUpdaterQueue({
+                    ids: [item.id],
+                    status: ItemStatusType.OLD,
+                    delay: triggerTimeInMilliseconds * (2 / 3),
+                  }),
+                ])
               }
 
-              await router.push(Routes.ShowItemPage({ itemId: item.id }))
+              setModalOpened(false)
             } catch (error: any) {
               console.error(error)
               return {

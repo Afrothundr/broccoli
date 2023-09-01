@@ -101,9 +101,9 @@ model ItemType {
 
 enum ItemStatusType {
   BAD
-  EATEN
-  FRESH
   OLD
+  FRESH
+  EATEN
 }
 
 model GroceryTrip {
