@@ -1,6 +1,6 @@
 import { MultiSelect, SelectItem } from "@mantine/core"
-import { forwardRef, ComponentPropsWithoutRef, PropsWithoutRef } from "react"
-import { useField, UseFieldConfig } from "react-final-form"
+import { ComponentPropsWithoutRef, PropsWithoutRef, forwardRef } from "react"
+import { UseFieldConfig, useField } from "react-final-form"
 
 export interface ItemTypeMultiSelectProps extends PropsWithoutRef<JSX.IntrinsicElements["input"]> {
   /** Field name. */
@@ -30,6 +30,7 @@ export const ItemTypeMultiSelect = forwardRef<HTMLInputElement, ItemTypeMultiSel
           disabled={submitting}
           label={label}
           placeholder={label}
+          searchable
           ref={ref}
         />
         {touched && normalizedError && (

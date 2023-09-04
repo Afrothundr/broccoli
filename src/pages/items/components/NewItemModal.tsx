@@ -28,9 +28,10 @@ export const NewItemModal = ({
   })
   const [createItemMutation] = useMutation(createItem)
 
-  const itemTypeData = itemTypes.map((item) => ({
-    label: item.name,
-    value: item.id.toString(),
+  const itemTypeData = itemTypes.map((type) => ({
+    label: type.name,
+    value: type.id.toString(),
+    group: type.category,
   }))
   const groceryTripsData = groceryTrips.map((trip) => ({
     label: `${trip.name} - ${dayjs(trip.createdAt).format("MM/DD/YY")}`,

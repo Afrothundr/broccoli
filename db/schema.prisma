@@ -93,6 +93,7 @@ model ItemType {
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
   name                        String   @unique
+  category                    String
   storage_advice              String
   suggested_life_span_seconds BigInt
 

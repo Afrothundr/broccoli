@@ -15,21 +15,67 @@ const itemTypes = [
     name: "Broccoli",
     storage_advice: 'Store loosely wrapped in a refrigerator crisper drawer set to "High-Humidity"',
     suggested_life_span_seconds: dayjs.duration({ weeks: 1 }).asSeconds(),
+    category: "Vegetables",
   },
   {
     name: "Brussels sprouts",
     storage_advice: 'Store loosely wrapped in a refrigerator crisper drawer set to "High-Humidity"',
     suggested_life_span_seconds: dayjs.duration({ weeks: 1 }).asSeconds(),
+    category: "Vegetables",
   },
   {
     name: "Citrus",
     storage_advice: "Store in a refrigerator at 41°F to 42°F",
     suggested_life_span_seconds: dayjs.duration({ weeks: 2, days: 3 }).asSeconds(),
+    category: "Fruit",
   },
   {
     name: "Self Destructing Spinach",
     storage_advice: "Good luck",
     suggested_life_span_seconds: dayjs.duration({ minutes: 1 }).asSeconds(),
+    category: "Test",
+  },
+  {
+    name: "Apples",
+    storage_advice: "Store in a cool, dark place or in the refrigerator.",
+    suggested_life_span_seconds: dayjs.duration({ days: 14 }).asSeconds(),
+    category: "Fruit",
+  },
+  {
+    name: "Bananas",
+    storage_advice: "Store at room temperature, away from direct sunlight.",
+    suggested_life_span_seconds: dayjs.duration({ days: 7 }).asSeconds(),
+    category: "Fruit",
+  },
+  {
+    name: "Carrots",
+    storage_advice: "Store in a cool, dry place or in the refrigerator.",
+    suggested_life_span_seconds: dayjs.duration({ days: 14 }).asSeconds(),
+    category: "Vegetables",
+  },
+  {
+    name: "Spinach",
+    storage_advice: "Store in the refrigerator in a plastic bag.",
+    suggested_life_span_seconds: dayjs.duration({ days: 7 }).asSeconds(),
+    category: "Vegetables",
+  },
+  {
+    name: "Milk",
+    storage_advice: "Refrigerate at all times.",
+    suggested_life_span_seconds: dayjs.duration({ days: 7 }).asSeconds(),
+    category: "Dairy",
+  },
+  {
+    name: "Cheese",
+    storage_advice: "Store in the refrigerator in an airtight container.",
+    suggested_life_span_seconds: dayjs.duration({ days: 14 }).asSeconds(),
+    category: "Dairy",
+  },
+  {
+    name: "Eggs",
+    storage_advice: "Keep in their original carton in the refrigerator.",
+    suggested_life_span_seconds: dayjs.duration({ days: 21 }).asSeconds(),
+    category: "Eggs",
   },
 ]
 
@@ -65,11 +111,19 @@ const seed = async () => {
     })
 
     groceryTrips.forEach(async (groceryTrip) => {
-      await db.groceryTrip.create({
-        data: {
+      const userId = index + 1
+      await db.groceryTrip.upsert({
+        where: { id: userId },
+        update: {
           ...groceryTrip,
           user: {
-            connect: { id: index + 1 },
+            connect: { id: userId },
+          },
+        },
+        create: {
+          ...groceryTrip,
+          user: {
+            connect: { id: userId },
           },
         },
       })

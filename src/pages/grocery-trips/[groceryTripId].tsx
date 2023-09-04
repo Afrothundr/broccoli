@@ -25,7 +25,7 @@ import { NewItemModal } from "../items/components/NewItemModal"
 
 export const GroceryTrip = () => {
   const groceryTripId = useParam("groceryTripId", "number")
-  const [groceryTrip] = useQuery(getGroceryTrip, { id: groceryTripId })
+  const [groceryTrip, { refetch }] = useQuery(getGroceryTrip, { id: groceryTripId })
   const [modalOpened, setModalOpened] = useState(false)
 
   const columns = useMemo(
@@ -104,7 +104,10 @@ export const GroceryTrip = () => {
       {modalOpened && (
         <Suspense fallback={<div>Loading...</div>}>
           <NewItemModal
-            onModalClose={() => setModalOpened(false)}
+            onModalClose={async () => {
+              setModalOpened(false)
+              await refetch()
+            }}
             groceryTripIdDefault={groceryTripId?.toString()}
           />
         </Suspense>
