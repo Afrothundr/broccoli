@@ -10,7 +10,6 @@ export default async function itemUpdaterQueue({
   status: ItemStatusType
   delay: number
 }) {
-  console.log(process.env.NEXT_PUBLIC_SCHEDULER_API_URL)
   return await axios({
     method: "post",
     url: "/items/update",

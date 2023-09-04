@@ -1,43 +1,26 @@
 import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
-import { useMutation, usePaginatedQuery, useQuery } from "@blitzjs/rpc"
-import {
-  ActionIcon,
-  Badge,
-  Button,
-  Container,
-  Group,
-  Modal,
-  NumberInput,
-  Select,
-  Text,
-  Tooltip,
-} from "@mantine/core"
-import { ItemStatusType } from "@prisma/client"
+import { usePaginatedQuery } from "@blitzjs/rpc"
+import { ActionIcon, Badge, Container, Group, Title, Tooltip } from "@mantine/core"
 import { IconShoppingCartPlus } from "@tabler/icons-react"
 import dayjs from "dayjs"
 import { useRouter } from "next/router"
 import { Suspense, useMemo, useState } from "react"
-import itemUpdaterQueue from "src/api/itemUpdaterQueue"
+import { BroccoliFooter } from "src/core/components/BroccoliFooter"
 import BroccoliTable from "src/core/components/BroccoliTable"
 import Layout from "src/core/layouts/Layout"
 import { filterDates } from "src/core/utils"
-import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
-import getItemTypes from "src/item-types/queries/getItemTypes"
-import { FORM_ERROR, ItemForm } from "src/items/components/ItemForm"
-import createItem from "src/items/mutations/createItem"
-import updateItem from "src/items/mutations/updateItem"
 import getItems from "src/items/queries/getItems"
-import { CreateItemSchema } from "src/items/schemas"
 import styles from "src/styles/ActionItem.module.css"
 import getItemStatusColor from "src/utils/ItemStatusTypeHelpers"
+import { NewItemModal } from "./components/NewItemModal"
 
 export const ItemsList = () => {
   const router = useRouter()
   const [itemsPerPage, setItemsPerPage] = useState(20)
   const page = Number(router.query.page) || 0
   const { userId } = useSession()
-  const [{ items, hasMore }] = usePaginatedQuery(getItems, {
+  const [{ items, hasMore, count }] = usePaginatedQuery(getItems, {
     where: {
       userId: userId ?? 0,
     },
@@ -100,163 +83,54 @@ export const ItemsList = () => {
           columns,
         }}
       />
-      <Group position="apart" mt="md">
-        <Group>
-          <Button variant="subtle" radius="xl" onClick={() => setPage(0)} disabled={page === 0}>
-            {"<<"}
-          </Button>
-          <Button
-            variant="subtle"
-            radius="xl"
-            onClick={() => goToPreviousPage()}
-            disabled={page === 0}
-          >
-            {"<"}
-          </Button>
-          <Button variant="subtle" radius="xl" onClick={() => goToNextPage()} disabled={!hasMore}>
-            {">"}
-          </Button>
-          <Button
-            variant="subtle"
-            radius="xl"
-            // onClick={() => setPage(table.getPageCount() - 1)}
-            disabled={!hasMore}
-          >
-            {">>"}
-          </Button>
-        </Group>
-        <Group>
-          <Text>
-            Page <strong>{page + 1}</strong>
-          </Text>
-
-          <Text className="flex items-center gap-1">| Go to page:</Text>
-          <NumberInput
-            min={1}
-            defaultValue={page + 1}
-            onChange={(value) => {
-              const page = value || 1
-              return setPage(page - 1)
-            }}
-          />
-        </Group>
-        <Select
-          placeholder={`${itemsPerPage} Items Per Page`}
-          value={itemsPerPage.toString()}
-          data={[10, 20, 30, 40, 50].map((pageSize) => ({
-            label: `Show ${pageSize}`,
-            value: pageSize.toString(),
-          }))}
-          onChange={(value) => {
-            setItemsPerPage(Number(value))
-          }}
-        />
-      </Group>
+      <BroccoliFooter
+        {...{
+          goToNextPage,
+          goToPreviousPage,
+          hasMore,
+          itemsPerPage,
+          page,
+          setItemsPerPage,
+          setPage,
+          totalCount: count,
+        }}
+      />
     </div>
   )
 }
 
 const ItemsPage = () => {
   const [modalOpened, setModalOpened] = useState(false)
-  const [createItemMutation] = useMutation(createItem)
-  const [{ itemTypes }] = useQuery(getItemTypes, {
-    orderBy: { name: "asc" },
-  })
-  const [{ groceryTrips }] = useQuery(getGroceryTrips, {
-    orderBy: { name: "desc" },
-  })
-  const { userId } = useSession()
-  const [updateItemMutation] = useMutation(updateItem)
-
-  const itemTypeData = itemTypes.map((item) => ({
-    label: item.name,
-    value: item.id.toString(),
-  }))
-  const groceryTripsData = groceryTrips.map((trip) => ({
-    label: `${trip.name} - ${dayjs(trip.createdAt).format("MM/DD/YY")}`,
-    value: trip.id.toString(),
-  }))
-
   return (
-    <>
-      <Container size="lg">
+    <Container size="lg">
+      <Title order={1} mb={"md"}>
+        Inventory
+      </Title>
+      <Suspense fallback={<div>Loading...</div>}>
+        <ItemsList />
+      </Suspense>
+      <Tooltip label="Add new item" openDelay={500}>
+        <ActionIcon
+          className={styles.actionButton}
+          color="blue"
+          size="xl"
+          radius="xl"
+          variant="filled"
+          onClick={() => setModalOpened(true)}
+        >
+          <IconShoppingCartPlus />
+        </ActionIcon>
+      </Tooltip>
+      {modalOpened && (
         <Suspense fallback={<div>Loading...</div>}>
-          <ItemsList />
+          <NewItemModal onModalClose={() => setModalOpened(false)} />
         </Suspense>
-        <Tooltip label="Add new item" openDelay={500}>
-          <ActionIcon
-            className={styles.actionButton}
-            color="blue"
-            size="xl"
-            radius="xl"
-            variant="filled"
-            onClick={() => setModalOpened(true)}
-          >
-            <IconShoppingCartPlus />
-          </ActionIcon>
-        </Tooltip>
-      </Container>
-      <Modal
-        opened={modalOpened}
-        onClose={() => setModalOpened(false)}
-        title="Add new item"
-        transitionProps={{ transition: "fade", duration: 200, timingFunction: "ease" }}
-      >
-        <ItemForm
-          submitText="Create Item"
-          itemTypeData={itemTypeData}
-          groceryTripData={groceryTripsData}
-          schema={CreateItemSchema.omit({
-            userId: true,
-            reminderSpanSeconds: true,
-          })}
-          initialValues={{
-            groceryTripId: groceryTripsData[0]?.value,
-          }}
-          onSubmit={async (values) => {
-            try {
-              const itemType = itemTypes.find(
-                (item) => item.id == parseInt(values.itemTypes[0] || "")
-              )
-              const item = await createItemMutation({
-                ...values,
-                groceryTripId: values.groceryTripId,
-                userId: userId || 0,
-                reminderSpanSeconds: itemType?.suggested_life_span_seconds || BigInt(-1),
-              })
-
-              if (item && itemType) {
-                const triggerTimeInMilliseconds =
-                  Number(itemType.suggested_life_span_seconds) * 1000
-                await Promise.all([
-                  itemUpdaterQueue({
-                    ids: [item.id],
-                    status: ItemStatusType.BAD,
-                    delay: triggerTimeInMilliseconds,
-                  }),
-                  itemUpdaterQueue({
-                    ids: [item.id],
-                    status: ItemStatusType.OLD,
-                    delay: triggerTimeInMilliseconds * (2 / 3),
-                  }),
-                ])
-              }
-
-              setModalOpened(false)
-            } catch (error: any) {
-              console.error(error)
-              return {
-                [FORM_ERROR]: error.toString(),
-              }
-            }
-          }}
-        />
-      </Modal>
-    </>
+      )}
+    </Container>
   )
 }
 
-ItemsPage.getLayout = (page) => <Layout title="Items">{page}</Layout>
+ItemsPage.getLayout = (page) => <Layout title="Inventory">{page}</Layout>
 
 ItemsPage.authenticate = { redirectTo: Routes.LoginPage() }
 export default ItemsPage

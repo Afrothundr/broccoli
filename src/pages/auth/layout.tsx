@@ -5,8 +5,7 @@ const useStyles = createStyles((theme) => ({
   wrapper: {
     minHeight: rem(900),
     backgroundSize: "cover",
-    backgroundImage:
-      "url(https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3540&q=80)",
+    backgroundImage: "url(https://ik.imagekit.io/qenlzsgdo/cat-han-VgyN_CWXQVM-unsplash.jpg)",
   },
 
   form: {

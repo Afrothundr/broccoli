@@ -1,16 +1,15 @@
-import { Suspense } from "react"
-import { Routes } from "@blitzjs/next"
+import { Routes, useParam } from "@blitzjs/next"
+import { useMutation, useQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { useQuery, useMutation } from "@blitzjs/rpc"
-import { useParam } from "@blitzjs/next"
+import { Suspense } from "react"
 
 import Layout from "src/core/layouts/Layout"
-import { UpdateItemSchema } from "src/items/schemas"
-import getItem from "src/items/queries/getItem"
 import updateItem from "src/items/mutations/updateItem"
-import { ItemForm, FORM_ERROR } from "src/items/components/ItemForm"
+import getItem from "src/items/queries/getItem"
+import { UpdateItemSchema } from "src/items/schemas"
+import { FORM_ERROR, ItemForm } from "src/pages/items/components/ItemForm"
 
 export const EditItem = () => {
   const router = useRouter()

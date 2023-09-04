@@ -4,14 +4,11 @@ import { useMutation, usePaginatedQuery } from "@blitzjs/rpc"
 import {
   ActionIcon,
   Anchor,
-  Button,
   Container,
-  Group,
   Modal,
-  NumberInput,
-  Select,
-  Text,
+  Title,
   Tooltip,
+  useMantineTheme,
 } from "@mantine/core"
 import { IconShoppingCartPlus } from "@tabler/icons-react"
 import dayjs from "dayjs"
@@ -19,6 +16,7 @@ import { FORM_ERROR } from "final-form"
 import Link from "next/link"
 import router, { useRouter } from "next/router"
 import { Suspense, useMemo, useState } from "react"
+import { BroccoliFooter } from "src/core/components/BroccoliFooter"
 import BroccoliTable from "src/core/components/BroccoliTable"
 import Layout from "src/core/layouts/Layout"
 import { filterDates } from "src/core/utils"
@@ -34,7 +32,7 @@ export const GroceryTripsList = () => {
   const { userId } = useSession()
   const [itemsPerPage, setItemsPerPage] = useState(100)
   const page = Number(router.query.page) || 0
-  const [{ groceryTrips, hasMore }] = usePaginatedQuery(getGroceryTrips, {
+  const [{ groceryTrips, hasMore, count }] = usePaginatedQuery(getGroceryTrips, {
     orderBy: { id: "asc" },
     where: {
       userId: userId ?? undefined,
@@ -88,57 +86,18 @@ export const GroceryTripsList = () => {
           columns,
         }}
       />
-      <Group mt="sm" position="center">
-        <Button variant="subtle" radius="xl" onClick={() => setPage(0)} disabled={page === 0}>
-          {"<<"}
-        </Button>
-        <Button
-          variant="subtle"
-          radius="xl"
-          onClick={() => goToPreviousPage()}
-          disabled={page === 0}
-        >
-          {"<"}
-        </Button>
-        <Button variant="subtle" radius="xl" onClick={() => goToNextPage()} disabled={!hasMore}>
-          {">"}
-        </Button>
-        <Button
-          variant="subtle"
-          radius="xl"
-          // onClick={() => setPage(table.getPageCount() - 1)}
-          disabled={!hasMore}
-        >
-          {">>"}
-        </Button>
-      </Group>
-      <Group position="right">
-        <Text>
-          Page <strong>{page + 1}</strong>
-        </Text>
-
-        <Text className="flex items-center gap-1">| Go to page:</Text>
-        <NumberInput
-          defaultValue={page + 1}
-          onChange={(value) => {
-            const page = value || 0
-            return setPage(page)
-          }}
-        />
-      </Group>
-      <Group position="right" mt="sm">
-        <Select
-          value={itemsPerPage.toString()}
-          placeholder={itemsPerPage.toString()}
-          data={[10, 20, 30, 40, 50].map((pageSize) => ({
-            label: `Show ${pageSize}`,
-            value: pageSize.toString(),
-          }))}
-          onChange={(value) => {
-            setItemsPerPage(Number(value))
-          }}
-        />
-      </Group>
+      <BroccoliFooter
+        {...{
+          goToNextPage,
+          goToPreviousPage,
+          hasMore,
+          itemsPerPage,
+          page,
+          setItemsPerPage,
+          setPage,
+          totalCount: count,
+        }}
+      />
     </div>
   )
 }
@@ -147,10 +106,14 @@ const GroceryTripsPage: BlitzPage = () => {
   const [modalOpened, setModalOpened] = useState(false)
   const { userId } = useSession()
   const [createGroceryTripMutation] = useMutation(createGroceryTrip)
+  const theme = useMantineTheme()
 
   return (
     <>
       <Container size="lg" className={styles.groceryTripsContainer}>
+        <Title order={1} mb={"md"}>
+          Grocery Trips
+        </Title>
         <Suspense fallback={<div>Loading...</div>}>
           <GroceryTripsList />
         </Suspense>
@@ -170,8 +133,14 @@ const GroceryTripsPage: BlitzPage = () => {
       <Modal
         opened={modalOpened}
         onClose={() => setModalOpened(false)}
+        closeOnClickOutside={false}
         title="Create New Grocery Trip"
         transitionProps={{ transition: "fade", duration: 200, timingFunction: "ease" }}
+        overlayProps={{
+          color: theme.colorScheme === "dark" ? theme.colors.dark[9] : theme.colors.gray[2],
+          opacity: 0.55,
+          blur: 3,
+        }}
       >
         <GroceryTripForm
           submitText="save"

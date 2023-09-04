@@ -117,10 +117,11 @@ function Filter({ column, table }: { column: Column<any, any>; table: ReactTable
 
   const formattedValues = sortedUniqueValues.map((val) => {
     if (Array.isArray(val)) {
-      return val[0]?.name || ""
+      return (val[0]?.name as string) || ""
     }
-    return val
+    return val as string
   })
+  const uniqueFormattedValues = [...new Set(formattedValues)]
   return (
     <Select
       value={(columnFilterValue ?? "") as string}
@@ -129,7 +130,7 @@ function Filter({ column, table }: { column: Column<any, any>; table: ReactTable
       searchable
       clearable
       nothingFound="No options"
-      data={formattedValues}
+      data={uniqueFormattedValues}
     />
   )
 }

@@ -1,6 +1,5 @@
 "use client"
 
-import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { NavLink } from "@mantine/core"
 import { RouteUrlObject } from "blitz"
@@ -12,7 +11,7 @@ export interface NavLinkProps {
 }
 
 export function Navigation() {
-  const { userId } = useSession()
+  // const { userId } = useSession()
   const links: NavLinkProps[] = [
     {
       name: "Dashboard",
@@ -26,10 +25,10 @@ export function Navigation() {
       name: "Grocery Trips",
       route: Routes.GroceryTripsPage(),
     },
-    {
-      name: "Profile",
-      route: userId ? `/users/${userId}` : Routes.LoginPage(),
-    },
+    // {
+    //   name: "Profile",
+    //   route: userId ? `/users/${userId}` : Routes.LoginPage(),
+    // },
   ]
 
   return (

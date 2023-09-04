@@ -50,7 +50,7 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
               <Navbar.Section>
                 <NavLink
                   onClick={async () => await logoutMutation()}
-                  label="logout"
+                  label="log out"
                   icon={<IconLogout2 />}
                 />
               </Navbar.Section>
@@ -93,7 +93,7 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
           asideOffsetBreakpoint="sm"
           fixed
         >
-          <UserProvider>{children}</UserProvider>
+          {children}
         </AppShell>
       </UserProvider>
     </>

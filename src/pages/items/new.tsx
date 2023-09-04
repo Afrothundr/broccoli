@@ -10,9 +10,9 @@ import itemUpdaterQueue from "src/api"
 import Layout from "src/core/layouts/Layout"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import getItemTypes from "src/item-types/queries/getItemTypes"
-import { FORM_ERROR, ItemForm } from "src/items/components/ItemForm"
 import createItem from "src/items/mutations/createItem"
 import { CreateItemSchema } from "src/items/schemas"
+import { FORM_ERROR, ItemForm } from "src/pages/items/components/ItemForm"
 
 const NewItemPage = () => {
   const router = useRouter()
