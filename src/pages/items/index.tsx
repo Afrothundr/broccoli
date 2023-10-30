@@ -20,7 +20,7 @@ export const ItemsList = () => {
   const [itemsPerPage, setItemsPerPage] = useState(20)
   const page = Number(router.query.page) || 0
   const { userId } = useSession()
-  const [{ items, hasMore, count }] = usePaginatedQuery(getItems, {
+  const [{ items, hasMore, count }, refetch] = usePaginatedQuery(getItems, {
     where: {
       userId: userId ?? 0,
     },

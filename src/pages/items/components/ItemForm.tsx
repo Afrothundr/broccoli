@@ -40,10 +40,11 @@ export function ItemForm<S extends z.ZodType<any, any>>(
         name="itemTypes"
         label="Type"
         placeholder="Type"
+        required
         data={props.itemTypeData}
       />
+      <PriceInputField name="price" label="Price" placeholder="Price" required />
       <Group>
-        <PriceInputField name="price" label="Price" placeholder="Price" required />
         <LabeledTextField
           name="quantity"
           label="Quantity"
@@ -51,8 +52,8 @@ export function ItemForm<S extends z.ZodType<any, any>>(
           type="number"
           step={0.5}
         />
+        <SelectInputField name="unit" label="Unit" placeholder="Unit" data={unitData} />
       </Group>
-      <SelectInputField name="unit" label="Unit" placeholder="Unit" data={unitData} />
       <SelectInputField
         name="groceryTripId"
         label="Grocery Trip"
