@@ -1,4 +1,3 @@
-import { Suspense } from "react"
 import Layout from "src/core/layouts/Layout"
 
 export const Dashboard = () => {
@@ -6,11 +5,7 @@ export const Dashboard = () => {
 }
 
 const DashboardsPage = () => {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <Dashboard />
-    </Suspense>
-  )
+  return <Dashboard />
 }
 
 DashboardsPage.getLayout = (page) => <Layout title="Dashboard">{page}</Layout>

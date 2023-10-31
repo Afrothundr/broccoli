@@ -1,5 +1,6 @@
 import { AppProps, ErrorBoundary, ErrorComponent, ErrorFallbackProps } from "@blitzjs/next"
 import { ColorScheme, ColorSchemeProvider, MantineProvider } from "@mantine/core"
+import "@uploadthing/react/styles.css"
 import { AuthenticationError, AuthorizationError } from "blitz"
 import { IKContext } from "imagekitio-react"
 import { useState } from "react"

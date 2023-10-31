@@ -6,16 +6,19 @@ import { Suspense, useMemo, useState } from "react"
 import {
   ActionIcon,
   Badge,
-  Container,
   Group,
   LoadingOverlay,
+  Paper,
+  Stack,
   Text,
   Title,
   Tooltip,
 } from "@mantine/core"
+import { notifications } from "@mantine/notifications"
 import { IconPencil, IconShoppingCartPlus } from "@tabler/icons-react"
 import dayjs from "dayjs"
 import BroccoliTable from "src/core/components/BroccoliTable"
+import { UploadDropzone } from "src/core/components/UploadThing"
 import Layout from "src/core/layouts/Layout"
 import { filterDates } from "src/core/utils"
 import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
@@ -71,7 +74,7 @@ export const GroceryTrip = () => {
   )
 
   return (
-    <Container size="lg">
+    <Paper shadow="xs" p="xl">
       <Group>
         <Title order={1}>
           {dayjs(groceryTrip.createdAt).format("M/D")} - {groceryTrip.name}
@@ -83,24 +86,52 @@ export const GroceryTrip = () => {
       <Text c="dimmed" my="sm">
         {groceryTrip.description}
       </Text>
-      <BroccoliTable
-        {...{
-          data: groceryTrip.items,
-          columns,
-        }}
-      />
-      <Tooltip label="Add new item" openDelay={500}>
-        <ActionIcon
-          className={styles.actionButton}
-          color="blue"
-          size="xl"
-          radius="xl"
-          variant="filled"
-          onClick={() => setModalOpened(true)}
-        >
-          <IconShoppingCartPlus />
-        </ActionIcon>
-      </Tooltip>
+      <Stack sx={{ marginBottom: "3rem" }}>
+        <Title order={2}>Receipts</Title>
+        <UploadDropzone
+          endpoint="imageUploader"
+          onClientUploadComplete={(res) => {
+            // Do something with the response
+            console.log("Files: ", res)
+            notifications.show({
+              color: "green",
+              title: "Success",
+              message: "File uploaded!",
+            })
+          }}
+          onUploadError={(error: Error) => {
+            console.log("ERROR", error)
+            notifications.show({
+              color: "red",
+              title: "Error",
+              message: error.message,
+            })
+          }}
+        />
+      </Stack>
+      <Stack>
+        <Group position="apart">
+          <Title order={2}>Items</Title>
+          <Tooltip label="Add new item" openDelay={500}>
+            <ActionIcon
+              className={styles.paperActionButton}
+              color="blue"
+              size="xl"
+              radius="xl"
+              variant="filled"
+              onClick={() => setModalOpened(true)}
+            >
+              <IconShoppingCartPlus />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
+        <BroccoliTable
+          {...{
+            data: groceryTrip.items,
+            columns,
+          }}
+        />
+      </Stack>
       {modalOpened && (
         <Suspense fallback={<div>Loading...</div>}>
           <NewItemModal
@@ -112,7 +143,7 @@ export const GroceryTrip = () => {
           />
         </Suspense>
       )}
-    </Container>
+    </Paper>
   )
 }
 

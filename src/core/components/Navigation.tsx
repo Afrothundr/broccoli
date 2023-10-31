@@ -1,29 +1,26 @@
-"use client"
-
 import { Routes } from "@blitzjs/next"
 import { NavLink } from "@mantine/core"
-import { RouteUrlObject } from "blitz"
-import Link from "next/link"
+import { useRouter } from "next/router"
 
 export interface NavLinkProps {
-  route: RouteUrlObject | string
+  route: string
   name: string
 }
 
 export function Navigation() {
-  // const { userId } = useSession()
+  const router = useRouter()
   const links: NavLinkProps[] = [
     {
       name: "Dashboard",
-      route: Routes.DashboardsPage(),
+      route: Routes.DashboardsPage().href,
     },
     {
       name: "Inventory",
-      route: Routes.ItemsPage(),
+      route: Routes.ItemsPage().href,
     },
     {
       name: "Grocery Trips",
-      route: Routes.GroceryTripsPage(),
+      route: Routes.GroceryTripsPage().href,
     },
     // {
     //   name: "Profile",
@@ -35,9 +32,11 @@ export function Navigation() {
     <>
       {links.map((link) => {
         return (
-          <Link href={link.route} key={link.name}>
-            <NavLink label={link.name} />
-          </Link>
+          <NavLink
+            onClick={async () => router.push(link.route)}
+            key={link.name}
+            label={link.name}
+          />
         )
       })}
     </>

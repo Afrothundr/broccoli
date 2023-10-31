@@ -1,15 +1,7 @@
 import { BlitzPage, useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { useMutation, usePaginatedQuery } from "@blitzjs/rpc"
-import {
-  ActionIcon,
-  Anchor,
-  Container,
-  Modal,
-  Title,
-  Tooltip,
-  useMantineTheme,
-} from "@mantine/core"
+import { ActionIcon, Container, Modal, Title, Tooltip, useMantineTheme } from "@mantine/core"
 import { IconShoppingCartPlus } from "@tabler/icons-react"
 import dayjs from "dayjs"
 import { FORM_ERROR } from "final-form"
@@ -62,7 +54,7 @@ export const GroceryTripsList = () => {
               groceryTripId: row.original.id,
             })}
           >
-            <Anchor>{row.original.name}</Anchor>
+            {row.original.name}
           </Link>
         ),
       },
