@@ -1,5 +1,5 @@
-import { NotFoundError } from "blitz"
 import { resolver } from "@blitzjs/rpc"
+import { NotFoundError } from "blitz"
 import db from "db"
 import { z } from "zod"
 
@@ -18,6 +18,7 @@ export default resolver.pipe(resolver.zod(GetGroceryTrip), resolver.authorize(),
           itemTypes: true,
         },
       },
+      receipts: true,
     },
   })
 
