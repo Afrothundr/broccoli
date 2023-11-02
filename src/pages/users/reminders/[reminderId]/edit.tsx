@@ -1,16 +1,15 @@
-import { Suspense } from "react"
-import { Routes } from "@blitzjs/next"
+import { Routes, useParam } from "@blitzjs/next"
+import { useMutation, useQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { useQuery, useMutation } from "@blitzjs/rpc"
-import { useParam } from "@blitzjs/next"
+import { Suspense } from "react"
 
 import Layout from "src/core/layouts/Layout"
-import { UpdateReminderSchema } from "src/reminders/schemas"
-import getReminder from "src/reminders/queries/getReminder"
+import { FORM_ERROR, ReminderForm } from "src/reminders/components/ReminderForm"
 import updateReminder from "src/reminders/mutations/updateReminder"
-import { ReminderForm, FORM_ERROR } from "src/reminders/components/ReminderForm"
+import getReminder from "src/reminders/queries/getReminder"
+import { UpdateReminderSchema } from "src/reminders/schemas"
 
 export const EditReminder = () => {
   const router = useRouter()
@@ -43,8 +42,8 @@ export const EditReminder = () => {
             onSubmit={async (values) => {
               try {
                 const updated = await updateReminderMutation({
-                  id: reminder.id,
                   ...values,
+                  id: reminder.id,
                 })
                 await setQueryData(updated)
                 await router.push(

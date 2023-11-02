@@ -1,18 +1,23 @@
+import { useSession } from "@blitzjs/auth"
 import { Routes, useParam } from "@blitzjs/next"
 import { useMutation, useQuery } from "@blitzjs/rpc"
+import dayjs from "dayjs"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/router"
 import { Suspense } from "react"
 
+import { FORM_ERROR, ItemForm } from "src/core/components/ItemForm"
 import Layout from "src/core/layouts/Layout"
+import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
+import getItemTypes from "src/item-types/queries/getItemTypes"
 import updateItem from "src/items/mutations/updateItem"
 import getItem from "src/items/queries/getItem"
 import { UpdateItemSchema } from "src/items/schemas"
-import { FORM_ERROR, ItemForm } from "src/pages/items/components/ItemForm"
 
 export const EditItem = () => {
   const router = useRouter()
+  const { userId } = useSession()
   const itemId = useParam("itemId", "number")
   const [item, { setQueryData }] = useQuery(
     getItem,
@@ -23,6 +28,23 @@ export const EditItem = () => {
     }
   )
   const [updateItemMutation] = useMutation(updateItem)
+  const [{ itemTypes }] = useQuery(getItemTypes, {
+    orderBy: { name: "asc" },
+  })
+  const [{ groceryTrips }] = useQuery(getGroceryTrips, {
+    orderBy: { name: "desc" },
+    where: { userId: userId ?? 0 },
+  })
+
+  const itemTypeData = itemTypes.map((type) => ({
+    label: type.name,
+    value: type.id.toString(),
+    group: type.category,
+  }))
+  const groceryTripsData = groceryTrips.map((trip) => ({
+    label: `${trip.name} - ${dayjs(trip.createdAt).format("MM/DD/YY")}`,
+    value: trip.id.toString(),
+  }))
 
   return (
     <>
@@ -36,13 +58,15 @@ export const EditItem = () => {
         <Suspense fallback={<div>Loading...</div>}>
           <ItemForm
             submitText="Update Item"
+            itemTypeData={itemTypeData}
+            groceryTripData={groceryTripsData}
             schema={UpdateItemSchema}
             initialValues={item}
             onSubmit={async (values) => {
               try {
                 const updated = await updateItemMutation({
-                  id: item.id,
                   ...values,
+                  id: item.id,
                 })
                 await setQueryData(updated)
                 await router.push(Routes.ShowItemPage({ itemId: updated.id }))

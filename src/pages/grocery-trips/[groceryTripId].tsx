@@ -28,7 +28,7 @@ import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
 import bulkCreateReceipt from "src/receipts/mutations/bulkCreateReceipts"
 import styles from "src/styles/ActionItem.module.css"
 import getItemStatusColor from "src/utils"
-import { NewItemModal } from "../items/components/NewItemModal"
+import { NewItemModal } from "../../core/components/NewItemModal"
 
 export const GroceryTrip = () => {
   const groceryTripId = useParam("groceryTripId", "number")

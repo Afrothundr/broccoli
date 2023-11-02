@@ -78,7 +78,7 @@ export const GroceryTripsList = () => {
         accessorKey: "_count.items",
       },
     ],
-    []
+    [router]
   )
 
   return (

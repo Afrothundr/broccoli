@@ -1,16 +1,15 @@
-import { Suspense } from "react"
-import { Routes } from "@blitzjs/next"
+import { Routes, useParam } from "@blitzjs/next"
+import { useMutation, useQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { useQuery, useMutation } from "@blitzjs/rpc"
-import { useParam } from "@blitzjs/next"
+import { Suspense } from "react"
 
 import Layout from "src/core/layouts/Layout"
-import { UpdateReceiptSchema } from "src/receipts/schemas"
-import getReceipt from "src/receipts/queries/getReceipt"
+import { FORM_ERROR, ReceiptForm } from "src/receipts/components/ReceiptForm"
 import updateReceipt from "src/receipts/mutations/updateReceipt"
-import { ReceiptForm, FORM_ERROR } from "src/receipts/components/ReceiptForm"
+import getReceipt from "src/receipts/queries/getReceipt"
+import { UpdateReceiptSchema } from "src/receipts/schemas"
 
 export const EditReceipt = () => {
   const router = useRouter()
@@ -42,8 +41,8 @@ export const EditReceipt = () => {
             onSubmit={async (values) => {
               try {
                 const updated = await updateReceiptMutation({
-                  id: receipt.id,
                   ...values,
+                  id: receipt.id,
                 })
                 await setQueryData(updated)
                 await router.push(Routes.ShowReceiptPage({ receiptId: updated.id }))

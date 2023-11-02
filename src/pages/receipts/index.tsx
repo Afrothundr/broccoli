@@ -1,9 +1,9 @@
-import { Suspense } from "react"
 import { Routes } from "@blitzjs/next"
+import { usePaginatedQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
-import { usePaginatedQuery } from "@blitzjs/rpc"
 import { useRouter } from "next/router"
+import { Suspense } from "react"
 import Layout from "src/core/layouts/Layout"
 import getReceipts from "src/receipts/queries/getReceipts"
 
@@ -26,7 +26,7 @@ export const ReceiptsList = () => {
       <ul>
         {receipts.map((receipt) => (
           <li key={receipt.id}>
-            <Link href={Routes.ShowReceiptPage({ receiptId: receipt.id })}>{receipt.name}</Link>
+            <Link href={Routes.ShowReceiptPage({ receiptId: receipt.id })}>{receipt.url}</Link>
           </li>
         ))}
       </ul>

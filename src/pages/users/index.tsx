@@ -1,9 +1,9 @@
-import { Suspense } from "react"
 import { Routes } from "@blitzjs/next"
+import { usePaginatedQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
-import { usePaginatedQuery } from "@blitzjs/rpc"
 import { useRouter } from "next/router"
+import { Suspense } from "react"
 import Layout from "src/core/layouts/Layout"
 import getUsers from "src/users/queries/getUsers"
 
@@ -51,10 +51,6 @@ const UsersPage = () => {
       </Head>
 
       <div>
-        <p>
-          <Link href={Routes.NewUserPage()}>Create User</Link>
-        </p>
-
         <Suspense fallback={<div>Loading...</div>}>
           <UsersList />
         </Suspense>

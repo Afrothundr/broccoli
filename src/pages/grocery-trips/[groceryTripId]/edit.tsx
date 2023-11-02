@@ -1,16 +1,15 @@
-import { Suspense } from "react"
-import { Routes } from "@blitzjs/next"
+import { Routes, useParam } from "@blitzjs/next"
+import { useMutation, useQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { useQuery, useMutation } from "@blitzjs/rpc"
-import { useParam } from "@blitzjs/next"
+import { Suspense } from "react"
 
 import Layout from "src/core/layouts/Layout"
-import { UpdateGroceryTripSchema } from "src/grocery-trips/schemas"
-import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
+import { FORM_ERROR, GroceryTripForm } from "src/grocery-trips/components/GroceryTripForm"
 import updateGroceryTrip from "src/grocery-trips/mutations/updateGroceryTrip"
-import { GroceryTripForm, FORM_ERROR } from "src/grocery-trips/components/GroceryTripForm"
+import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
+import { UpdateGroceryTripSchema } from "src/grocery-trips/schemas"
 
 export const EditGroceryTrip = () => {
   const router = useRouter()
@@ -42,10 +41,14 @@ export const EditGroceryTrip = () => {
             onSubmit={async (values) => {
               try {
                 const updated = await updateGroceryTripMutation({
-                  id: groceryTrip.id,
                   ...values,
+                  id: groceryTrip.id,
                 })
-                await setQueryData(updated)
+                await setQueryData({
+                  ...updated,
+                  receipts: groceryTrip.receipts,
+                  items: groceryTrip.items,
+                })
                 await router.push(Routes.ShowGroceryTripPage({ groceryTripId: updated.id }))
               } catch (error: any) {
                 console.error(error)

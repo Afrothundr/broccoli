@@ -43,3 +43,5 @@ export const AuthLayout: BlitzLayout<{ title?: string; children?: React.ReactNod
     </div>
   )
 }
+
+export default AuthLayout

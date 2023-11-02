@@ -13,7 +13,7 @@ import { filterDates } from "src/core/utils"
 import getItems from "src/items/queries/getItems"
 import styles from "src/styles/ActionItem.module.css"
 import getItemStatusColor from "src/utils/ItemStatusTypeHelpers"
-import { NewItemModal } from "./components/NewItemModal"
+import { NewItemModal } from "../../core/components/NewItemModal"
 
 export const ItemsList = () => {
   const router = useRouter()

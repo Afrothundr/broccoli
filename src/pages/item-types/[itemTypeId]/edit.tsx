@@ -1,16 +1,15 @@
-import { Suspense } from "react"
-import { Routes } from "@blitzjs/next"
+import { Routes, useParam } from "@blitzjs/next"
+import { useMutation, useQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { useQuery, useMutation } from "@blitzjs/rpc"
-import { useParam } from "@blitzjs/next"
+import { Suspense } from "react"
 
 import Layout from "src/core/layouts/Layout"
-import { UpdateItemTypeSchema } from "src/item-types/schemas"
-import getItemType from "src/item-types/queries/getItemType"
+import { FORM_ERROR, ItemTypeForm } from "src/item-types/components/ItemTypeForm"
 import updateItemType from "src/item-types/mutations/updateItemType"
-import { ItemTypeForm, FORM_ERROR } from "src/item-types/components/ItemTypeForm"
+import getItemType from "src/item-types/queries/getItemType"
+import { UpdateItemTypeSchema } from "src/item-types/schemas"
 
 export const EditItemType = () => {
   const router = useRouter()
@@ -42,8 +41,8 @@ export const EditItemType = () => {
             onSubmit={async (values) => {
               try {
                 const updated = await updateItemTypeMutation({
-                  id: itemType.id,
                   ...values,
+                  id: itemType.id,
                 })
                 await setQueryData(updated)
                 await router.push(Routes.ShowItemTypePage({ itemTypeId: updated.id }))
