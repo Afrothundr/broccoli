@@ -1,8 +1,10 @@
 import { z } from "zod"
 
 export const CreateReceiptSchema = z.object({
-  // template: __fieldName__: z.__zodType__(),
+  url: z.string(),
+  groceryTripId: z.number(),
 })
+export const CreateBulkReceiptSchema = z.array(CreateReceiptSchema)
 export const UpdateReceiptSchema = z.object({
   id: z.number(),
   // template: __fieldName__: z.__zodType__(),

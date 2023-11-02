@@ -33,7 +33,7 @@ function BroccoliTable<T>({ data, columns }: TableProps<T>) {
     getPaginationRowModel: getPaginationRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     manualPagination: true,
-    debugTable: true,
+    debugTable: false,
   })
 
   return (

@@ -1,11 +1,18 @@
 import { BlitzPage, useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { useMutation, usePaginatedQuery } from "@blitzjs/rpc"
-import { ActionIcon, Container, Modal, Title, Tooltip, useMantineTheme } from "@mantine/core"
+import {
+  ActionIcon,
+  Anchor,
+  Container,
+  Modal,
+  Title,
+  Tooltip,
+  useMantineTheme,
+} from "@mantine/core"
 import { IconShoppingCartPlus } from "@tabler/icons-react"
 import dayjs from "dayjs"
 import { FORM_ERROR } from "final-form"
-import Link from "next/link"
 import router, { useRouter } from "next/router"
 import { Suspense, useMemo, useState } from "react"
 import { BroccoliFooter } from "src/core/components/BroccoliFooter"
@@ -49,13 +56,17 @@ export const GroceryTripsList = () => {
         header: "Name",
         accessorKey: "name",
         cell: ({ row }) => (
-          <Link
-            href={Routes.ShowGroceryTripPage({
-              groceryTripId: row.original.id,
-            })}
+          <Anchor
+            onClick={() =>
+              router.push(
+                Routes.ShowGroceryTripPage({
+                  groceryTripId: row.original.id,
+                })
+              )
+            }
           >
             {row.original.name}
-          </Link>
+          </Anchor>
         ),
       },
       {

@@ -1,12 +1,15 @@
 import { Routes, useParam } from "@blitzjs/next"
-import { useQuery } from "@blitzjs/rpc"
+import { useMutation, useQuery } from "@blitzjs/rpc"
 import Link from "next/link"
 import { Suspense, useMemo, useState } from "react"
 
 import {
   ActionIcon,
+  Avatar,
   Badge,
+  Box,
   Group,
+  Indicator,
   LoadingOverlay,
   Paper,
   Stack,
@@ -15,13 +18,14 @@ import {
   Tooltip,
 } from "@mantine/core"
 import { notifications } from "@mantine/notifications"
-import { IconPencil, IconShoppingCartPlus } from "@tabler/icons-react"
+import { IconPencil, IconPlus } from "@tabler/icons-react"
 import dayjs from "dayjs"
 import BroccoliTable from "src/core/components/BroccoliTable"
-import { UploadDropzone } from "src/core/components/UploadThing"
+import { UploadButton } from "src/core/components/UploadThing"
 import Layout from "src/core/layouts/Layout"
 import { filterDates } from "src/core/utils"
 import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
+import bulkCreateReceipt from "src/receipts/mutations/bulkCreateReceipts"
 import styles from "src/styles/ActionItem.module.css"
 import getItemStatusColor from "src/utils"
 import { NewItemModal } from "../items/components/NewItemModal"
@@ -30,6 +34,7 @@ export const GroceryTrip = () => {
   const groceryTripId = useParam("groceryTripId", "number")
   const [groceryTrip, { refetch }] = useQuery(getGroceryTrip, { id: groceryTripId })
   const [modalOpened, setModalOpened] = useState(false)
+  const [bulkReceiptMutation] = useMutation(bulkCreateReceipt)
 
   const columns = useMemo(
     () => [
@@ -75,53 +80,78 @@ export const GroceryTrip = () => {
 
   return (
     <Paper shadow="xs" p="xl">
-      <Group>
-        <Title order={1}>
-          {dayjs(groceryTrip.createdAt).format("M/D")} - {groceryTrip.name}
-        </Title>
-        <Link href={Routes.EditGroceryTripPage({ groceryTripId: groceryTrip.id })}>
-          <IconPencil />
-        </Link>
+      <Group position="apart">
+        <Group>
+          <Title order={1}>{groceryTrip.name}</Title>
+          <Link href={Routes.EditGroceryTripPage({ groceryTripId: groceryTrip.id })}>
+            <IconPencil />
+          </Link>
+        </Group>
+        <Text c="dimmed">{dayjs(groceryTrip.createdAt).format("MM/DD")}</Text>
       </Group>
-      <Text c="dimmed" my="sm">
+      <Text c="dimmed" my="lg">
         {groceryTrip.description}
       </Text>
-      <Stack sx={{ marginBottom: "3rem" }}>
+      <Stack sx={{ marginBottom: "3rem", alignItems: "flex-start" }}>
         <Title order={2}>Receipts</Title>
-        <UploadDropzone
-          endpoint="imageUploader"
-          onClientUploadComplete={(res) => {
-            // Do something with the response
-            console.log("Files: ", res)
-            notifications.show({
-              color: "green",
-              title: "Success",
-              message: "File uploaded!",
-            })
-          }}
-          onUploadError={(error: Error) => {
-            console.log("ERROR", error)
-            notifications.show({
-              color: "red",
-              title: "Error",
-              message: error.message,
-            })
-          }}
-        />
+        <Group spacing="lg">
+          {groceryTrip.receipts.map((receipt) => (
+            <Indicator inline label="New" size={16} key={receipt.id}>
+              <Avatar size="lg" src={receipt.url} />
+            </Indicator>
+          ))}
+          <Box ml="md">
+            <UploadButton
+              endpoint="imageUploader"
+              content={{
+                button: (
+                  <>
+                    <IconPlus />
+                    Add new
+                  </>
+                ),
+              }}
+              onClientUploadComplete={async (res) => {
+                // Do something with the response
+                console.log("Files: ", res)
+                await bulkReceiptMutation(
+                  res?.map((image) => ({
+                    url: image.url,
+                    groceryTripId: groceryTrip.id,
+                  }))
+                )
+                notifications.show({
+                  color: "green",
+                  title: "Success",
+                  message: "File uploaded!",
+                })
+                await refetch()
+              }}
+              onUploadError={(error: Error) => {
+                console.log("ERROR", error)
+                notifications.show({
+                  color: "red",
+                  title: "Error",
+                  message: error.message,
+                })
+              }}
+            />
+          </Box>
+        </Group>
       </Stack>
       <Stack>
-        <Group position="apart">
+        <Group>
           <Title order={2}>Items</Title>
           <Tooltip label="Add new item" openDelay={500}>
             <ActionIcon
               className={styles.paperActionButton}
               color="blue"
-              size="xl"
+              size="l"
               radius="xl"
               variant="filled"
               onClick={() => setModalOpened(true)}
             >
-              <IconShoppingCartPlus />
+              <IconPlus />
             </ActionIcon>
           </Tooltip>
         </Group>
