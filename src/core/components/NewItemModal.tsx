@@ -72,7 +72,7 @@ export const NewItemModal = ({
               ...values,
               groceryTripId: values.groceryTripId,
               userId: userId || 0,
-              reminderSpanSeconds: itemType?.suggested_life_span_seconds || BigInt(-1),
+              reminderSpanSeconds: itemType?.suggested_life_span_seconds ?? -1,
             })
 
             await queueItemUpdates(item, itemType)

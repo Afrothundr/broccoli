@@ -1,10 +1,8 @@
-import { BlitzPage } from "@blitzjs/next"
+import { BlitzPage, Routes } from "@blitzjs/next"
 import { HeroTitle } from "src/core/components/HeroTitle"
 
 const Home: BlitzPage = () => {
   return <HeroTitle />
 }
-
-export const dynamic = "force-dynamic"
-
+Home.redirectAuthenticatedTo = Routes.DashboardsPage()
 export default Home

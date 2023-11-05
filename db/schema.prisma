@@ -95,7 +95,7 @@ model ItemType {
   name                        String   @unique
   category                    String
   storage_advice              String
-  suggested_life_span_seconds BigInt
+  suggested_life_span_seconds Int
 
   items Item[]
 }

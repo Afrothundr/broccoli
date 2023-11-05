@@ -9,7 +9,7 @@ export const CreateItemSchema = z.object({
   price: z.number(),
   quantity: z.number(),
   unit: z.string().optional(),
-  reminderSpanSeconds: z.bigint(),
+  reminderSpanSeconds: z.number(),
   // template: __fieldName__: z.__zodType__(),1
 })
 export const UpdateItemSchema = z.object({
