@@ -7,7 +7,7 @@ export interface NavLinkProps {
   name: string
 }
 
-export function Navigation() {
+export function Navigation({ handleNavClick }: { handleNavClick: () => void }) {
   const router = useRouter()
   const links: NavLinkProps[] = [
     {
@@ -33,7 +33,10 @@ export function Navigation() {
       {links.map((link) => {
         return (
           <NavLink
-            onClick={async () => router.push(link.route)}
+            onClick={async () => {
+              await router.push(link.route)
+              handleNavClick()
+            }}
             key={link.name}
             label={link.name}
           />

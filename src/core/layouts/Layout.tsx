@@ -42,10 +42,16 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
           <AppShell
             padding="sm"
             navbar={
-              <Navbar p="md" hiddenBreakpoint="sm" hidden={!opened} width={{ sm: 200, lg: 300 }}>
+              <Navbar
+                p="md"
+                hiddenBreakpoint="sm"
+                hidden={!opened}
+                width={{ sm: 200, lg: 300 }}
+                style={{ zIndex: 101 }}
+              >
                 <Navbar.Section grow mt="md">
                   <Suspense fallback={<Loader />}>
-                    <Navigation />
+                    <Navigation handleNavClick={() => setOpened(false)} />
                   </Suspense>
                 </Navbar.Section>
                 <Navbar.Section>
@@ -91,7 +97,6 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
               },
             })}
             navbarOffsetBreakpoint="sm"
-            asideOffsetBreakpoint="sm"
             fixed
           >
             {children}
