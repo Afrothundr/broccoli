@@ -14,7 +14,7 @@ const LoginPage: BlitzPage = () => {
       <Text ta="center" mt="lg">
         Don&apos;t have an account?{" "}
         <Link href={Routes.SignupPage()}>
-          <Text c="blue" weight={700}>
+          <Text c="blue" fw={700}>
             Sign Up
           </Text>
         </Link>

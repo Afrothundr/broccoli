@@ -1,6 +1,6 @@
-import { TextInput, createStyles, rem } from "@mantine/core"
-import { forwardRef, ComponentPropsWithoutRef, PropsWithoutRef } from "react"
-import { useField, UseFieldConfig } from "react-final-form"
+import { TextInput } from "@mantine/core"
+import { ComponentPropsWithoutRef, PropsWithoutRef, forwardRef } from "react"
+import { UseFieldConfig, useField } from "react-final-form"
 
 export interface LabeledTextFieldProps extends PropsWithoutRef<JSX.IntrinsicElements["input"]> {
   /** Field name. */
@@ -39,12 +39,8 @@ export const LabeledTextField = forwardRef<HTMLInputElement, LabeledTextFieldPro
           placeholder={label}
           ref={ref}
           type={type}
+          error={touched && normalizedError}
         />
-        {touched && normalizedError && (
-          <div role="alert" style={{ color: "red" }}>
-            {normalizedError}
-          </div>
-        )}
       </div>
     )
   }

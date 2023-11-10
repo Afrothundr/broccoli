@@ -1,13 +1,13 @@
-import { MultiSelect, NativeSelect, SelectItem } from "@mantine/core"
-import { forwardRef, ComponentPropsWithoutRef, PropsWithoutRef } from "react"
-import { useField, UseFieldConfig } from "react-final-form"
+import { ComboboxItem, NativeSelect } from "@mantine/core"
+import { ComponentPropsWithoutRef, PropsWithoutRef, forwardRef } from "react"
+import { UseFieldConfig, useField } from "react-final-form"
 
 export interface SelectInputFieldProps extends PropsWithoutRef<JSX.IntrinsicElements["select"]> {
   /** Field name. */
   name: string
   /** Field label. */
   label: string
-  data: SelectItem[]
+  data: ComboboxItem[]
   outerProps?: PropsWithoutRef<JSX.IntrinsicElements["div"]>
   labelProps?: ComponentPropsWithoutRef<"label">
   fieldProps?: UseFieldConfig<string>
@@ -30,12 +30,13 @@ export const SelectInputField = forwardRef<HTMLInputElement, SelectInputFieldPro
           disabled={submitting}
           label={label}
           placeholder={label}
+          error={touched && normalizedError}
         />
-        {touched && normalizedError && (
+        {/* {touched && normalizedError && (
           <div role="alert" style={{ color: "red" }}>
             {normalizedError}
           </div>
-        )}
+        )} */}
       </div>
     )
   }

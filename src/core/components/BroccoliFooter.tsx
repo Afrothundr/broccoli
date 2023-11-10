@@ -28,7 +28,7 @@ export const BroccoliFooter = ({
   totalCount,
 }: BroccoliFooterProps) => {
   return (
-    <Group position="apart" mt="md">
+    <Group justify="space-between" mt="md">
       <Group>
         <Button variant="subtle" radius="xl" onClick={() => setPage(0)} disabled={page === 0}>
           <IconArrowBarToLeft />
@@ -64,7 +64,7 @@ export const BroccoliFooter = ({
           disabled={!hasMore}
           defaultValue={page + 1}
           onChange={(value) => {
-            const page = value || 1
+            const page = parseInt(value.toString())
             return setPage(page - 1)
           }}
         />

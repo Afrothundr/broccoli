@@ -9,6 +9,7 @@ import { Suspense } from "react"
 
 import { FORM_ERROR, ItemForm } from "src/core/components/ItemForm"
 import Layout from "src/core/layouts/Layout"
+import { ItemTypeGrouper } from "src/core/utils/ItemTypeGrouper"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import getItemTypes from "src/item-types/queries/getItemTypes"
 import updateItem from "src/items/mutations/updateItem"
@@ -36,11 +37,6 @@ export const EditItem = () => {
     where: { userId: userId ?? 0 },
   })
 
-  const itemTypeData = itemTypes.map((type) => ({
-    label: type.name,
-    value: type.id.toString(),
-    group: type.category,
-  }))
   const groceryTripsData = groceryTrips.map((trip) => ({
     label: `${trip.name} - ${dayjs(trip.createdAt).format("MM/DD/YY")}`,
     value: trip.id.toString(),
@@ -58,7 +54,7 @@ export const EditItem = () => {
         <Suspense fallback={<div>Loading...</div>}>
           <ItemForm
             submitText="Update Item"
-            itemTypeData={itemTypeData}
+            itemTypeData={ItemTypeGrouper(itemTypes)}
             groceryTripData={groceryTripsData}
             schema={UpdateItemSchema}
             initialValues={item}

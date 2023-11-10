@@ -1,6 +1,6 @@
-import { NumberInput, TextInput, createStyles, rem } from "@mantine/core"
-import { forwardRef, ComponentPropsWithoutRef, PropsWithoutRef } from "react"
-import { useField, UseFieldConfig } from "react-final-form"
+import { NumberInput } from "@mantine/core"
+import { ComponentPropsWithoutRef, PropsWithoutRef, forwardRef } from "react"
+import { UseFieldConfig, useField } from "react-final-form"
 
 export interface PriceInputProps extends PropsWithoutRef<JSX.IntrinsicElements["input"]> {
   /** Field name. */
@@ -33,20 +33,11 @@ export const PriceInputField = forwardRef<HTMLInputElement, PriceInputProps>(
           label={label}
           placeholder={label}
           ref={ref}
-          precision={2}
+          decimalScale={2}
           defaultValue={0}
-          parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-          formatter={(value) =>
-            !Number.isNaN(parseFloat(value))
-              ? `$ ${value}`.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",")
-              : "$ "
-          }
+          prefix="$"
+          error={touched && normalizedError}
         />
-        {touched && normalizedError && (
-          <div role="alert" style={{ color: "red" }}>
-            {normalizedError}
-          </div>
-        )}
       </div>
     )
   }

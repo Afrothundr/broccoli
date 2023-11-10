@@ -1,12 +1,13 @@
 import { useSession } from "@blitzjs/auth"
 import { useMutation, useQuery } from "@blitzjs/rpc"
-import { Modal, Title, useMantineTheme } from "@mantine/core"
+import { Modal, Title } from "@mantine/core"
 import dayjs from "dayjs"
 import { FORM_ERROR } from "final-form"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import getItemTypes from "src/item-types/queries/getItemTypes"
 import createItem from "src/items/mutations/createItem"
 import { CreateItemSchema } from "src/items/schemas"
+import { ItemTypeGrouper } from "../utils/ItemTypeGrouper"
 import { queueItemUpdates } from "../utils/QueueItemUpdates"
 import { ItemForm } from "./ItemForm"
 
@@ -25,19 +26,14 @@ export const NewItemModal = ({
   })
   const [{ groceryTrips }] = useQuery(getGroceryTrips, {
     orderBy: { name: "desc" },
+    where: { userId: userId ?? 0 },
   })
   const [createItemMutation] = useMutation(createItem)
 
-  const itemTypeData = itemTypes.map((type) => ({
-    label: type.name,
-    value: type.id.toString(),
-    group: type.category,
-  }))
   const groceryTripsData = groceryTrips.map((trip) => ({
     label: `${trip.name} - ${dayjs(trip.createdAt).format("MM/DD/YY")}`,
     value: trip.id.toString(),
   }))
-  const theme = useMantineTheme()
 
   return (
     <Modal
@@ -46,15 +42,10 @@ export const NewItemModal = ({
       title={<Title order={2}>Add new item</Title>}
       closeOnClickOutside={false}
       transitionProps={{ transition: "fade", duration: 200, timingFunction: "ease" }}
-      overlayProps={{
-        color: theme.colorScheme === "dark" ? theme.colors.dark[9] : theme.colors.gray[2],
-        opacity: 0.55,
-        blur: 3,
-      }}
     >
       <ItemForm
         submitText="Create Item"
-        itemTypeData={itemTypeData}
+        itemTypeData={ItemTypeGrouper(itemTypes)}
         groceryTripData={groceryTripsData}
         schema={CreateItemSchema.omit({
           userId: true,
@@ -62,6 +53,7 @@ export const NewItemModal = ({
         })}
         initialValues={{
           groceryTripId: groceryTripIdDefault || groceryTripsData[0]?.value,
+          itemTypes: [],
         }}
         onSubmit={async (values) => {
           try {

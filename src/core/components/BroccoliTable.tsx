@@ -129,7 +129,7 @@ function Filter({ column, table }: { column: Column<any, any>; table: ReactTable
       placeholder={`Search...`}
       searchable
       clearable
-      nothingFound="No options"
+      nothingFoundMessage="No options"
       data={uniqueFormattedValues}
     />
   )

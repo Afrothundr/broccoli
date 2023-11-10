@@ -1,0 +1,87 @@
+.wrapper {
+  position: relative;
+  box-sizing: border-box;
+}
+
+.inner {
+  position: relative;
+  padding-top: 12.5rem;
+  padding-bottom: 7.5rem;
+}
+
+@media (max-width: 48em) {
+  .inner {
+    padding-bottom: 5rem;
+    padding-top: 5rem;
+  }
+}
+
+.title {
+  font-family: "Greycliff CF", Roboto, sans-serif;
+  font-size: 3.875rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0;
+  padding: 0;
+  color: #000;
+}
+
+@media (max-width: 48em) {
+  .title {
+    font-size: 2.625rem;
+    line-height: 1.2;
+  }
+}
+
+.subTitle {
+  font-family: "Greycliff CF", Roboto, sans-serif;
+  font-size: 1.9375rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+  padding: 0;
+  color: #000;
+}
+
+@media (max-width: 48em) {
+  .subTitle {
+    font-size: 2.625rem;
+    line-height: 1.2;
+  }
+}
+
+.description {
+  margin-top: 3.5rem;
+  font-size: 1.5rem;
+}
+
+@media (max-width: 48em) {
+  .description {
+    font-size: 1.125rem;
+  }
+}
+
+.controls {
+  margin-top: calc(2.5rem * 2);
+}
+
+@media (max-width: 48em) {
+  .controls {
+    margin-top: 2.5rem;
+  }
+}
+
+.control {
+  height: 3.375rem;
+  padding-left: 2.375rem;
+  padding-right: 2.375rem;
+}
+
+@media (max-width: 48em) {
+  .control {
+    height: 3.375rem;
+    padding-left: 0.9375rem;
+    padding-right: 0.9375rem;
+    flex: 1;
+  }
+}

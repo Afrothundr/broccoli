@@ -139,11 +139,6 @@ const GroceryTripsPage: BlitzPage = () => {
         closeOnClickOutside={false}
         title="Create New Grocery Trip"
         transitionProps={{ transition: "fade", duration: 200, timingFunction: "ease" }}
-        overlayProps={{
-          color: theme.colorScheme === "dark" ? theme.colors.dark[9] : theme.colors.gray[2],
-          opacity: 0.55,
-          blur: 3,
-        }}
       >
         <GroceryTripForm
           submitText="save"

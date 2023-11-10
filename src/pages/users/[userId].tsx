@@ -17,7 +17,7 @@ export const User = () => {
 
       {user && (
         <Link href={Routes.EditUserPage({ userId: user?.id })}>
-          <Button leftIcon={<IconEditCircle />} variant="default">
+          <Button leftSection={<IconEditCircle />} variant="default">
             Edit
           </Button>
         </Link>

@@ -80,7 +80,7 @@ export const GroceryTrip = () => {
 
   return (
     <Paper shadow="xs" p="xl">
-      <Group position="apart">
+      <Group justify="space-between">
         <Group>
           <Title order={1}>{groceryTrip.name}</Title>
           <Link href={Routes.EditGroceryTripPage({ groceryTripId: groceryTrip.id })}>
@@ -92,9 +92,9 @@ export const GroceryTrip = () => {
       <Text c="dimmed" my="lg">
         {groceryTrip.description}
       </Text>
-      <Stack sx={{ marginBottom: "3rem", alignItems: "flex-start" }}>
+      <Stack style={{ marginBottom: "3rem", alignItems: "flex-start" }}>
         <Title order={2}>Receipts</Title>
-        <Group spacing="lg">
+        <Group gap="lg">
           {groceryTrip.receipts.map((receipt) => (
             <Indicator inline label="New" size={16} key={receipt.id}>
               <Avatar size="lg" src={receipt.url} />

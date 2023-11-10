@@ -1,4 +1,4 @@
-import { MultiSelect, SelectItem } from "@mantine/core"
+import { ComboboxItemGroup, MultiSelect } from "@mantine/core"
 import { ComponentPropsWithoutRef, PropsWithoutRef, forwardRef } from "react"
 import { UseFieldConfig, useField } from "react-final-form"
 
@@ -7,7 +7,7 @@ export interface ItemTypeMultiSelectProps extends PropsWithoutRef<JSX.IntrinsicE
   name: string
   /** Field label. */
   label: string
-  data: SelectItem[]
+  data: ComboboxItemGroup[]
   outerProps?: PropsWithoutRef<JSX.IntrinsicElements["div"]>
   labelProps?: ComponentPropsWithoutRef<"label">
   fieldProps?: UseFieldConfig<string>
@@ -21,7 +21,6 @@ export const ItemTypeMultiSelect = forwardRef<HTMLInputElement, ItemTypeMultiSel
     } = useField(name, fieldProps)
 
     const normalizedError = Array.isArray(error) ? error.join(", ") : error || submitError
-
     return (
       <div {...outerProps}>
         <MultiSelect
@@ -32,12 +31,8 @@ export const ItemTypeMultiSelect = forwardRef<HTMLInputElement, ItemTypeMultiSel
           placeholder={label}
           searchable
           ref={ref}
+          error={touched && normalizedError}
         />
-        {touched && normalizedError && (
-          <div role="alert" style={{ color: "red" }}>
-            {normalizedError}
-          </div>
-        )}
       </div>
     )
   }

@@ -3,20 +3,20 @@ import { useMutation } from "@blitzjs/rpc"
 import {
   ActionIcon,
   AppShell,
+  Box,
   Burger,
-  Flex,
-  Header,
+  Group,
   Loader,
-  MediaQuery,
   NavLink,
-  Navbar,
+  Stack,
   useMantineColorScheme,
-  useMantineTheme,
 } from "@mantine/core"
+import "@mantine/dates/styles.css"
+import { useDisclosure } from "@mantine/hooks"
 import { IconLogout2, IconMoon, IconSunLow } from "@tabler/icons-react"
 import Head from "next/head"
 import Link from "next/link"
-import React, { Suspense, useState } from "react"
+import React, { Suspense } from "react"
 import logout from "src/auth/mutations/logout"
 import { UserProvider } from "src/users/hooks/useCurrentUser"
 import { Navigation } from "../components/Navigation"
@@ -26,9 +26,8 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
   children,
 }) => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
-  const theme = useMantineTheme()
   const dark = colorScheme === "dark"
-  const [opened, setOpened] = useState(false)
+  const [opened, { toggle }] = useDisclosure()
   const [logoutMutation] = useMutation(logout)
 
   return (
@@ -40,73 +39,48 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
       <Suspense fallback={<Loader color="blue" />}>
         <UserProvider>
           <AppShell
-            padding="sm"
-            navbar={
-              <Navbar
-                p="md"
-                hiddenBreakpoint="sm"
-                hidden={!opened}
-                width={{ sm: 200, lg: 300 }}
-                style={{ zIndex: 101 }}
-              >
-                <Navbar.Section grow mt="md">
-                  <Suspense fallback={<Loader />}>
-                    <Navigation handleNavClick={() => setOpened(false)} />
-                  </Suspense>
-                </Navbar.Section>
-                <Navbar.Section>
-                  <NavLink
-                    onClick={async () => await logoutMutation()}
-                    label="log out"
-                    icon={<IconLogout2 />}
-                  />
-                </Navbar.Section>
-              </Navbar>
-            }
-            header={
-              <Header height={60} p="xs">
-                <Flex justify="space-between" align="center">
-                  <MediaQuery largerThan="sm" styles={{ display: "none" }}>
-                    <Burger
-                      opened={opened}
-                      onClick={() => setOpened((o) => !o)}
-                      size="sm"
-                      color={theme.colors.gray[6]}
-                      mr="xl"
-                    />
-                  </MediaQuery>
-                  <Link href={Routes.DashboardsPage()}>
-                    <span>Broccoli App</span>
-                  </Link>
-                  <ActionIcon
-                    size="lg"
-                    variant="outline"
-                    color={dark ? "yellow" : "blue"}
-                    onClick={() => toggleColorScheme()}
-                    title="Toggle color scheme"
-                  >
-                    {dark ? <IconSunLow /> : <IconMoon />}
-                  </ActionIcon>
-                </Flex>
-              </Header>
-            }
-            styles={(theme) => ({
-              main: {
-                backgroundColor:
-                  theme.colorScheme === "dark" ? theme.colors.dark[8] : theme.colors.gray[0],
-              },
-            })}
-            navbarOffsetBreakpoint="sm"
-            fixed
+            header={{ height: 60 }}
+            navbar={{ width: 300, breakpoint: "sm", collapsed: { mobile: !opened } }}
+            padding="md"
           >
-            {children}
+            <AppShell.Header>
+              <Group h="100%" px="md" justify="space-between">
+                <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+                <Link href={Routes.DashboardsPage()}>
+                  <span>Broccoli App</span>
+                </Link>
+                <ActionIcon
+                  size="lg"
+                  variant="outline"
+                  color={dark ? "yellow" : "blue"}
+                  onClick={() => toggleColorScheme()}
+                  title="Toggle color scheme"
+                >
+                  {dark ? <IconSunLow /> : <IconMoon />}
+                </ActionIcon>
+              </Group>
+            </AppShell.Header>
+            <AppShell.Navbar p="md">
+              <Stack justify="space-between" h={"100%"}>
+                <Box>
+                  <Suspense fallback={<Loader />}>
+                    <Navigation handleNavClick={() => toggle()} />
+                  </Suspense>
+                </Box>
+                <NavLink
+                  onClick={async () => await logoutMutation()}
+                  label="log out"
+                  leftSection={<IconLogout2 />}
+                />
+              </Stack>
+            </AppShell.Navbar>
+            <AppShell.Main>{children}</AppShell.Main>
           </AppShell>
         </UserProvider>
       </Suspense>
     </>
   )
 }
-export const dynamic = "force-dynamic"
 
 Layout.authenticate = { redirectTo: Routes.LoginPage() }
 

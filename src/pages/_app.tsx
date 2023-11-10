@@ -1,9 +1,9 @@
 import { AppProps, ErrorBoundary, ErrorComponent, ErrorFallbackProps } from "@blitzjs/next"
-import { ColorScheme, ColorSchemeProvider, MantineProvider } from "@mantine/core"
+import { MantineProvider } from "@mantine/core"
+import "@mantine/core/styles.css"
 import "@uploadthing/react/styles.css"
 import { AuthenticationError, AuthorizationError } from "blitz"
 import { IKContext } from "imagekitio-react"
-import { useState } from "react"
 import { withBlitz } from "src/blitz-client"
 import "src/styles/globals.css"
 
@@ -28,20 +28,16 @@ function RootErrorFallback({ error }: ErrorFallbackProps) {
 }
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const [colorScheme, setColorScheme] = useState<ColorScheme>("light")
   const getLayout = Component.getLayout || ((page) => page)
-  const toggleColorScheme = (value?: ColorScheme) =>
-    setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"))
+
   return (
-    <ErrorBoundary FallbackComponent={RootErrorFallback}>
-      <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
-        <MantineProvider withGlobalStyles withNormalizeCSS theme={{ colorScheme }}>
-          <IKContext urlEndpoint="https://ik.imagekit.io/qenlzsgdo/">
-            {getLayout(<Component {...pageProps} />)}
-          </IKContext>
-        </MantineProvider>
-      </ColorSchemeProvider>
-    </ErrorBoundary>
+    <MantineProvider defaultColorScheme="light">
+      <ErrorBoundary FallbackComponent={RootErrorFallback}>
+        <IKContext urlEndpoint="https://ik.imagekit.io/qenlzsgdo/">
+          {getLayout(<Component {...pageProps} />)}
+        </IKContext>
+      </ErrorBoundary>
+    </MantineProvider>
   )
 }
 

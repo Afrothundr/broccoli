@@ -1,0 +1,21 @@
+.wrapper {
+  height: 100vh;
+  background-size: cover;
+  background-image: url(https://ik.imagekit.io/qenlzsgdo/cat-han-VgyN_CWXQVM-unsplash.jpg);
+}
+
+.form {
+  border-right: 0.0625rem solid #d4d4d4; /* Default border color */
+  height: 100%;
+  max-width: 28.125rem;
+  padding-top: 5rem; /* Using rem(80) */
+
+  /* Media query for small screens */
+  @media (max-width: 48em) {
+    max-width: 100%;
+  }
+}
+
+.title {
+  color: #000; /* Default color */
+}
