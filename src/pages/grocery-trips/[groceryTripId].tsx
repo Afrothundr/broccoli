@@ -8,6 +8,7 @@ import {
   Avatar,
   Badge,
   Box,
+  Button,
   Checkbox,
   Container,
   Group,
@@ -22,10 +23,12 @@ import { notifications } from "@mantine/notifications"
 import { IconPencil, IconPlus } from "@tabler/icons-react"
 import dayjs from "dayjs"
 import BroccoliTable from "src/core/components/BroccoliTable"
+import { ConfirmationModal } from "src/core/components/ConfirmationModal"
 import { UploadButton } from "src/core/components/UploadThing"
 import Layout from "src/core/layouts/Layout"
 import { filterDates } from "src/core/utils"
 import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
+import deleteItems from "src/items/mutations/deleteItems"
 import bulkCreateReceipt from "src/receipts/mutations/bulkCreateReceipts"
 import styles from "src/styles/ActionItem.module.css"
 import getItemStatusColor from "src/utils"
@@ -34,9 +37,11 @@ import { NewItemModal } from "../../core/components/NewItemModal"
 export const GroceryTrip = () => {
   const groceryTripId = useParam("groceryTripId", "number")
   const [groceryTrip, { refetch }] = useQuery(getGroceryTrip, { id: groceryTripId })
-  const [modalOpened, setModalOpened] = useState(false)
+  const [newItemModalOpen, setNewItemModalOpen] = useState(false)
+  const [confirmationModalOpen, setConfirmationModalOpen] = useState(false)
   const [bulkReceiptMutation] = useMutation(bulkCreateReceipt)
   const [rowSelection, setRowSelection] = useState({})
+  const [deleteItemsMutation] = useMutation(deleteItems)
 
   const columns = useMemo(
     () => [
@@ -103,6 +108,20 @@ export const GroceryTrip = () => {
     ],
     []
   )
+
+  const handleItemDeletion = async () => {
+    const indexesToDelete = Object.keys(rowSelection)
+    const itemsToDelete = indexesToDelete.map((index) => groceryTrip.items[index].id)
+    await deleteItemsMutation({ ids: itemsToDelete })
+    await refetch()
+    setRowSelection({})
+    notifications.show({
+      color: "green",
+      title: "Success!",
+      message: `You just deleted ${itemsToDelete.length} items`,
+    })
+    setConfirmationModalOpen(false)
+  }
 
   return (
     <Container size="lg">
@@ -175,11 +194,16 @@ export const GroceryTrip = () => {
               size="l"
               radius="xl"
               variant="filled"
-              onClick={() => setModalOpened(true)}
+              onClick={() => setNewItemModalOpen(true)}
             >
               <IconPlus />
             </ActionIcon>
           </Tooltip>
+          {Object.values(rowSelection).length > 0 && (
+            <Button onClick={() => setConfirmationModalOpen(true)}>
+              Delete {Object.values(rowSelection).length} item(s)
+            </Button>
+          )}
         </Group>
         <BroccoliTable
           {...{
@@ -192,16 +216,24 @@ export const GroceryTrip = () => {
           }}
         />
       </Stack>
-      {modalOpened && (
+      {newItemModalOpen && (
         <Suspense fallback={<div>Loading...</div>}>
           <NewItemModal
             onModalClose={async () => {
-              setModalOpened(false)
+              setNewItemModalOpen(false)
               await refetch()
             }}
             groceryTripIdDefault={groceryTripId?.toString()}
           />
         </Suspense>
+      )}
+      {confirmationModalOpen && (
+        <ConfirmationModal
+          onModalClose={() => setConfirmationModalOpen(false)}
+          onConfirmation={handleItemDeletion}
+          title="Confirm deletion"
+          copy={`Are you sure you want to delete ${Object.values(rowSelection).length} item(s)`}
+        />
       )}
     </Container>
   )

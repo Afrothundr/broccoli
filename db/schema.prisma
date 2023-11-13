@@ -78,14 +78,13 @@ model Item {
   updatedAt       DateTime       @updatedAt
   status          ItemStatusType @default(FRESH)
   percentConsumed Decimal        @default(0)
-  user            User           @relation(fields: [userId], references: [id])
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId          Int
-  groceryTrip     GroceryTrip    @relation(fields: [groceryTripId], references: [id])
+  groceryTrip     GroceryTrip    @relation(fields: [groceryTripId], references: [id], onDelete: Cascade)
   groceryTripId   Int
   reminders       Reminder[]
 
   itemTypes ItemType[]
-  Job       Job[]
 }
 
 model ItemType {
@@ -113,7 +112,7 @@ model GroceryTrip {
   updatedAt   DateTime @updatedAt
   name        String
   description String   @default("")
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
 
   items    Item[]
@@ -125,7 +124,7 @@ model Receipt {
   url           String
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
-  GroceryTrip   GroceryTrip? @relation(fields: [groceryTripId], references: [id])
+  GroceryTrip   GroceryTrip? @relation(fields: [groceryTripId], references: [id], onDelete: Cascade)
   groceryTripId Int?
 }
 
@@ -134,19 +133,8 @@ model Reminder {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   time      DateTime
-  item      Item     @relation(fields: [itemId], references: [id])
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
   itemId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
-}
-
-model Job {
-  id           Int            @id @default(autoincrement())
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  scheduledFor DateTime
-  executedAt   DateTime
-  item         Item           @relation(fields: [itemId], references: [id])
-  itemId       Int
-  payload      ItemStatusType
 }

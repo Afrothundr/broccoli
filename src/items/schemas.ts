@@ -24,5 +24,5 @@ export const UpdateItemSchema = z.object({
 })
 
 export const DeleteItemSchema = z.object({
-  id: z.number(),
+  ids: z.number().array(),
 })

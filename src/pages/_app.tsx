@@ -1,6 +1,8 @@
 import { AppProps, ErrorBoundary, ErrorComponent, ErrorFallbackProps } from "@blitzjs/next"
 import { MantineProvider } from "@mantine/core"
 import "@mantine/core/styles.css"
+import { Notifications } from "@mantine/notifications"
+import "@mantine/notifications/styles.css"
 import "@uploadthing/react/styles.css"
 import { AuthenticationError, AuthorizationError } from "blitz"
 import { IKContext } from "imagekitio-react"
@@ -32,6 +34,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <MantineProvider defaultColorScheme="light">
+      <Notifications />
       <ErrorBoundary FallbackComponent={RootErrorFallback}>
         <IKContext urlEndpoint="https://ik.imagekit.io/qenlzsgdo/">
           {getLayout(<Component {...pageProps} />)}

@@ -1,19 +1,18 @@
-import { Suspense } from "react"
-import { Routes } from "@blitzjs/next"
+import { Routes, useParam } from "@blitzjs/next"
+import { useMutation, useQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { useQuery, useMutation } from "@blitzjs/rpc"
-import { useParam } from "@blitzjs/next"
+import { Suspense } from "react"
 
 import Layout from "src/core/layouts/Layout"
+import deleteItems from "src/items/mutations/deleteItems"
 import getItem from "src/items/queries/getItem"
-import deleteItem from "src/items/mutations/deleteItem"
 
 export const Item = () => {
   const router = useRouter()
   const itemId = useParam("itemId", "number")
-  const [deleteItemMutation] = useMutation(deleteItem)
+  const [deleteItemMutation] = useMutation(deleteItems)
   const [item] = useQuery(getItem, { id: itemId })
 
   return (
@@ -32,7 +31,7 @@ export const Item = () => {
           type="button"
           onClick={async () => {
             if (window.confirm("This will be deleted")) {
-              await deleteItemMutation({ id: item.id })
+              await deleteItemMutation({ ids: [item.id] })
               await router.push(Routes.ItemsPage())
             }
           }}

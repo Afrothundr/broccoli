@@ -34,7 +34,7 @@
     "@mantine/hooks": "7.2.1",
     "@mantine/modals": "7.2.1",
     "@mantine/next": "6.0.21",
-    "@mantine/notifications": "7.2.1",
+    "@mantine/notifications": "7.2.2",
     "@prisma/client": "4.6.1",
     "@tabler/icons-react": "2.21.0",
     "@tanstack/match-sorter-utils": "8.8.4",

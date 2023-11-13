@@ -39,7 +39,7 @@ export const NewItemModal = ({
     <Modal
       opened={true}
       onClose={() => onModalClose()}
-      title={<Title order={2}>Add new item</Title>}
+      title={<Title order={3}>Add new item</Title>}
       closeOnClickOutside={false}
       transitionProps={{ transition: "fade", duration: 200, timingFunction: "ease" }}
     >
