@@ -38,7 +38,7 @@
     "@prisma/client": "4.6.1",
     "@tabler/icons-react": "2.21.0",
     "@tanstack/match-sorter-utils": "8.8.4",
-    "@tanstack/react-table": "8.9.2",
+    "@tanstack/react-table": "8.10.7",
     "@uploadthing/react": "5.7.0",
     "axios": "1.5.0",
     "blitz": "2.0.0-beta.34",

@@ -1,4 +1,4 @@
-import { Table as MantineTable, NumberInput, Select, Text } from "@mantine/core"
+import { Table as MantineTable, NumberInput, Select, Table, Text } from "@mantine/core"
 import { DatePickerInput } from "@mantine/dates"
 import {
   Column,
@@ -17,9 +17,11 @@ import { filterDates, fuzzyFilter } from "../utils"
 type TableProps<T> = {
   data: T[]
   columns: ColumnDef<T>[]
+  handleRowSelection?: (e: any) => void
+  rowSelection?: Record<number, boolean>
 }
 
-function BroccoliTable<T>({ data, columns }: TableProps<T>) {
+function BroccoliTable<T>({ data, columns, rowSelection = {}, handleRowSelection }: TableProps<T>) {
   const table = useReactTable({
     data,
     columns,
@@ -27,6 +29,11 @@ function BroccoliTable<T>({ data, columns }: TableProps<T>) {
       fuzzy: fuzzyFilter,
       date: filterDates,
     },
+    state: {
+      rowSelection,
+    },
+    enableRowSelection: !!handleRowSelection,
+    onRowSelectionChange: handleRowSelection,
     globalFilterFn: fuzzyFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -38,14 +45,14 @@ function BroccoliTable<T>({ data, columns }: TableProps<T>) {
 
   return (
     <MantineTable>
-      <thead>
+      <Table.Thead>
         {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id}>
+          <Table.Tr key={headerGroup.id}>
             {headerGroup.headers.map((header) => {
               return (
-                <th key={header.id} colSpan={header.colSpan}>
+                <Table.Th key={header.id} colSpan={header.colSpan}>
                   {header.isPlaceholder ? null : (
-                    <div>
+                    <>
                       <Text>
                         {" "}
                         {flexRender(header.column.columnDef.header, header.getContext())}
@@ -56,27 +63,29 @@ function BroccoliTable<T>({ data, columns }: TableProps<T>) {
                           <Filter column={header.column} table={table} />
                         </div>
                       ) : null}
-                    </div>
+                    </>
                   )}
-                </th>
+                </Table.Th>
               )
             })}
-          </tr>
+          </Table.Tr>
         ))}
-      </thead>
-      <tbody>
+      </Table.Thead>
+      <Table.Tbody>
         {table.getRowModel().rows.map((row) => {
           return (
-            <tr key={row.id}>
+            <Table.Tr key={row.id}>
               {row.getVisibleCells().map((cell) => {
                 return (
-                  <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                  <Table.Td key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </Table.Td>
                 )
               })}
-            </tr>
+            </Table.Tr>
           )
         })}
-      </tbody>
+      </Table.Tbody>
     </MantineTable>
   )
 }

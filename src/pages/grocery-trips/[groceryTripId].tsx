@@ -8,10 +8,11 @@ import {
   Avatar,
   Badge,
   Box,
+  Checkbox,
+  Container,
   Group,
   Indicator,
   LoadingOverlay,
-  Paper,
   Stack,
   Text,
   Title,
@@ -35,9 +36,34 @@ export const GroceryTrip = () => {
   const [groceryTrip, { refetch }] = useQuery(getGroceryTrip, { id: groceryTripId })
   const [modalOpened, setModalOpened] = useState(false)
   const [bulkReceiptMutation] = useMutation(bulkCreateReceipt)
+  const [rowSelection, setRowSelection] = useState({})
 
   const columns = useMemo(
     () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            {...{
+              checked: table.getIsAllRowsSelected(),
+              indeterminate: table.getIsSomeRowsSelected(),
+              onChange: table.getToggleAllRowsSelectedHandler(),
+            }}
+          />
+        ),
+        cell: ({ row }) => (
+          <div className="px-1">
+            <Checkbox
+              {...{
+                checked: row.getIsSelected(),
+                disabled: !row.getCanSelect(),
+                indeterminate: row.getIsSomeSelected(),
+                onChange: row.getToggleSelectedHandler(),
+              }}
+            />
+          </div>
+        ),
+      },
       {
         header: "Name",
         accessorKey: "name",
@@ -79,7 +105,7 @@ export const GroceryTrip = () => {
   )
 
   return (
-    <Paper shadow="xs" p="xl">
+    <Container size="lg">
       <Group justify="space-between">
         <Group>
           <Title order={1}>{groceryTrip.name}</Title>
@@ -159,6 +185,10 @@ export const GroceryTrip = () => {
           {...{
             data: groceryTrip.items,
             columns,
+            rowSelection,
+            handleRowSelection: (e) => {
+              setRowSelection(e)
+            },
           }}
         />
       </Stack>
@@ -173,7 +203,7 @@ export const GroceryTrip = () => {
           />
         </Suspense>
       )}
-    </Paper>
+    </Container>
   )
 }
 

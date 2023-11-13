@@ -3,14 +3,15 @@ import { Routes } from "@blitzjs/next"
 import { useMutation, usePaginatedQuery } from "@blitzjs/rpc"
 import {
   ActionIcon,
-  Anchor,
   Container,
+  LoadingOverlay,
   Modal,
+  NavLink,
   Title,
   Tooltip,
   useMantineTheme,
 } from "@mantine/core"
-import { IconShoppingCartPlus } from "@tabler/icons-react"
+import { IconChevronRight, IconShoppingCartPlus } from "@tabler/icons-react"
 import dayjs from "dayjs"
 import { FORM_ERROR } from "final-form"
 import router, { useRouter } from "next/router"
@@ -24,7 +25,6 @@ import createGroceryTrip from "src/grocery-trips/mutations/createGroceryTrip"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import { CreateGroceryTripSchema } from "src/grocery-trips/schemas"
 import actionStyles from "src/styles/ActionItem.module.css"
-import styles from "src/styles/GroceryTripsPage.module.css"
 
 export const GroceryTripsList = () => {
   const router = useRouter()
@@ -47,16 +47,13 @@ export const GroceryTripsList = () => {
   const columns = useMemo(
     () => [
       {
-        header: "Date",
-        accessorKey: "createdAt",
-        cell: (value) => dayjs(value.getValue()).format("MM/D"),
-        filterFn: filterDates,
-      },
-      {
         header: "Name",
         accessorKey: "name",
         cell: ({ row }) => (
-          <Anchor
+          <NavLink
+            label={row.original.name}
+            description={row.original.description}
+            rightSection={<IconChevronRight size="1rem" stroke={1.5} />}
             onClick={() =>
               router.push(
                 Routes.ShowGroceryTripPage({
@@ -64,14 +61,14 @@ export const GroceryTripsList = () => {
                 })
               )
             }
-          >
-            {row.original.name}
-          </Anchor>
+          />
         ),
       },
       {
-        header: "Description",
-        accessorKey: "description",
+        header: "Date",
+        accessorKey: "createdAt",
+        cell: (value) => dayjs(value.getValue()).format("MM/D"),
+        filterFn: filterDates,
       },
       {
         header: "Items",
@@ -113,11 +110,11 @@ const GroceryTripsPage: BlitzPage = () => {
 
   return (
     <>
-      <Container size="lg" className={styles.groceryTripsContainer}>
+      <Container size="lg">
         <Title order={1} mb={"md"}>
           Grocery Trips
         </Title>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<LoadingOverlay />}>
           <GroceryTripsList />
         </Suspense>
         <Tooltip label="Add new grocery trip" openDelay={500}>
