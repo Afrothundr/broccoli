@@ -105,6 +105,7 @@ enum ItemStatusType {
   OLD
   FRESH
   EATEN
+  DISCARDED
 }
 
 model GroceryTrip {

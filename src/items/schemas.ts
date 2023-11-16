@@ -19,7 +19,7 @@ export const UpdateItemSchema = z.object({
   price: z.number(),
   quantity: z.number(),
   unit: z.string(),
-  status: z.enum(["BAD", "EATEN", "FRESH", "OLD"]),
+  status: z.enum(["BAD", "EATEN", "FRESH", "OLD", "DISCARDED"]),
   // template: __fieldName__: z.__zodType__(),
 })
 

@@ -1,6 +1,6 @@
 import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
-import { usePaginatedQuery } from "@blitzjs/rpc"
+import { useMutation, usePaginatedQuery, useQuery } from "@blitzjs/rpc"
 import {
   ActionIcon,
   Badge,
@@ -17,7 +17,7 @@ import {
   Tooltip,
   rem,
 } from "@mantine/core"
-import { Item } from "@prisma/client"
+import { Item, ItemStatusType } from "@prisma/client"
 import {
   IconDots,
   IconPaperBag,
@@ -26,11 +26,9 @@ import {
   IconToolsKitchen2,
   IconTrash,
 } from "@tabler/icons-react"
-import dayjs from "dayjs"
-import { useRouter } from "next/router"
-import { Suspense, useMemo, useState } from "react"
+import { Suspense, useState } from "react"
 import Layout from "src/core/layouts/Layout"
-import { filterDates } from "src/core/utils"
+import updateItem from "src/items/mutations/updateItem"
 import getItems from "src/items/queries/getItems"
 import styles from "src/styles/ActionItem.module.css"
 import getItemStatusColor from "src/utils/ItemStatusTypeHelpers"
@@ -43,58 +41,19 @@ type combinedItemType = Item & {
   }[]
 }
 
-export const ItemsList = ({ items }: { items: combinedItemType[] }) => {
-  const router = useRouter()
-  const [itemsPerPage, setItemsPerPage] = useState(20)
-  const page = Number(router.query.page) || 0
-  const { userId } = useSession()
+export const ItemsList = ({
+  items,
+  refetch,
+}: {
+  items: combinedItemType[]
+  refetch: () => void
+}) => {
+  const [updateItemMutation] = useMutation(updateItem)
 
-  const goToPreviousPage = () => router.push({ query: { page: page - 1 } })
-  const goToNextPage = () => router.push({ query: { page: page + 1 } })
-  const setPage = (pageNumber: number) => router.push({ query: { page: pageNumber } })
-
-  const columns = useMemo(
-    () => [
-      {
-        header: "Name",
-        accessorKey: "name",
-      },
-      {
-        header: "How Much",
-        accessorKey: "quantity",
-      },
-      {
-        header: "Type",
-        accessorKey: "itemTypes",
-        cell: ({ row }) => (
-          <Group>
-            {row.original.itemTypes.map((itemType) => (
-              <Badge variant="filled" key={itemType.name + row.original.id}>
-                {itemType.name}
-              </Badge>
-            ))}
-          </Group>
-        ),
-      },
-      {
-        header: "Status",
-        accessorKey: "status",
-        cell: ({ row }) => (
-          <Badge variant="filled" color={getItemStatusColor(row.original.status)}>
-            {row.original.status}
-          </Badge>
-        ),
-      },
-      {
-        header: "Date Purchased",
-        accessorKey: "createdAt",
-        cell: (value) => dayjs(value.getValue()).format("MM/D"),
-        filterFn: filterDates,
-      },
-    ],
-    []
-  )
-
+  const handleItemEaten = async (item: Item) => {
+    await updateItemMutation({ ...item, status: ItemStatusType.EATEN })
+    refetch()
+  }
   return (
     <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} mt="lg">
       {items.map((item) => (
@@ -119,6 +78,7 @@ export const ItemsList = ({ items }: { items: combinedItemType[] }) => {
                         <IconToolsKitchen2 style={{ width: rem(14), height: rem(14) }} />
                       }
                       color="green"
+                      onClick={() => handleItemEaten(item)}
                     >
                       I ate all of this!
                     </Menu.Item>
@@ -161,13 +121,10 @@ export const ItemsList = ({ items }: { items: combinedItemType[] }) => {
 }
 
 const ItemsPage = () => {
-  const router = useRouter()
   const [modalOpened, setModalOpened] = useState(false)
   const [search, setSearch] = useState("")
   const { userId } = useSession()
-  const [itemsPerPage, setItemsPerPage] = useState(20)
-  const page = Number(router.query.page) || 0
-  const [{ items, hasMore, count }, refetch] = usePaginatedQuery(getItems, {
+  const [{ items }, { refetch }] = usePaginatedQuery(getItems, {
     where: {
       userId: userId ?? 0,
       name: {
@@ -175,12 +132,19 @@ const ItemsPage = () => {
       },
     },
     orderBy: { id: "asc" },
-    skip: itemsPerPage * page,
-    take: itemsPerPage,
   })
-  // useEffect(() => {
+  const [{ items: defaultItems }, { refetch: refetchDefault }] = useQuery(getItems, {
+    where: {
+      userId: userId ?? 0,
+    },
+    orderBy: { id: "asc" },
+    take: 50,
+  })
 
-  // }, [search])
+  const handleUpdate = async () => {
+    await refetch()
+    await refetchDefault()
+  }
   return (
     <Container size="lg">
       <Title order={1} mb={"md"}>
@@ -195,7 +159,9 @@ const ItemsPage = () => {
         leftSection={<IconSearch />}
         rightSection={search && <CloseButton onClick={() => setSearch("")} />}
       />
-      <Suspense fallback={<div>Loading...</div>}>{items && <ItemsList items={items} />}</Suspense>
+      <Suspense fallback={<div>Loading...</div>}>
+        <ItemsList items={items.length > 0 ? items : defaultItems} refetch={handleUpdate} />
+      </Suspense>
       <Tooltip label="Add new item" openDelay={500}>
         <ActionIcon
           className={styles.actionButton}

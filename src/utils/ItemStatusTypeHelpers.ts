@@ -9,6 +9,8 @@ export default function getItemStatusColor(status: ItemStatusType) {
     case ItemStatusType.FRESH:
       return "green"
     case ItemStatusType.EATEN:
-      return "grey"
+      return "rgba(22, 105, 21, 1)"
+    case ItemStatusType.DISCARDED:
+      return "gray"
   }
 }
