@@ -24,6 +24,7 @@ import { IconPencil, IconPlus } from "@tabler/icons-react"
 import dayjs from "dayjs"
 import BroccoliTable from "src/core/components/BroccoliTable"
 import { ConfirmationModal } from "src/core/components/ConfirmationModal"
+import { ItemStatusBadge } from "src/core/components/ItemStatusBadge"
 import { UploadButton } from "src/core/components/UploadThing"
 import Layout from "src/core/layouts/Layout"
 import { filterDates } from "src/core/utils"
@@ -31,7 +32,6 @@ import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
 import deleteItems from "src/items/mutations/deleteItems"
 import bulkCreateReceipt from "src/receipts/mutations/bulkCreateReceipts"
 import styles from "src/styles/ActionItem.module.css"
-import getItemStatusColor from "src/utils"
 import { NewItemModal } from "../../core/components/NewItemModal"
 
 export const GroceryTrip = () => {
@@ -94,9 +94,10 @@ export const GroceryTrip = () => {
         header: "Status",
         accessorKey: "status",
         cell: ({ row }) => (
-          <Badge variant="filled" color={getItemStatusColor(row.original.status)}>
-            {row.original.status}
-          </Badge>
+          <ItemStatusBadge
+            status={row.original.status}
+            percentConsumed={row.original.percentConsumed}
+          />
         ),
       },
       {

@@ -4,22 +4,25 @@ export const CreateItemSchema = z.object({
   description: z.string().optional(),
   groceryTripId: z.string(),
   itemTypes: z.string().array(),
-  userId: z.number(),
   name: z.string(),
   price: z.number(),
   quantity: z.number(),
-  unit: z.string().optional(),
   reminderSpanSeconds: z.number(),
+  unit: z.string().optional(),
+  userId: z.number(),
   // template: __fieldName__: z.__zodType__(),1
 })
 export const UpdateItemSchema = z.object({
-  id: z.number(),
   description: z.string(),
+  groceryTripId: z.string(),
+  itemTypes: z.string().array(),
+  id: z.number(),
   name: z.string(),
+  percentConsumed: z.number(),
   price: z.number(),
   quantity: z.number(),
+  status: z.enum(["BAD", "EATEN", "FRESH", "OLD", "DISCARDED"]),
   unit: z.string(),
-  status: z.enum(["BAD", "EATEN", "FRESH", "OLD"]),
   // template: __fieldName__: z.__zodType__(),
 })
 

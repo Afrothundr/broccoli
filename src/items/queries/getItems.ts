@@ -1,5 +1,5 @@
-import { paginate } from "blitz"
 import { resolver } from "@blitzjs/rpc"
+import { paginate } from "blitz"
 import db, { Prisma } from "db"
 
 interface GetItemsInput
@@ -26,6 +26,7 @@ export default resolver.pipe(
           include: {
             itemTypes: {
               select: {
+                id: true,
                 name: true,
                 storage_advice: true,
               },
