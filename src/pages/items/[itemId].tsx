@@ -25,8 +25,6 @@ export const Item = () => {
         <h1>Item {item.id}</h1>
         <pre>{JSON.stringify(item, null, 2)}</pre>
 
-        <Link href={Routes.EditItemPage({ itemId: item.id })}>Edit</Link>
-
         <button
           type="button"
           onClick={async () => {
