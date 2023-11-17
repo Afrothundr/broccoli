@@ -1,8 +1,8 @@
-import { ReactNode, PropsWithoutRef } from "react"
+import { Button } from "@mantine/core"
+import { validateZodSchema } from "blitz"
+import { PropsWithoutRef, ReactNode } from "react"
 import { Form as FinalForm, FormProps as FinalFormProps } from "react-final-form"
 import { z } from "zod"
-import { validateZodSchema } from "blitz"
-import { Button } from "@mantine/core"
 export { FORM_ERROR } from "final-form"
 
 export interface FormProps<S extends z.ZodType<any, any>>
@@ -27,12 +27,7 @@ export function Form<S extends z.ZodType<any, any>>({
   return (
     <FinalForm
       initialValues={initialValues}
-      validate={async (values) => {
-        const validation = await validateZodSchema(schema)(values)
-        // console.log(validation, "validation")
-        // console.log(values, "values")
-        return validateZodSchema(schema)(values)
-      }}
+      validate={validateZodSchema}
       onSubmit={onSubmit}
       render={({ handleSubmit, submitting, submitError }) => (
         <form onSubmit={handleSubmit} className="form" {...props}>
