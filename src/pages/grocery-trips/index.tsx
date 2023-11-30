@@ -4,17 +4,18 @@ import { useMutation, usePaginatedQuery } from "@blitzjs/rpc"
 import {
   ActionIcon,
   Container,
+  Group,
   LoadingOverlay,
   Modal,
   NavLink,
+  Text,
   Title,
   Tooltip,
-  useMantineTheme,
 } from "@mantine/core"
-import { IconChevronRight, IconShoppingCartPlus } from "@tabler/icons-react"
+import { IconChevronRight, IconPlus } from "@tabler/icons-react"
 import dayjs from "dayjs"
 import { FORM_ERROR } from "final-form"
-import router, { useRouter } from "next/router"
+import { useRouter } from "next/router"
 import { Suspense, useMemo, useState } from "react"
 import { BroccoliFooter } from "src/core/components/BroccoliFooter"
 import BroccoliTable from "src/core/components/BroccoliTable"
@@ -24,7 +25,6 @@ import { GroceryTripForm } from "src/grocery-trips/components/GroceryTripForm"
 import createGroceryTrip from "src/grocery-trips/mutations/createGroceryTrip"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import { CreateGroceryTripSchema } from "src/grocery-trips/schemas"
-import actionStyles from "src/styles/ActionItem.module.css"
 
 export const GroceryTripsList = () => {
   const router = useRouter()
@@ -32,7 +32,7 @@ export const GroceryTripsList = () => {
   const [itemsPerPage, setItemsPerPage] = useState(100)
   const page = Number(router.query.page) || 0
   const [{ groceryTrips, hasMore, count }] = usePaginatedQuery(getGroceryTrips, {
-    orderBy: { id: "asc" },
+    orderBy: { createdAt: "desc" },
     where: {
       userId: userId ?? undefined,
     },
@@ -80,24 +80,30 @@ export const GroceryTripsList = () => {
 
   return (
     <div>
-      <BroccoliTable
-        {...{
-          data: groceryTrips,
-          columns,
-        }}
-      />
-      <BroccoliFooter
-        {...{
-          goToNextPage,
-          goToPreviousPage,
-          hasMore,
-          itemsPerPage,
-          page,
-          setItemsPerPage,
-          setPage,
-          totalCount: count,
-        }}
-      />
+      {groceryTrips.length > 0 ? (
+        <>
+          <BroccoliTable
+            {...{
+              data: groceryTrips,
+              columns,
+            }}
+          />
+          <BroccoliFooter
+            {...{
+              goToNextPage,
+              goToPreviousPage,
+              hasMore,
+              itemsPerPage,
+              page,
+              setItemsPerPage,
+              setPage,
+              totalCount: count,
+            }}
+          />
+        </>
+      ) : (
+        <Text>Create a grocery trip to get started!</Text>
+      )}
     </div>
   )
 }
@@ -106,29 +112,28 @@ const GroceryTripsPage: BlitzPage = () => {
   const [modalOpened, setModalOpened] = useState(false)
   const { userId } = useSession()
   const [createGroceryTripMutation] = useMutation(createGroceryTrip)
-  const theme = useMantineTheme()
+  const router = useRouter()
 
   return (
     <>
       <Container size="lg">
-        <Title order={1} mb={"md"}>
-          Grocery Trips
-        </Title>
+        <Group mb={"md"}>
+          <Title order={1}>Grocery Trips</Title>
+          <Tooltip label="Add new grocery trip" openDelay={500}>
+            <ActionIcon
+              color="green"
+              variant="filled"
+              onClick={() => setModalOpened(true)}
+              size="l"
+              radius="xl"
+            >
+              <IconPlus />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
         <Suspense fallback={<LoadingOverlay />}>
           <GroceryTripsList />
         </Suspense>
-        <Tooltip label="Add new grocery trip" openDelay={500}>
-          <ActionIcon
-            className={actionStyles.actionButton}
-            color="green"
-            size="xl"
-            radius="xl"
-            variant="filled"
-            onClick={() => setModalOpened(true)}
-          >
-            <IconShoppingCartPlus />
-          </ActionIcon>
-        </Tooltip>
       </Container>
       <Modal
         opened={modalOpened}

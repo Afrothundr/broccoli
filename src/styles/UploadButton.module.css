@@ -1,0 +1,7 @@
+.customContainer {
+  background-color: transparent;
+}
+
+.customButton {
+  background-color: var(--mantine-color-blue-filled);
+}

@@ -7,41 +7,61 @@ import {
   ActionIcon,
   Avatar,
   Badge,
-  Box,
   Button,
   Checkbox,
   Container,
   Group,
   Indicator,
   LoadingOverlay,
+  Menu,
   Stack,
   Text,
   Title,
   Tooltip,
+  rem,
 } from "@mantine/core"
 import { notifications } from "@mantine/notifications"
-import { IconPencil, IconPlus } from "@tabler/icons-react"
+import { ItemStatusType } from "@prisma/client"
+import {
+  IconCamera,
+  IconDotsVertical,
+  IconPaperBag,
+  IconPencil,
+  IconPlus,
+  IconSkull,
+  IconToolsKitchen2,
+  IconTrash,
+} from "@tabler/icons-react"
 import dayjs from "dayjs"
 import BroccoliTable from "src/core/components/BroccoliTable"
 import { ConfirmationModal } from "src/core/components/ConfirmationModal"
 import { ItemStatusBadge } from "src/core/components/ItemStatusBadge"
+import { UpdateConsumedModal } from "src/core/components/UpdateConsumedModal"
+import { UpdateItemModal } from "src/core/components/UpdateItemModal"
 import { UploadButton } from "src/core/components/UploadThing"
 import Layout from "src/core/layouts/Layout"
-import { filterDates } from "src/core/utils"
 import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
 import deleteItems from "src/items/mutations/deleteItems"
+import updatePercentage from "src/items/mutations/updatePercentage"
+import updateStatus from "src/items/mutations/updateStatus"
 import bulkCreateReceipt from "src/receipts/mutations/bulkCreateReceipts"
 import styles from "src/styles/ActionItem.module.css"
+import uploadStyles from "src/styles/UploadButton.module.css"
 import { NewItemModal } from "../../core/components/NewItemModal"
 
 export const GroceryTrip = () => {
   const groceryTripId = useParam("groceryTripId", "number")
   const [groceryTrip, { refetch }] = useQuery(getGroceryTrip, { id: groceryTripId })
   const [newItemModalOpen, setNewItemModalOpen] = useState(false)
+  const [editItemModalOpen, setEditItemModalOpen] = useState(false)
+  const [percentageEatenModalOpen, setPercentageEatenModalOpen] = useState(false)
+  const [itemToUpdate, setItemToUpdate] = useState()
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false)
   const [bulkReceiptMutation] = useMutation(bulkCreateReceipt)
   const [rowSelection, setRowSelection] = useState({})
   const [deleteItemsMutation] = useMutation(deleteItems)
+  const [updatePercentages] = useMutation(updatePercentage)
+  const [updateStatuses] = useMutation(updateStatus)
 
   const columns = useMemo(
     () => [
@@ -101,10 +121,15 @@ export const GroceryTrip = () => {
         ),
       },
       {
-        header: "Date Purchased",
-        accessorKey: "createdAt",
-        cell: (value) => dayjs(value.getValue()).format("MM/D"),
-        filterFn: filterDates,
+        id: "action",
+        cell: ({ row }) => (
+          <ActionsMenu
+            onEditClick={() => {
+              setItemToUpdate(row.original)
+              setEditItemModalOpen(true)
+            }}
+          />
+        ),
       },
     ],
     []
@@ -124,6 +149,23 @@ export const GroceryTrip = () => {
     setConfirmationModalOpen(false)
   }
 
+  const handleItemsStatusChange = async (status: ItemStatusType) => {
+    const indexesToUpdate = Object.keys(rowSelection)
+    const itemsToUpdate = indexesToUpdate.map((index) => groceryTrip.items[index].id)
+    await updateStatuses({ ids: itemsToUpdate, status })
+    await refetch()
+    setRowSelection({})
+  }
+
+  const handleItemPercentageUpdate = async (percentage: number) => {
+    const indexesToUpdate = Object.keys(rowSelection)
+    const itemsToUpdate = indexesToUpdate.map((index) => groceryTrip.items[index].id)
+    await updatePercentages({ ids: itemsToUpdate, percentConsumed: percentage })
+    await refetch()
+    setRowSelection({})
+    setPercentageEatenModalOpen(false)
+  }
+
   return (
     <Container size="lg">
       <Group justify="space-between">
@@ -139,83 +181,132 @@ export const GroceryTrip = () => {
         {groceryTrip.description}
       </Text>
       <Stack style={{ marginBottom: "3rem", alignItems: "flex-start" }}>
-        <Title order={2}>Receipts</Title>
+        <Group align="start">
+          <Title order={2}>Receipts</Title>
+          <UploadButton
+            endpoint="imageUploader"
+            content={{
+              button: (
+                <Tooltip label="Add new receipt" openDelay={500}>
+                  <IconCamera />
+                </Tooltip>
+              ),
+            }}
+            appearance={{
+              button({ ready, isUploading }) {
+                return `custom-button ${
+                  ready ? uploadStyles.customButton : "custom-button-not-ready"
+                } ${isUploading ? "custom-button-uploading" : ""}`
+              },
+              container: uploadStyles.customContainer,
+              allowedContent: "custom-allowed-content",
+            }}
+            onClientUploadComplete={async (res) => {
+              // Do something with the response
+              console.log("Files: ", res)
+              await bulkReceiptMutation(
+                res?.map((image) => ({
+                  url: image.url,
+                  groceryTripId: groceryTrip.id,
+                }))
+              )
+              notifications.show({
+                color: "green",
+                title: "Success",
+                message: "File uploaded!",
+              })
+              await refetch()
+            }}
+            onUploadError={(error: Error) => {
+              console.log("ERROR", error)
+              notifications.show({
+                color: "red",
+                title: "Error",
+                message: error.message,
+              })
+            }}
+          />
+        </Group>
         <Group gap="lg">
           {groceryTrip.receipts.map((receipt) => (
             <Indicator inline label="New" size={16} key={receipt.id}>
               <Avatar size="lg" src={receipt.url} />
             </Indicator>
           ))}
-          <Box ml="md">
-            <UploadButton
-              endpoint="imageUploader"
-              content={{
-                button: (
-                  <>
-                    <IconPlus />
-                    Add new
-                  </>
-                ),
-              }}
-              onClientUploadComplete={async (res) => {
-                // Do something with the response
-                console.log("Files: ", res)
-                await bulkReceiptMutation(
-                  res?.map((image) => ({
-                    url: image.url,
-                    groceryTripId: groceryTrip.id,
-                  }))
-                )
-                notifications.show({
-                  color: "green",
-                  title: "Success",
-                  message: "File uploaded!",
-                })
-                await refetch()
-              }}
-              onUploadError={(error: Error) => {
-                console.log("ERROR", error)
-                notifications.show({
-                  color: "red",
-                  title: "Error",
-                  message: error.message,
-                })
-              }}
-            />
-          </Box>
         </Group>
       </Stack>
       <Stack>
         <Group>
           <Title order={2}>Items</Title>
-          <Tooltip label="Add new item" openDelay={500}>
-            <ActionIcon
-              className={styles.paperActionButton}
-              color="blue"
-              size="l"
-              radius="xl"
-              variant="filled"
-              onClick={() => setNewItemModalOpen(true)}
-            >
-              <IconPlus />
-            </ActionIcon>
-          </Tooltip>
-          {Object.values(rowSelection).length > 0 && (
-            <Button onClick={() => setConfirmationModalOpen(true)}>
-              Delete {Object.values(rowSelection).length} item(s)
-            </Button>
+          {Object.values(rowSelection).length > 0 ? (
+            <Menu>
+              <Menu.Target>
+                <Button variant="filled" radius="lg">
+                  Update {Object.values(rowSelection).length} item(s)
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item
+                  leftSection={<IconToolsKitchen2 style={{ width: rem(14), height: rem(14) }} />}
+                  color="green"
+                  onClick={() => handleItemsStatusChange(ItemStatusType.EATEN)}
+                >
+                  I ate all of this!
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() => {
+                    setPercentageEatenModalOpen(true)
+                  }}
+                  leftSection={<IconPaperBag style={{ width: rem(14), height: rem(14) }} />}
+                >
+                  I ate some of this.
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<IconTrash style={{ width: rem(14), height: rem(14) }} />}
+                  color="red"
+                  onClick={() => handleItemsStatusChange(ItemStatusType.DISCARDED)}
+                >
+                  I tossed this...
+                </Menu.Item>
+                <Menu.Label>Danger zone</Menu.Label>
+                <Menu.Item
+                  color="red"
+                  leftSection={<IconSkull style={{ width: rem(14), height: rem(14) }} />}
+                  onClick={() => setConfirmationModalOpen(true)}
+                >
+                  Delete {Object.values(rowSelection).length} item(s)
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          ) : (
+            <Tooltip label="Add new item" openDelay={500}>
+              <ActionIcon
+                className={styles.paperActionButton}
+                color="blue"
+                size="l"
+                radius="xl"
+                variant="filled"
+                onClick={() => setNewItemModalOpen(true)}
+              >
+                <IconPlus />
+              </ActionIcon>
+            </Tooltip>
           )}
         </Group>
-        <BroccoliTable
-          {...{
-            data: groceryTrip.items,
-            columns,
-            rowSelection,
-            handleRowSelection: (e) => {
-              setRowSelection(e)
-            },
-          }}
-        />
+        {groceryTrip.items.length > 0 ? (
+          <BroccoliTable
+            {...{
+              data: groceryTrip.items,
+              columns,
+              rowSelection,
+              handleRowSelection: (e) => {
+                setRowSelection(e)
+              },
+            }}
+          />
+        ) : (
+          <Text>Add some receipts or items to get started!</Text>
+        )}
       </Stack>
       {newItemModalOpen && (
         <Suspense fallback={<div>Loading...</div>}>
@@ -228,6 +319,17 @@ export const GroceryTrip = () => {
           />
         </Suspense>
       )}
+      {editItemModalOpen && itemToUpdate && (
+        <Suspense fallback={<div>Loading...</div>}>
+          <UpdateItemModal
+            onModalClose={async () => {
+              setEditItemModalOpen(false)
+              await refetch()
+            }}
+            item={itemToUpdate}
+          />
+        </Suspense>
+      )}
       {confirmationModalOpen && (
         <ConfirmationModal
           onModalClose={() => setConfirmationModalOpen(false)}
@@ -236,7 +338,30 @@ export const GroceryTrip = () => {
           copy={`Are you sure you want to delete ${Object.values(rowSelection).length} item(s)`}
         />
       )}
+      {percentageEatenModalOpen && (
+        <UpdateConsumedModal
+          onModalClose={async () => {
+            setPercentageEatenModalOpen(false)
+          }}
+          onSubmit={(percentage) => handleItemPercentageUpdate(percentage)}
+        />
+      )}
     </Container>
+  )
+}
+
+const ActionsMenu = ({ onEditClick }: { onEditClick: () => void }) => {
+  return (
+    <Menu>
+      <Menu.Target>
+        <Button variant="transparent" color="gray">
+          <IconDotsVertical />
+        </Button>
+      </Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Item onClick={onEditClick}>Edit</Menu.Item>
+      </Menu.Dropdown>
+    </Menu>
   )
 }
 

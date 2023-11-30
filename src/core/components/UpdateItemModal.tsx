@@ -1,6 +1,6 @@
 import { useSession } from "@blitzjs/auth"
 import { useMutation, useQuery } from "@blitzjs/rpc"
-import { Modal, Title } from "@mantine/core"
+import { Modal } from "@mantine/core"
 import dayjs from "dayjs"
 import { FORM_ERROR } from "final-form"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
@@ -36,7 +36,7 @@ export const UpdateItemModal = ({ onModalClose, item }: UpdateItemModalProps): J
     <Modal
       opened={true}
       onClose={() => onModalClose()}
-      title={<Title order={3}>Update item</Title>}
+      title={"Update item"}
       closeOnClickOutside={false}
       transitionProps={{ transition: "fade", duration: 200, timingFunction: "ease" }}
     >

@@ -8,11 +8,13 @@ import { UpdateConsumedForm } from "./UpdateConsumedForm"
 
 type UpdateConsumedModalProps = {
   onModalClose: () => void
-  item: CombinedItemType
+  item?: CombinedItemType
+  onSubmit?: (percentage: number) => void
 }
 
 export const UpdateConsumedModal = ({
   onModalClose,
+  onSubmit,
   item,
 }: UpdateConsumedModalProps): JSX.Element => {
   const [updateItemMutation] = useMutation(updateItem)
@@ -32,22 +34,27 @@ export const UpdateConsumedModal = ({
             percentConsumed: true,
           })}
           initialValues={{
-            percentConsumed: item.percentConsumed,
+            percentConsumed: item?.percentConsumed,
           }}
           onSubmit={async (values) => {
-            try {
-              await updateItemMutation({
-                ...item,
-                ...values,
-                itemTypes: item.itemTypes.map((item) => item.id.toString()),
-                groceryTripId: item.groceryTripId.toString(),
-              })
-              onModalClose()
-            } catch (error: any) {
-              console.error(error)
-              return {
-                [FORM_ERROR]: error.toString(),
+            if (item) {
+              try {
+                await updateItemMutation({
+                  ...item,
+                  ...values,
+                  itemTypes: item.itemTypes.map((item) => item.id.toString()),
+                  groceryTripId: item.groceryTripId.toString(),
+                })
+                onModalClose()
+              } catch (error: any) {
+                console.error(error)
+                return {
+                  [FORM_ERROR]: error.toString(),
+                }
               }
+            }
+            if (onSubmit) {
+              onSubmit(values.percentConsumed)
             }
           }}
         />

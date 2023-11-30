@@ -53,16 +53,16 @@ function BroccoliTable<T>({ data, columns, rowSelection = {}, handleRowSelection
                 <Table.Th key={header.id} colSpan={header.colSpan}>
                   {header.isPlaceholder ? null : (
                     <>
-                      <Text>
-                        {" "}
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                      </Text>
-
                       {header.column.getCanFilter() ? (
                         <div>
                           <Filter column={header.column} table={table} />
                         </div>
-                      ) : null}
+                      ) : (
+                        <Text>
+                          {" "}
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                        </Text>
+                      )}
                     </>
                   )}
                 </Table.Th>
@@ -99,13 +99,14 @@ function Filter({ column, table }: { column: Column<any, any>; table: ReactTable
     () => (typeof firstValue === "number" ? [] : Array.from(uniqueValues.keys()).sort()),
     [uniqueValues, firstValue]
   )
+  const placeholder = column.columnDef.header?.toString()
 
   if (typeof firstValue === "number") {
     return (
       <NumberInput
         value={(columnFilterValue as [number, number])?.[0] ?? ""}
         onChange={(value) => column.setFilterValue((old: [number, number]) => [value, old?.[1]])}
-        placeholder={`Min`}
+        placeholder={placeholder}
         min={0}
       />
     )
@@ -119,7 +120,7 @@ function Filter({ column, table }: { column: Column<any, any>; table: ReactTable
         type="range"
         value={[value1, value2]}
         onChange={(date) => column.setFilterValue(date || undefined)}
-        placeholder="Search..."
+        placeholder={placeholder}
       />
     )
   }
@@ -135,7 +136,7 @@ function Filter({ column, table }: { column: Column<any, any>; table: ReactTable
     <Select
       value={(columnFilterValue ?? "") as string}
       onChange={(value) => column.setFilterValue(value)}
-      placeholder={`Search...`}
+      placeholder={placeholder}
       searchable
       clearable
       nothingFoundMessage="No options"

@@ -46,26 +46,42 @@ export type CombinedItemType = Item & {
   }[]
 }
 
-export const ItemsList = ({
-  items,
-  refetch,
-}: {
-  items: CombinedItemType[]
-  refetch: () => void
-}) => {
+export const ItemsList = ({ search }: { search: string }) => {
   const [updateItemMutation] = useMutation(updateItem)
   const [percentageEatenModalOpen, setPercentageEatenModalOpen] = useState(false)
   const [updateItemModalOpened, setUpdateItemModalOpened] = useState(false)
   const [itemToUpdate, setItemToUpdate] = useState<CombinedItemType>()
+  const { userId } = useSession()
+  const [{ items }, { refetch }] = usePaginatedQuery(getItems, {
+    where: {
+      userId: userId ?? 0,
+      name: {
+        search: search.trim().split(" ").join(" & "),
+      },
+    },
+    orderBy: { id: "desc" },
+  })
+  const [{ items: defaultItems }, { refetch: refetchDefault }] = useQuery(getItems, {
+    where: {
+      userId: userId ?? 0,
+    },
+    orderBy: { id: "desc" },
+    take: 50,
+  })
+  const handleUpdate = async () => {
+    await refetch()
+    await refetchDefault()
+  }
   const router = useRouter()
   const handleItemEaten = async (item: CombinedItemType) => {
     await updateItemMutation({
       ...item,
       itemTypes: item.itemTypes.map((type) => type.id.toString()),
       groceryTripId: item.groceryTripId.toString(),
+      percentConsumed: 100,
       status: ItemStatusType.EATEN,
     })
-    refetch()
+    await handleUpdate()
   }
   const handleItemDiscarded = async (item: CombinedItemType) => {
     await updateItemMutation({
@@ -74,12 +90,14 @@ export const ItemsList = ({
       groceryTripId: item.groceryTripId.toString(),
       status: ItemStatusType.DISCARDED,
     })
-    refetch()
+    await handleUpdate()
   }
+
+  const itemsToDisplay = items.length > 0 ? items : defaultItems
 
   return (
     <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} mt="lg">
-      {items.map((item) => (
+      {itemsToDisplay.map((item) => (
         <Card key={item.id} withBorder shadow="sm" radius="md">
           <Card.Section withBorder inheritPadding py="xs">
             <Group justify="space-between">
@@ -171,8 +189,8 @@ export const ItemsList = ({
       ))}
       {percentageEatenModalOpen && itemToUpdate && (
         <UpdateConsumedModal
-          onModalClose={() => {
-            refetch()
+          onModalClose={async () => {
+            await refetch()
             setPercentageEatenModalOpen(false)
           }}
           item={itemToUpdate}
@@ -180,8 +198,8 @@ export const ItemsList = ({
       )}
       {updateItemModalOpened && itemToUpdate && (
         <UpdateItemModal
-          onModalClose={() => {
-            refetch()
+          onModalClose={async () => {
+            await handleUpdate()
             setUpdateItemModalOpened(false)
           }}
           item={itemToUpdate}
@@ -194,28 +212,7 @@ export const ItemsList = ({
 const ItemsPage = () => {
   const [newItemModalOpened, setNewItemModalOpened] = useState(false)
   const [search, setSearch] = useState("")
-  const { userId } = useSession()
-  const [{ items }, { refetch }] = usePaginatedQuery(getItems, {
-    where: {
-      userId: userId ?? 0,
-      name: {
-        search,
-      },
-    },
-    orderBy: { id: "desc" },
-  })
-  const [{ items: defaultItems }, { refetch: refetchDefault }] = useQuery(getItems, {
-    where: {
-      userId: userId ?? 0,
-    },
-    orderBy: { id: "desc" },
-    take: 50,
-  })
 
-  const handleUpdate = async () => {
-    await refetch()
-    await refetchDefault()
-  }
   return (
     <Container size="lg">
       <Group align="center" mb={"md"}>
@@ -238,18 +235,17 @@ const ItemsPage = () => {
         radius="xl"
         placeholder="Search your items"
         value={search}
-        onChange={(e) => setSearch(e.target.value.trim())}
+        onChange={(e) => setSearch(e.target.value)}
         leftSection={<IconSearch />}
         rightSection={search && <CloseButton onClick={() => setSearch("")} />}
       />
       <Suspense fallback={<div>Loading...</div>}>
-        <ItemsList items={items.length > 0 ? items : defaultItems} refetch={handleUpdate} />
+        <ItemsList search={search} />
       </Suspense>
       {newItemModalOpened && (
         <Suspense fallback={<div>Loading...</div>}>
           <NewItemModal
-            onModalClose={async () => {
-              await handleUpdate()
+            onModalClose={() => {
               setNewItemModalOpened(false)
             }}
           />
