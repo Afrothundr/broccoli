@@ -29,10 +29,10 @@ jobs:
       uses: borales/actions-yarn@v4
       with:
         cmd: install # will run `yarn install` command
-      env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }} # if needed
     - name: Build production bundle
       uses: borales/actions-yarn@v4
+      env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       with:
           cmd: build
     - name: Test App
