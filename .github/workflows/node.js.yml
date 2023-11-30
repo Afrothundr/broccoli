@@ -25,14 +25,18 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
+    - name: Create .env with Github Secrets and run script
+      run: |
+        touch .env
+        echo DATABASE_URL=$DATABASE_URL >> .env
+      env:
+          DATABASE_URL: ${{ vars.DATABASE_URL }}
     - name: Run install
       uses: borales/actions-yarn@v4
       with:
         cmd: install # will run `yarn install` command
     - name: Build production bundle
       uses: borales/actions-yarn@v4
-      env:
-          DATABASE_URL: ${{ vars.DATABASE_URL }}
       with:
           cmd: build
     - name: Test App
