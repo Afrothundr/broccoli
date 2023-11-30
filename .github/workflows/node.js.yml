@@ -32,7 +32,7 @@ jobs:
     - name: Build production bundle
       uses: borales/actions-yarn@v4
       env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ vars.DATABASE_URL }}
       with:
           cmd: build
     - name: Test App
