@@ -1,7 +1,19 @@
+import { Container, Loader, SimpleGrid, Title } from "@mantine/core"
+import { Suspense } from "react"
+import { AverageGroceryCost } from "src/core/components/AverageGroceryCost"
 import Layout from "src/core/layouts/Layout"
 
 export const Dashboard = () => {
-  return <div>Dashboards!</div>
+  return (
+    <Container size="lg">
+      <Title>Dashboards</Title>
+      <SimpleGrid cols={{ base: 1, lg: 2 }}>
+        <Suspense fallback={<Loader />}>
+          <AverageGroceryCost />
+        </Suspense>
+      </SimpleGrid>
+    </Container>
+  )
 }
 
 const DashboardsPage = () => {
