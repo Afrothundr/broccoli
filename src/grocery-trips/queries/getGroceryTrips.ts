@@ -30,6 +30,8 @@ export default resolver.pipe(
             items: {
               select: {
                 price: true,
+                percentConsumed: true,
+                status: true,
               },
             },
           },
