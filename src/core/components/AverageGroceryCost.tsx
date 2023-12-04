@@ -1,7 +1,7 @@
 import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { usePaginatedQuery } from "@blitzjs/rpc"
-import { Box, NumberFormatter, Stack, Text, Title, useMantineTheme } from "@mantine/core"
+import { Card, NumberFormatter, Text, Title, useMantineTheme } from "@mantine/core"
 import dayjs from "dayjs"
 import Link from "next/link"
 import {
@@ -36,12 +36,14 @@ export const AverageGroceryCost = () => {
   const averageCost = (data.reduce((acc, curr) => acc + curr.cost, 0) / data.length).toFixed(2)
   const regressionLine = calculateLineOfBestFit(data)
   return (
-    <Stack mt="sm">
-      <Title order={4} style={{ textAlign: "center" }}>
-        Average Grocery Trip Cost:{" "}
-        {<NumberFormatter prefix="$" value={averageCost} thousandSeparator />}
-      </Title>
-      <Box>
+    <Card mt="sm" withBorder shadow="sm" radius="md" style={{ minHeight: 150 }}>
+      <Card.Section withBorder inheritPadding py="xs">
+        <Title order={4} style={{ textAlign: "center" }}>
+          Average Grocery Trip Cost:{" "}
+          {<NumberFormatter prefix="$" value={averageCost} thousandSeparator />}
+        </Title>
+      </Card.Section>
+      <Card.Section mt="sm">
         {groceryTrips.length ? (
           <ResponsiveContainer width={"100%"} height={400}>
             <AreaChart
@@ -75,8 +77,8 @@ export const AverageGroceryCost = () => {
             No grocery trips yet! <Link href={Routes.GroceryTripsPage()}>Add one</Link>
           </Text>
         )}
-      </Box>
-    </Stack>
+      </Card.Section>
+    </Card>
   )
 }
 

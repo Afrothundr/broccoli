@@ -2,6 +2,7 @@ import { Container, Loader, SimpleGrid, Title } from "@mantine/core"
 import { Suspense } from "react"
 import { AverageGroceryCost } from "src/core/components/AverageGroceryCost"
 import { AverageLoss } from "src/core/components/AverageLoss"
+import { CurrentSavings } from "src/core/components/CurrentSavings"
 import Layout from "src/core/layouts/Layout"
 
 export const Dashboard = () => {
@@ -14,6 +15,9 @@ export const Dashboard = () => {
         </Suspense>
         <Suspense fallback={<Loader />}>
           <AverageLoss />
+        </Suspense>
+        <Suspense fallback={<Loader />}>
+          <CurrentSavings />
         </Suspense>
       </SimpleGrid>
     </Container>

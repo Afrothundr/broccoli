@@ -1,7 +1,7 @@
 import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { usePaginatedQuery } from "@blitzjs/rpc"
-import { Box, NumberFormatter, Stack, Text, Title, useMantineTheme } from "@mantine/core"
+import { Card, NumberFormatter, Text, Title, useMantineTheme } from "@mantine/core"
 import { ItemStatusType } from "@prisma/client"
 import Link from "next/link"
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts"
@@ -39,12 +39,14 @@ export const AverageLoss = () => {
   ]
 
   return (
-    <Stack mt="sm">
-      <Title order={4} style={{ textAlign: "center" }}>
-        Average percentage of items used per grocery trip:{" "}
-        {<NumberFormatter suffix="%" value={Math.round(averageConsumed * 100)} />}
-      </Title>
-      <Box>
+    <Card mt="sm" withBorder shadow="sm" radius="md" style={{ minHeight: 150 }}>
+      <Card.Section withBorder inheritPadding py="xs">
+        <Title order={4} style={{ textAlign: "center" }}>
+          Average percentage of items used per grocery trip:{" "}
+          {<NumberFormatter suffix="%" value={Math.round(averageConsumed * 100)} />}
+        </Title>
+      </Card.Section>
+      <Card.Section>
         {groceryTrips.length ? (
           <ResponsiveContainer width={"100%"} height={400}>
             <PieChart width={600} height={600} data={data}>
@@ -72,8 +74,8 @@ export const AverageLoss = () => {
             No grocery trips yet! <Link href={Routes.GroceryTripsPage()}>Add one</Link>
           </Text>
         )}
-      </Box>
-    </Stack>
+      </Card.Section>
+    </Card>
   )
 }
 
