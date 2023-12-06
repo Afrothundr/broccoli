@@ -1,6 +1,6 @@
 import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
-import { usePaginatedQuery } from "@blitzjs/rpc"
+import { useQuery } from "@blitzjs/rpc"
 import { Card, NumberFormatter, Text, Title, useMantineTheme } from "@mantine/core"
 import { ItemStatusType } from "@prisma/client"
 import Link from "next/link"
@@ -9,12 +9,11 @@ import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 
 export const AverageLoss = () => {
   const { userId } = useSession()
-  const [{ groceryTrips }] = usePaginatedQuery(getGroceryTrips, {
+  const [{ groceryTrips }] = useQuery(getGroceryTrips, {
     orderBy: { createdAt: "asc" },
     where: {
       userId: userId ?? undefined,
     },
-    take: 10,
   })
 
   const data = groceryTrips.map((trip) => ({

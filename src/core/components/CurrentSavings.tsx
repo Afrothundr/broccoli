@@ -1,19 +1,18 @@
 import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
-import { usePaginatedQuery } from "@blitzjs/rpc"
-import { Card, Text, Title, useMantineTheme } from "@mantine/core"
+import { useQuery } from "@blitzjs/rpc"
+import { Card, Text, Title } from "@mantine/core"
 import { ItemStatusType } from "@prisma/client"
 import Link from "next/link"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 
 export const CurrentSavings = () => {
   const { userId } = useSession()
-  const [{ groceryTrips }] = usePaginatedQuery(getGroceryTrips, {
+  const [{ groceryTrips }] = useQuery(getGroceryTrips, {
     orderBy: { createdAt: "asc" },
     where: {
       userId: userId ?? undefined,
     },
-    take: 10,
   })
 
   const data = groceryTrips.map((trip) => ({
@@ -25,7 +24,6 @@ export const CurrentSavings = () => {
       0
     ),
   }))
-  const theme = useMantineTheme()
 
   const averageConsumed =
     data.reduce((acc, curr) => acc + curr.itemsConsumed / curr.totalItems, 0) / data.length
@@ -51,7 +49,7 @@ export const CurrentSavings = () => {
             ta="center"
             style={{ fontSize: "3rem" }}
           >
-            ${averageAmountSaved.toFixed(2)}
+            ${isNaN(averageAmountSaved) ? 0 : averageAmountSaved.toFixed(2)}
           </Text>
         ) : (
           <Text>

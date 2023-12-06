@@ -89,7 +89,6 @@ model GroceryTrip {
   name        String
   description String    @default("")
   userId      Int
-  totalCost   Float     @default(0)
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   items       Item[]
   receipts    Receipt[]
