@@ -14,6 +14,7 @@ import {
   Indicator,
   LoadingOverlay,
   Menu,
+  NumberFormatter,
   Stack,
   Text,
   Title,
@@ -94,6 +95,15 @@ export const GroceryTrip = () => {
         accessorKey: "name",
       },
       {
+        header: "Cost",
+        accessorKey: "price",
+        cell: ({ row }) => (
+          <Text>
+            <NumberFormatter prefix="$ " value={row.original.price} thousandSeparator />
+          </Text>
+        ),
+      },
+      {
         header: "How Much",
         accessorKey: "quantity",
       },
@@ -166,6 +176,8 @@ export const GroceryTrip = () => {
     setPercentageEatenModalOpen(false)
   }
 
+  const totalCost = groceryTrip.items.reduce((total, item) => total + item.price, 0)
+
   return (
     <Container size="lg">
       <Group justify="space-between">
@@ -175,11 +187,20 @@ export const GroceryTrip = () => {
             <IconPencil />
           </Link>
         </Group>
+        <Text
+          variant="gradient"
+          gradient={{ from: "green", to: "teal" }}
+          fw={900}
+          ta="center"
+          style={{ fontSize: "3rem" }}
+        >
+          <NumberFormatter prefix="$" value={totalCost.toFixed(2)} />
+        </Text>
+      </Group>
+      <Group mb="lg">
+        <Text c="dimmed">{groceryTrip.description}</Text> -
         <Text c="dimmed">{dayjs(groceryTrip.createdAt).format("MM/DD")}</Text>
       </Group>
-      <Text c="dimmed" my="lg">
-        {groceryTrip.description}
-      </Text>
       <Stack style={{ marginBottom: "3rem", alignItems: "flex-start" }}>
         <Group align="start">
           <Title order={2}>Receipts</Title>

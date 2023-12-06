@@ -27,12 +27,11 @@ export const EditGroceryTrip = () => {
   return (
     <>
       <Head>
-        <title>Edit GroceryTrip {groceryTrip.id}</title>
+        <title>Edit GroceryTrip</title>
       </Head>
 
       <div>
-        <h1>Edit GroceryTrip {groceryTrip.id}</h1>
-        <pre>{JSON.stringify(groceryTrip, null, 2)}</pre>
+        <h1>Edit GroceryTrip</h1>
         <Suspense fallback={<div>Loading...</div>}>
           <GroceryTripForm
             submitText="Update GroceryTrip"

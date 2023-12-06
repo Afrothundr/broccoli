@@ -10,6 +10,8 @@ export function HeroTitle() {
         <h1 className={classes.title}>
           <Text
             component="span"
+            size="xl"
+            fw={900}
             variant="gradient"
             gradient={{ from: "green", to: "teal" }}
             inherit

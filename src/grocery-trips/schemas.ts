@@ -8,6 +8,9 @@ export const CreateGroceryTripSchema = z.object({
 })
 export const UpdateGroceryTripSchema = z.object({
   id: z.number(),
+  name: z.string(),
+  description: z.string(),
+  createdAt: z.date(),
   // template: __fieldName__: z.__zodType__(),
 })
 

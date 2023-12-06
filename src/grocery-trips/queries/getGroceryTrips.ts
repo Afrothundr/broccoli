@@ -1,5 +1,5 @@
-import { paginate } from "blitz"
 import { resolver } from "@blitzjs/rpc"
+import { paginate } from "blitz"
 import db, { Prisma } from "db"
 
 interface GetGroceryTripsInput
@@ -26,6 +26,13 @@ export default resolver.pipe(
           include: {
             _count: {
               select: { items: true },
+            },
+            items: {
+              select: {
+                price: true,
+                percentConsumed: true,
+                status: true,
+              },
             },
           },
         }),

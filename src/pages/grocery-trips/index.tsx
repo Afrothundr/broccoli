@@ -8,6 +8,7 @@ import {
   LoadingOverlay,
   Modal,
   NavLink,
+  NumberFormatter,
   Text,
   Title,
   Tooltip,
@@ -73,6 +74,17 @@ export const GroceryTripsList = () => {
       {
         header: "Items",
         accessorKey: "_count.items",
+      },
+      {
+        header: "Total Cost",
+        cell: ({ row }) => {
+          const totalCost = row.original.items.reduce((total, item) => total + item.price, 0)
+          return (
+            <Text>
+              <NumberFormatter prefix="$ " value={totalCost.toFixed(2)} thousandSeparator />
+            </Text>
+          )
+        },
       },
     ],
     [router]

@@ -190,7 +190,7 @@ export const ItemsList = ({ search }: { search: string }) => {
       {percentageEatenModalOpen && itemToUpdate && (
         <UpdateConsumedModal
           onModalClose={async () => {
-            await refetch()
+            await handleUpdate()
             setPercentageEatenModalOpen(false)
           }}
           item={itemToUpdate}
