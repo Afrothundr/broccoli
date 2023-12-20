@@ -6,6 +6,7 @@ import PriceInputField from "src/core/components/NumberInputField"
 import { ComboboxItem, ComboboxItemGroup, Group } from "@mantine/core"
 import SelectInputField from "src/core/components/SelectInputField"
 import { z } from "zod"
+import HiddenInputField from "./HiddenInputField"
 import ItemTypeMultiSelect from "./ItemTypeMultiSelect"
 export { FORM_ERROR } from "src/core/components/Form"
 
@@ -63,6 +64,7 @@ export function ItemForm<S extends z.ZodType<any, any>>({
         data={groceryTripData}
         required
       />
+      <HiddenInputField name="importId" />
     </Form>
   )
 }

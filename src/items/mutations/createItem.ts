@@ -15,6 +15,7 @@ export default resolver.pipe(
         price: input.price,
         quantity: input.quantity,
         unit: input.unit,
+        importId: input.importId,
         user: {
           connect: { id: input.userId },
         },
