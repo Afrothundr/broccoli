@@ -19,7 +19,8 @@
     "incremental": true,
     "tsBuildInfoFile": ".tsbuildinfo",
     "paths": {
-      "react": ["./node_modules/@types/react"]
+      "react": ["./node_modules/@types/react"],
+      "vite": ["node_modules/vite"]
     }
   },
   "exclude": ["node_modules", "**/*.e2e.ts", "cypress"],

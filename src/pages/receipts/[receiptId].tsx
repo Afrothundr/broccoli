@@ -1,14 +1,13 @@
-import { Suspense } from "react"
-import { Routes } from "@blitzjs/next"
+import { Routes, useParam } from "@blitzjs/next"
+import { useMutation, useQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { useQuery, useMutation } from "@blitzjs/rpc"
-import { useParam } from "@blitzjs/next"
+import { Suspense } from "react"
 
 import Layout from "src/core/layouts/Layout"
-import getReceipt from "src/receipts/queries/getReceipt"
 import deleteReceipt from "src/receipts/mutations/deleteReceipt"
+import getReceipt from "src/receipts/queries/getReceipt"
 
 export const Receipt = () => {
   const router = useRouter()
@@ -25,8 +24,6 @@ export const Receipt = () => {
       <div>
         <h1>Receipt {receipt.id}</h1>
         <pre>{JSON.stringify(receipt, null, 2)}</pre>
-
-        <Link href={Routes.EditReceiptPage({ receiptId: receipt.id })}>Edit</Link>
 
         <button
           type="button"
