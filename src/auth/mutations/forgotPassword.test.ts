@@ -1,9 +1,9 @@
-import { vi, describe, it, beforeEach } from "vitest"
-import db from "db"
 import { hash256 } from "@blitzjs/auth"
-import forgotPassword from "./forgotPassword"
-import previewEmail from "preview-email"
 import { Ctx } from "@blitzjs/next"
+import db from "db"
+import previewEmail from "preview-email"
+import { beforeEach, describe, it, vi } from "vitest"
+import forgotPassword from "./forgotPassword"
 
 beforeEach(async () => {
   await db.$reset()
@@ -14,7 +14,7 @@ vi.mock("@blitzjs/auth", async () => {
   const auth = await vi.importActual<Record<string, unknown>>("@blitzjs/auth")!
   return {
     ...auth,
-    generateToken: () => generatedToken
+    generateToken: () => generatedToken,
   }
 })
 
@@ -30,6 +30,8 @@ describe("forgotPassword mutation", () => {
     const user = await db.user.create({
       data: {
         email: "user@example.com",
+        firstName: "Bob",
+        lastName: "Evans",
         tokens: {
           // Create old token to ensure it's deleted
           create: {
