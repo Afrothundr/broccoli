@@ -58,7 +58,7 @@ model Item {
   description     String         @default("")
   price           Float
   quantity        Int
-  importId        String?        @default("")
+  importId        String         @default("")
   unit            String         @default("")
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
