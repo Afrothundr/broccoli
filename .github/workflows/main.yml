@@ -68,6 +68,10 @@ jobs:
       - name: Migrate DB & generate prisma client
         run: yarn blitz prisma migrate dev
 
+      # Build project
+      - name: Build project
+        run: yarn build
+
       # Jest Tests (API/Frontend)
       - name: Run Jest Tests
         run: yarn test
