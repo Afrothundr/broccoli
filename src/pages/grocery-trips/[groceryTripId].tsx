@@ -37,6 +37,7 @@ import dayjs from "dayjs"
 import BroccoliTable from "src/core/components/BroccoliTable"
 import { ConfirmationModal } from "src/core/components/ConfirmationModal"
 import { ItemStatusBadge } from "src/core/components/ItemStatusBadge"
+import { ReceiptImportModal } from "src/core/components/ReceiptImportModal"
 import { UpdateConsumedModal } from "src/core/components/UpdateConsumedModal"
 import { UpdateItemModal } from "src/core/components/UpdateItemModal"
 import { UploadButton } from "src/core/components/UploadThing"
@@ -57,12 +58,14 @@ export const GroceryTrip = () => {
   const [editItemModalOpen, setEditItemModalOpen] = useState(false)
   const [percentageEatenModalOpen, setPercentageEatenModalOpen] = useState(false)
   const [itemToUpdate, setItemToUpdate] = useState()
+  const [receiptToImport, setReceiptToImport] = useState(0)
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false)
   const [bulkReceiptMutation] = useMutation(bulkCreateReceipt)
   const [rowSelection, setRowSelection] = useState({})
   const [deleteItemsMutation] = useMutation(deleteItems)
   const [updatePercentages] = useMutation(updatePercentage)
   const [updateStatuses] = useMutation(updateStatus)
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false)
 
   const columns = useMemo(
     () => [
@@ -250,9 +253,27 @@ export const GroceryTrip = () => {
         </Group>
         <Group gap="lg">
           {groceryTrip.receipts.map((receipt) => (
-            <Indicator inline label="New" size={16} key={receipt.id}>
-              <Avatar size="lg" src={receipt.url} />
-            </Indicator>
+            <button
+              key={receipt.id}
+              onClick={() => {
+                setReceiptToImport(receipt.id)
+                setReceiptModalOpen(!receiptModalOpen)
+              }}
+              style={{ backgroundColor: "transparent", border: "none", cursor: "pointer" }}
+            >
+              <Indicator
+                inline
+                label={receipt.status.toLocaleLowerCase()}
+                size={16}
+                key={receipt.id}
+                onClick={() => {
+                  setReceiptToImport(receipt.id)
+                  setReceiptModalOpen(!receiptModalOpen)
+                }}
+              >
+                <Avatar size="lg" src={receipt.url} />
+              </Indicator>
+            </button>
           ))}
         </Group>
       </Stack>
@@ -365,6 +386,15 @@ export const GroceryTrip = () => {
             setPercentageEatenModalOpen(false)
           }}
           onSubmit={(percentage) => handleItemPercentageUpdate(percentage)}
+        />
+      )}
+      {receiptModalOpen && (
+        <ReceiptImportModal
+          id={receiptToImport}
+          onModalClose={async () => {
+            await refetch()
+            setReceiptModalOpen(false)
+          }}
         />
       )}
     </Container>

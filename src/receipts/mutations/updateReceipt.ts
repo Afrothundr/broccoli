@@ -7,7 +7,14 @@ export default resolver.pipe(
   resolver.authorize(),
   async ({ id, ...data }) => {
     // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-    const receipt = await db.receipt.update({ where: { id }, data })
+    const receipt = await db.receipt.update({
+      where: { id },
+      data: {
+        items: {
+          connect: { id: data.itemId },
+        },
+      },
+    })
 
     return receipt
   }

@@ -4,7 +4,7 @@ import { Modal, Title } from "@mantine/core"
 import dayjs from "dayjs"
 import { FORM_ERROR } from "final-form"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
-import getItemTypes from "src/item-types/queries/getItemTypes"
+import useItemTypes from "src/items/hooks/useItemTypes"
 import createItem from "src/items/mutations/createItem"
 import { CreateItemSchema } from "src/items/schemas"
 import { ItemTypeGrouper } from "../utils/ItemTypeGrouper"
@@ -21,9 +21,7 @@ export const NewItemModal = ({
   groceryTripIdDefault,
 }: NewItemModalProps): JSX.Element => {
   const { userId } = useSession()
-  const [{ itemTypes }] = useQuery(getItemTypes, {
-    orderBy: { name: "asc" },
-  })
+  const itemTypes = useItemTypes()
   const [{ groceryTrips }] = useQuery(getGroceryTrips, {
     orderBy: { name: "desc" },
     where: { userId: userId ?? 0 },

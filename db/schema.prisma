@@ -58,6 +58,7 @@ model Item {
   description     String         @default("")
   price           Float
   quantity        Int
+  importId        String         @default("")
   unit            String         @default("")
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -66,6 +67,8 @@ model Item {
   userId          Int
   groceryTripId   Int
   groceryTrip     GroceryTrip    @relation(fields: [groceryTripId], references: [id], onDelete: Cascade)
+  receiptId       Int?
+  receipt         Receipt?       @relation(fields: [receiptId], references: [id], onDelete: Cascade)
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   reminders       Reminder[]
   itemTypes       ItemType[]
@@ -95,12 +98,14 @@ model GroceryTrip {
 }
 
 model Receipt {
-  id            Int          @id @default(autoincrement())
+  id            Int           @id @default(autoincrement())
   url           String
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   groceryTripId Int?
-  GroceryTrip   GroceryTrip? @relation(fields: [groceryTripId], references: [id], onDelete: Cascade)
+  GroceryTrip   GroceryTrip?  @relation(fields: [groceryTripId], references: [id], onDelete: Cascade)
+  items         Item[]
+  status        ReceiptStatus @default(IMPORTED)
 }
 
 model Reminder {
@@ -124,4 +129,10 @@ enum ItemStatusType {
   FRESH
   EATEN
   DISCARDED
+}
+
+enum ReceiptStatus {
+  PROCESSING
+  IMPORTED
+  ERROR
 }

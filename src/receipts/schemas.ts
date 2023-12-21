@@ -7,6 +7,7 @@ export const CreateReceiptSchema = z.object({
 export const CreateBulkReceiptSchema = z.array(CreateReceiptSchema)
 export const UpdateReceiptSchema = z.object({
   id: z.number(),
+  itemId: z.number(),
   // template: __fieldName__: z.__zodType__(),
 })
 
