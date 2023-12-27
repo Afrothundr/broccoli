@@ -57,8 +57,6 @@ type ImportedItemProps = {
   }[]
 }
 
-const importData = [] as unknown as ImportedItemProps[]
-
 export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps): JSX.Element => {
   const { userId } = useSession()
   const [receipt, { refetch }] = useQuery(getReceipt, { id })
@@ -92,11 +90,14 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
   }
 
   useEffect(() => {
-    const mergedData = importData.map((data) => {
-      const foundSubmittedItem = receipt?.items.find((item) => item.importId === data?.importId)
-      return foundSubmittedItem ? foundSubmittedItem : data
-    })
-    setImportedData(mergedData)
+    const scrapedData = JSON.parse(receipt.scrapedData as string)
+    if ("items" in scrapedData) {
+      const mergedData = (scrapedData.items as ImportedItemProps[]).map((data) => {
+        const foundSubmittedItem = receipt?.items.find((item) => item.importId === data?.importId)
+        return foundSubmittedItem ? foundSubmittedItem : data
+      })
+      setImportedData(mergedData)
+    }
   }, [receipt])
 
   const activeItem = importedData[itemIndex]
