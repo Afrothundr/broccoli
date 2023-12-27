@@ -106,6 +106,7 @@ model Receipt {
   GroceryTrip   GroceryTrip?  @relation(fields: [groceryTripId], references: [id], onDelete: Cascade)
   items         Item[]
   status        ReceiptStatus @default(IMPORTED)
+  scrapedData   Json?
 }
 
 model Reminder {
