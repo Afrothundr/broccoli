@@ -13,6 +13,9 @@ export default async function itemUpdaterQueue({
   return await axios({
     method: "post",
     url: "/items/update",
+    headers: {
+      "x-api-key": process.env.NEXT_PUBLIC_SCHEDULER_API_KEY,
+    },
     data: {
       ids,
       status,
