@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Receipt" ALTER COLUMN "status" SET DEFAULT 'PROCESSING';
