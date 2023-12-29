@@ -22,7 +22,7 @@ import {
   rem,
 } from "@mantine/core"
 import { notifications } from "@mantine/notifications"
-import { ItemStatusType } from "@prisma/client"
+import { ItemStatusType, ReceiptStatus } from "@prisma/client"
 import {
   IconCamera,
   IconDotsVertical,
@@ -34,6 +34,8 @@ import {
   IconTrash,
 } from "@tabler/icons-react"
 import dayjs from "dayjs"
+
+import { processImageQueue } from "src/api/processImageQueue"
 import BroccoliTable from "src/core/components/BroccoliTable"
 import { ConfirmationModal } from "src/core/components/ConfirmationModal"
 import { ItemStatusBadge } from "src/core/components/ItemStatusBadge"
@@ -46,9 +48,10 @@ import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
 import deleteItems from "src/items/mutations/deleteItems"
 import updatePercentage from "src/items/mutations/updatePercentage"
 import updateStatus from "src/items/mutations/updateStatus"
-import bulkCreateReceipt from "src/receipts/mutations/bulkCreateReceipts"
+import createReceipt from "src/receipts/mutations/createReceipt"
 import styles from "src/styles/ActionItem.module.css"
 import uploadStyles from "src/styles/UploadButton.module.css"
+import { getReceiptStatusColor } from "src/utils/receiptStatusTypeHelper"
 import { NewItemModal } from "../../core/components/NewItemModal"
 
 export const GroceryTrip = () => {
@@ -60,7 +63,7 @@ export const GroceryTrip = () => {
   const [itemToUpdate, setItemToUpdate] = useState()
   const [receiptToImport, setReceiptToImport] = useState(0)
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false)
-  const [bulkReceiptMutation] = useMutation(bulkCreateReceipt)
+  const [createReceiptMutation] = useMutation(createReceipt)
   const [rowSelection, setRowSelection] = useState({})
   const [deleteItemsMutation] = useMutation(deleteItems)
   const [updatePercentages] = useMutation(updatePercentage)
@@ -228,16 +231,21 @@ export const GroceryTrip = () => {
             onClientUploadComplete={async (res) => {
               // Do something with the response
               console.log("Files: ", res)
-              await bulkReceiptMutation(
-                res?.map((image) => ({
+              res?.forEach(async (image) => {
+                const receipt = await createReceiptMutation({
                   url: image.url,
                   groceryTripId: groceryTrip.id,
-                }))
-              )
+                })
+                await processImageQueue({
+                  receiptId: receipt.id,
+                  url: image.url,
+                })
+              })
+
               notifications.show({
                 color: "green",
                 title: "Success",
-                message: "File uploaded!",
+                message: "File(s) uploaded!",
               })
               await refetch()
             }}
@@ -261,18 +269,21 @@ export const GroceryTrip = () => {
               }}
               style={{ backgroundColor: "transparent", border: "none", cursor: "pointer" }}
             >
-              <Indicator
-                inline
-                label={receipt.status.toLocaleLowerCase()}
-                size={16}
-                key={receipt.id}
-                onClick={() => {
-                  setReceiptToImport(receipt.id)
-                  setReceiptModalOpen(!receiptModalOpen)
-                }}
-              >
-                <Avatar size="lg" src={receipt.url} />
-              </Indicator>
+              <Tooltip label={receipt.status.toLocaleLowerCase()}>
+                <Indicator
+                  size={16}
+                  color={getReceiptStatusColor(receipt.status)}
+                  key={receipt.id}
+                  offset={5}
+                  processing={receipt.status === ReceiptStatus.PROCESSING}
+                  onClick={() => {
+                    setReceiptToImport(receipt.id)
+                    setReceiptModalOpen(!receiptModalOpen)
+                  }}
+                >
+                  <Avatar size="lg" src={receipt.url} />
+                </Indicator>
+              </Tooltip>
             </button>
           ))}
         </Group>

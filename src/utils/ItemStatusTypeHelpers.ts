@@ -1,6 +1,6 @@
 import { ItemStatusType } from "@prisma/client"
 
-export default function getItemStatusColor(status: ItemStatusType) {
+export function getItemStatusColor(status: ItemStatusType) {
   switch (status) {
     case ItemStatusType.BAD:
       return "red"

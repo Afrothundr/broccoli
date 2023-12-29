@@ -1,24 +1,23 @@
-import { ItemStatusType } from "@prisma/client"
 import axios from "axios"
 
-export async function itemUpdaterQueue({
-  ids,
-  status,
-  delay,
+export async function processImageQueue({
+  receiptId,
+  url,
+  delay = 0,
 }: {
-  ids: number[]
-  status: ItemStatusType
-  delay: number
+  receiptId: number
+  url: string
+  delay?: number
 }) {
   return await axios({
     method: "post",
-    url: "/items/update",
+    url: "/receipts/process",
     headers: {
       "x-api-key": process.env.NEXT_PUBLIC_SCHEDULER_API_KEY,
     },
     data: {
-      ids,
-      status,
+      receiptId,
+      url,
       delay,
     },
     withCredentials: false,

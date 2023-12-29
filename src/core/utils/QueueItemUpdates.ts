@@ -1,5 +1,5 @@
 import { Item, ItemStatusType, ItemType } from "@prisma/client"
-import itemUpdaterQueue from "src/api"
+import { itemUpdaterQueue } from "src/api/itemUpdaterQueue"
 
 export async function queueItemUpdates(item?: Item, itemType?: ItemType) {
   if (item && itemType) {
