@@ -231,7 +231,7 @@ export const GroceryTrip = () => {
             onClientUploadComplete={async (res) => {
               // Do something with the response
               console.log("Files: ", res)
-              res?.forEach(async (image) => {
+              res?.forEach(async (image, index) => {
                 const receipt = await createReceiptMutation({
                   url: image.url,
                   groceryTripId: groceryTrip.id,
@@ -240,6 +240,9 @@ export const GroceryTrip = () => {
                   receiptId: receipt.id,
                   url: image.url,
                 })
+                if (res.length === index + 1) {
+                  await refetch()
+                }
               })
 
               notifications.show({
@@ -247,7 +250,6 @@ export const GroceryTrip = () => {
                 title: "Success",
                 message: "File(s) uploaded!",
               })
-              await refetch()
             }}
             onUploadError={(error: Error) => {
               console.log("ERROR", error)
