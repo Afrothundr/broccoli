@@ -1,3 +1,4 @@
+import { Routes } from "@blitzjs/next"
 import { Container, Flex, Loader, SimpleGrid, Title } from "@mantine/core"
 import { Suspense } from "react"
 import { AverageGroceryCost } from "src/core/components/AverageGroceryCost"
@@ -42,5 +43,6 @@ const DashboardsPage = () => {
 }
 
 DashboardsPage.getLayout = (page) => <Layout title="Dashboard">{page}</Layout>
+DashboardsPage.authenticate = { redirectTo: Routes.LoginPage() }
 
 export default DashboardsPage

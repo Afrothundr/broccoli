@@ -35,6 +35,7 @@ import {
 } from "@tabler/icons-react"
 import dayjs from "dayjs"
 
+import { backOff } from "exponential-backoff"
 import { processImageQueue } from "src/api/processImageQueue"
 import BroccoliTable from "src/core/components/BroccoliTable"
 import { ConfirmationModal } from "src/core/components/ConfirmationModal"
@@ -241,7 +242,10 @@ export const GroceryTrip = () => {
                   url: image.url,
                 })
                 if (res.length === index + 1) {
-                  await refetch()
+                  await backOff(async () => {
+                    console.log("attempt")
+                    await refetch()
+                  })
                 }
               })
 

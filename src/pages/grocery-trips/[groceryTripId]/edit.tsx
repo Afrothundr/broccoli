@@ -6,7 +6,7 @@ import { useRouter } from "next/router"
 import { Suspense } from "react"
 
 import Layout from "src/core/layouts/Layout"
-import { FORM_ERROR, GroceryTripForm } from "src/grocery-trips/components/GroceryTripForm"
+import { GroceryTripForm } from "src/grocery-trips/components/GroceryTripForm"
 import updateGroceryTrip from "src/grocery-trips/mutations/updateGroceryTrip"
 import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
 import { UpdateGroceryTripSchema } from "src/grocery-trips/schemas"
@@ -35,12 +35,12 @@ export const EditGroceryTrip = () => {
         <Suspense fallback={<div>Loading...</div>}>
           <GroceryTripForm
             submitText="Update GroceryTrip"
-            schema={UpdateGroceryTripSchema}
             initialValues={groceryTrip}
             onSubmit={async (values) => {
+              const formValues = UpdateGroceryTripSchema.parse(values)
               try {
                 const updated = await updateGroceryTripMutation({
-                  ...values,
+                  ...formValues,
                   id: groceryTrip.id,
                 })
                 await setQueryData({
@@ -51,9 +51,6 @@ export const EditGroceryTrip = () => {
                 await router.push(Routes.ShowGroceryTripPage({ groceryTripId: updated.id }))
               } catch (error: any) {
                 console.error(error)
-                return {
-                  [FORM_ERROR]: error.toString(),
-                }
               }
             }}
           />

@@ -1,14 +1,13 @@
-import { Suspense } from "react"
-import { Routes } from "@blitzjs/next"
+import { Routes, useParam } from "@blitzjs/next"
+import { useMutation, useQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { useQuery, useMutation } from "@blitzjs/rpc"
-import { useParam } from "@blitzjs/next"
+import { Suspense } from "react"
 
 import Layout from "src/core/layouts/Layout"
-import getItemType from "src/item-types/queries/getItemType"
 import deleteItemType from "src/item-types/mutations/deleteItemType"
+import getItemType from "src/item-types/queries/getItemType"
 
 export const ItemType = () => {
   const router = useRouter()
@@ -25,8 +24,6 @@ export const ItemType = () => {
       <div>
         <h1>ItemType {itemType.id}</h1>
         <pre>{JSON.stringify(itemType, null, 2)}</pre>
-
-        <Link href={Routes.EditItemTypePage({ itemTypeId: itemType.id })}>Edit</Link>
 
         <button
           type="button"

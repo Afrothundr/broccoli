@@ -2,7 +2,6 @@ import { useSession } from "@blitzjs/auth"
 import { useMutation, useQuery } from "@blitzjs/rpc"
 import { Modal, Title } from "@mantine/core"
 import dayjs from "dayjs"
-import { FORM_ERROR } from "final-form"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import useItemTypes from "src/items/hooks/useItemTypes"
 import createItem from "src/items/mutations/createItem"
@@ -45,35 +44,28 @@ export const NewItemModal = ({
         submitText="Create Item"
         itemTypeData={ItemTypeGrouper(itemTypes)}
         groceryTripData={groceryTripsData}
-        schema={CreateItemSchema.omit({
-          userId: true,
-          reminderSpanSeconds: true,
-        })}
         initialValues={{
           groceryTripId: groceryTripIdDefault || groceryTripsData[0]?.value,
           itemTypes: [],
         }}
         onSubmit={async (values) => {
-          try {
-            const itemType = itemTypes.find(
-              (item) => item.id == parseInt(values.itemTypes[0] || "")
-            )
-            const item = await createItemMutation({
-              ...values,
-              groceryTripId: values.groceryTripId,
-              userId: userId || 0,
-              reminderSpanSeconds: itemType?.suggested_life_span_seconds ?? -1,
-            })
+          const formValues = CreateItemSchema.omit({
+            reminderSpanSeconds: true,
+            userId: true,
+          }).parse(values)
+          const itemType = itemTypes.find(
+            (item) => item.id === Number.parseInt(formValues.itemTypes[0] || "")
+          )
+          const item = await createItemMutation({
+            ...formValues,
+            groceryTripId: formValues.groceryTripId,
+            userId: userId || 0,
+            reminderSpanSeconds: itemType?.suggested_life_span_seconds ?? -1,
+          })
 
-            await queueItemUpdates(item, itemType)
+          await queueItemUpdates(item, itemType)
 
-            onModalClose()
-          } catch (error: any) {
-            console.error(error)
-            return {
-              [FORM_ERROR]: error.toString(),
-            }
-          }
+          onModalClose()
         }}
       />
     </Modal>

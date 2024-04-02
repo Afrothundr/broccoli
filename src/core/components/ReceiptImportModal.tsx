@@ -8,13 +8,13 @@ import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
 import useItemTypes from "src/items/hooks/useItemTypes"
 import createItem from "src/items/mutations/createItem"
 import updateItem from "src/items/mutations/updateItem"
-import { UpdateItemSchema } from "src/items/schemas"
-import { CombinedItemType } from "src/pages/items"
+import { CreateItemSchema, UpdateItemSchema } from "src/items/schemas"
+import type { CombinedItemType } from "src/pages/items"
 import updateReceipt from "src/receipts/mutations/updateReceipt"
 import getReceipt from "src/receipts/queries/getReceipt"
 import { ItemTypeGrouper } from "../utils/ItemTypeGrouper"
 import { queueItemUpdates } from "../utils/QueueItemUpdates"
-import { FORM_ERROR, ItemForm } from "./ItemForm"
+import { ItemForm } from "./ItemForm"
 
 type ReceiptImportModalProps = {
   onModalClose: () => void
@@ -72,12 +72,14 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
   const [updateItemMutation] = useMutation(updateItem)
   const [importedData, setImportedData] = useState<(CombinedItemType | ImportedItemProps)[]>([])
   const [itemIndex, setItemIndex] = useState(0)
+  const [activeItem, setActiveItem] = useState<CombinedItemType | ImportedItemProps | undefined>()
   const itemTypes = useItemTypes()
 
   const nextStep = () => {
     const nextIndex = itemIndex + 1
     if (nextIndex <= importedData.length - 1) {
       setItemIndex(nextIndex)
+      setActiveItem(importedData[nextIndex])
     } else {
       onModalClose()
     }
@@ -86,30 +88,40 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
     const previousIndex = itemIndex - 1
     if (itemIndex !== 0) {
       setItemIndex(previousIndex)
+      setActiveItem(importedData[previousIndex])
     }
   }
 
   useEffect(() => {
+    if (importedData.length) return
+
     const scrapedData = JSON.parse(receipt.scrapedData as string)
     if ("items" in scrapedData) {
       const mergedData = (scrapedData.items as ImportedItemProps[]).map((data) => {
         const foundSubmittedItem = receipt?.items.find((item) => item.importId === data?.importId)
-        return foundSubmittedItem ? foundSubmittedItem : data
+        return foundSubmittedItem
+          ? foundSubmittedItem
+          : { ...data, price: Number.parseFloat(data?.price?.toString() || "0") }
       })
       setImportedData(mergedData)
+      setActiveItem(mergedData[itemIndex])
     }
-  }, [receipt])
-
-  const activeItem = importedData[itemIndex]
+  }, [receipt, itemIndex, importedData])
 
   const isItemSaved = !!receipt?.items.find((item) => item.importId === activeItem?.importId)
 
-  const handleNewItemSave = async (values: NewItemProps) => {
+  const handleNewItemSave = async (values) => {
     try {
-      const itemType = itemTypes.find((item) => item.id == parseInt(values.itemTypes[0] || ""))
+      const formValues = CreateItemSchema.omit({
+        reminderSpanSeconds: true,
+        userId: true,
+      }).parse(values)
+      const itemType = itemTypes.find(
+        (item) => item.id === Number.parseInt(values.itemTypes[0] || "")
+      )
       const item = await createItemMutation({
-        ...values,
-        groceryTripId: values.groceryTripId,
+        ...formValues,
+        groceryTripId: formValues.groceryTripId,
         userId: userId || 0,
         reminderSpanSeconds: itemType?.suggested_life_span_seconds ?? -1,
       })
@@ -120,26 +132,21 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
       await queueItemUpdates(item, itemType)
       await refetch()
       nextStep()
-    } catch (error: any) {
+    } catch (error) {
       console.error(error)
-      return {
-        [FORM_ERROR]: error.toString(),
-      }
     }
   }
 
   const handleItemUpdate = async (values: UpdateItemProps) => {
+    const formValues = UpdateItemSchema.parse(values)
     try {
       await updateItemMutation({
-        ...values,
+        ...formValues,
       })
       await refetch()
       nextStep()
-    } catch (error: any) {
+    } catch (error) {
       console.error(error)
-      return {
-        [FORM_ERROR]: error.toString(),
-      }
     }
   }
 
@@ -191,7 +198,6 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
                   submitText={isItemSaved ? "Update Item" : "Save Item"}
                   itemTypeData={ItemTypeGrouper(itemTypes)}
                   groceryTripData={[groceryTripsData]}
-                  schema={UpdateItemSchema}
                   initialValues={{
                     ...activeItem,
                     importId: activeItem?.importId || "",

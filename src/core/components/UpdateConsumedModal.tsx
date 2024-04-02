@@ -1,9 +1,8 @@
 import { useMutation } from "@blitzjs/rpc"
 import { Box, Modal, Title } from "@mantine/core"
-import { FORM_ERROR } from "final-form"
 import updateItem from "src/items/mutations/updateItem"
 import { UpdateItemSchema } from "src/items/schemas"
-import { CombinedItemType } from "src/pages/items"
+import type { CombinedItemType } from "src/pages/items"
 import { UpdateConsumedForm } from "./UpdateConsumedForm"
 
 type UpdateConsumedModalProps = {
@@ -30,31 +29,28 @@ export const UpdateConsumedModal = ({
       <Box mt="lg">
         <UpdateConsumedForm
           submitText="Update!"
-          schema={UpdateItemSchema.pick({
-            percentConsumed: true,
-          })}
           initialValues={{
             percentConsumed: item?.percentConsumed,
           }}
           onSubmit={async (values) => {
+            const formValues = UpdateItemSchema.pick({
+              percentConsumed: true,
+            }).parse(values)
             if (item) {
               try {
                 await updateItemMutation({
                   ...item,
-                  ...values,
+                  ...formValues,
                   itemTypes: item.itemTypes.map((item) => item.id.toString()),
                   groceryTripId: item.groceryTripId.toString(),
                 })
                 onModalClose()
-              } catch (error: any) {
-                console.error(error)
-                return {
-                  [FORM_ERROR]: error.toString(),
-                }
+              } catch (err) {
+                console.error(err)
               }
             }
             if (onSubmit) {
-              onSubmit(values.percentConsumed)
+              onSubmit(formValues.percentConsumed)
             }
           }}
         />

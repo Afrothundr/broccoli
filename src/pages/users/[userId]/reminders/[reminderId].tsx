@@ -1,14 +1,13 @@
-import { Suspense } from "react"
-import { Routes } from "@blitzjs/next"
+import { Routes, useParam } from "@blitzjs/next"
+import { useMutation, useQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { useQuery, useMutation } from "@blitzjs/rpc"
-import { useParam } from "@blitzjs/next"
+import { Suspense } from "react"
 
 import Layout from "src/core/layouts/Layout"
-import getReminder from "src/reminders/queries/getReminder"
 import deleteReminder from "src/reminders/mutations/deleteReminder"
+import getReminder from "src/reminders/queries/getReminder"
 
 export const Reminder = () => {
   const router = useRouter()
@@ -26,15 +25,6 @@ export const Reminder = () => {
       <div>
         <h1>Reminder {reminder.id}</h1>
         <pre>{JSON.stringify(reminder, null, 2)}</pre>
-
-        <Link
-          href={Routes.EditReminderPage({
-            userId: userId!,
-            reminderId: reminder.id,
-          })}
-        >
-          Edit
-        </Link>
 
         <button
           type="button"

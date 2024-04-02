@@ -31,7 +31,7 @@ export const StorageAdvice = () => {
     return validTypes.includes(item.status)
   })
 
-  currentItems.forEach((item) => {
+  for (const item of currentItems) {
     const itemTypeId = item.itemTypes[0]?.id
     const itemTypeName = item.itemTypes[0]?.name
     const itemTypeStorageAdvice = item.itemTypes[0]?.storage_advice
@@ -47,7 +47,7 @@ export const StorageAdvice = () => {
         }))
       }
     }
-  })
+  }
 
   return (
     <Stack mt={"lg"}>

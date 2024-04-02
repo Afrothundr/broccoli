@@ -12,11 +12,11 @@ export default resolver.pipe(
       data: {
         ...data,
         itemTypes: {
-          connect: data.itemTypes.map((id) => ({ id: parseInt(id) })),
+          connect: data.itemTypes.map((id) => ({ id: Number.parseInt(id) })),
         },
         groceryTrip: {
           connect: {
-            id: parseInt(groceryTripId),
+            id: Number.parseInt(groceryTripId),
           },
         },
       },

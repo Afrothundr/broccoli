@@ -1,13 +1,32 @@
 import { BlitzPage } from "@blitzjs/next"
 import { useMutation } from "@blitzjs/rpc"
+import { Alert, Button, Group, TextInput } from "@mantine/core"
+import { useForm } from "@mantine/form"
+import { useState } from "react"
 import forgotPassword from "src/auth/mutations/forgotPassword"
-import { ForgotPassword } from "src/auth/schemas"
-import { Form, FORM_ERROR } from "src/core/components/Form"
-import { LabeledTextField } from "src/core/components/LabeledTextField"
+import { RequiredValidation } from "src/core/types"
 import { AuthLayout } from "./layout"
 
 const ForgotPasswordPage: BlitzPage = () => {
   const [forgotPasswordMutation, { isSuccess }] = useMutation(forgotPassword)
+  const [error, setError] = useState<string>()
+
+  const form = useForm({
+    initialValues: {
+      email: "",
+    },
+    validate: {
+      email: RequiredValidation,
+    },
+  })
+
+  const onSubmit = async (values) => {
+    try {
+      await forgotPasswordMutation(values)
+    } catch (error: any) {
+      setError("Sorry, we had an unexpected error. Please try again.")
+    }
+  }
 
   return (
     <>
@@ -20,22 +39,17 @@ const ForgotPasswordPage: BlitzPage = () => {
           </p>
         </div>
       ) : (
-        <Form
-          submitText="Send Reset Password Instructions"
-          schema={ForgotPassword}
-          initialValues={{ email: "" }}
-          onSubmit={async (values) => {
-            try {
-              await forgotPasswordMutation(values)
-            } catch (error: any) {
-              return {
-                [FORM_ERROR]: "Sorry, we had an unexpected error. Please try again.",
-              }
-            }
-          }}
-        >
-          <LabeledTextField name="email" label="Email" placeholder="Email" />
-        </Form>
+        <form onSubmit={form.onSubmit((values) => onSubmit(values))}>
+          <TextInput withAsterisk type="email" label="Email" {...form.getInputProps("email")} />
+          <Group justify="flex-end" mt="md">
+            <Button type="submit">Send Reset Password Instructions</Button>
+          </Group>
+          {error && (
+            <Alert title="Error:" variant="light" color="pink">
+              {error}
+            </Alert>
+          )}
+        </form>
       )}
     </>
   )

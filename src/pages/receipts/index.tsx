@@ -49,10 +49,6 @@ const ReceiptsPage = () => {
       </Head>
 
       <div>
-        <p>
-          <Link href={Routes.NewReceiptPage()}>Create Receipt</Link>
-        </p>
-
         <Suspense fallback={<div>Loading...</div>}>
           <ReceiptsList />
         </Suspense>

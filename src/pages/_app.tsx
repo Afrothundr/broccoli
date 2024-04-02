@@ -1,4 +1,10 @@
-import { AppProps, ErrorBoundary, ErrorComponent, ErrorFallbackProps } from "@blitzjs/next"
+import {
+  ErrorBoundary,
+  ErrorComponent,
+  Routes,
+  type AppProps,
+  type ErrorFallbackProps,
+} from "@blitzjs/next"
 import { MantineProvider } from "@mantine/core"
 import "@mantine/core/styles.css"
 import { Notifications } from "@mantine/notifications"
@@ -6,27 +12,28 @@ import "@mantine/notifications/styles.css"
 import "@uploadthing/react/styles.css"
 import { AuthenticationError, AuthorizationError } from "blitz"
 import { IKContext } from "imagekitio-react"
+import { useRouter } from "next/navigation"
 import { withBlitz } from "src/blitz-client"
 import "src/styles/globals.css"
 
 function RootErrorFallback({ error }: ErrorFallbackProps) {
+  const router = useRouter()
   if (error instanceof AuthenticationError) {
-    return <div>Error: You are not authenticated</div>
-  } else if (error instanceof AuthorizationError) {
+    router.push(Routes.LoginPage().href)
+    return <ErrorComponent statusCode={error.statusCode} title="Unauthorized" />
+  }
+
+  if (error instanceof AuthorizationError) {
     return (
       <ErrorComponent
         statusCode={error.statusCode}
         title="Sorry, you are not authorized to access this"
       />
     )
-  } else {
-    return (
-      <ErrorComponent
-        statusCode={(error as any)?.statusCode || 400}
-        title={error.message || error.name}
-      />
-    )
   }
+  return (
+    <ErrorComponent statusCode={error?.statusCode || 400} title={error.message || error.name} />
+  )
 }
 
 function MyApp({ Component, pageProps }: AppProps) {

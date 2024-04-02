@@ -1,28 +1,34 @@
-import { Field } from "react-final-form"
-import DatePickerInput from "src/core/components/DatePickerInput"
-import { Form, FormProps } from "src/core/components/Form"
-import { LabeledTextField } from "src/core/components/LabeledTextField"
+import { Button, Group, TextInput } from "@mantine/core"
+import { DateInput } from "@mantine/dates"
+import { useForm } from "@mantine/form"
+import { RequiredValidation, type FormProps } from "src/core/types"
 
-import { z } from "zod"
-export { FORM_ERROR } from "src/core/components/Form"
-
-export function GroceryTripForm<S extends z.ZodType<any, any>>(props: FormProps<S>) {
+export function GroceryTripForm({ onSubmit, initialValues, submitText = "Submit" }: FormProps) {
+  const form = useForm({
+    initialValues: {
+      createdAt: "",
+      name: "",
+      description: "",
+      ...initialValues,
+    },
+    validate: {
+      createdAt: RequiredValidation,
+      name: RequiredValidation,
+    },
+  })
   return (
-    <Form<S> {...props}>
-      <Field
-        component={DatePickerInput}
-        name="createdAt"
-        asterisk
+    <form onSubmit={form.onSubmit((values) => onSubmit(values))}>
+      <DateInput
+        withAsterisk
         label="Date"
+        {...form.getInputProps("createdAt")}
         defaultValue={new Date()}
       />
-      <LabeledTextField name="name" label="Name" required placeholder="name" type="text" />
-      <LabeledTextField
-        name="description"
-        label="Description"
-        placeholder="Description"
-        type="text"
-      />
-    </Form>
+      <TextInput withAsterisk label="Name" {...form.getInputProps("name")} />
+      <TextInput label="Description" {...form.getInputProps("description")} />
+      <Group justify="flex-end" mt="md">
+        <Button type="submit">{submitText}</Button>
+      </Group>
+    </form>
   )
 }

@@ -1,5 +1,5 @@
 import { BlitzPage, Routes } from "@blitzjs/next"
-import { Text } from "@mantine/core"
+import { Anchor, Stack, Text } from "@mantine/core"
 import Link from "next/link"
 import { useRouter } from "next/router"
 import { LoginForm } from "src/auth/components/LoginForm"
@@ -11,14 +11,21 @@ const LoginPage: BlitzPage = () => {
   return (
     <>
       <LoginForm />
-      <Text ta="center" mt="lg">
-        Don&apos;t have an account?{" "}
-        <Link href={Routes.SignupPage()}>
-          <Text c="blue" fw={700}>
-            Sign Up
-          </Text>
-        </Link>
-      </Text>
+      <Stack align="center" mt="lg">
+        <div>
+          <Anchor>
+            <Link href={Routes.ForgotPasswordPage()}>Forgot your password?</Link>
+          </Anchor>
+        </div>
+        <Text ta="center">
+          Don&apos;t have an account?{" "}
+          <Link href={Routes.SignupPage()}>
+            <Text c="blue" fw={700}>
+              Sign Up
+            </Text>
+          </Link>
+        </Text>
+      </Stack>
     </>
   )
 }

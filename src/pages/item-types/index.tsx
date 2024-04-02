@@ -1,9 +1,9 @@
-import { Suspense } from "react"
 import { Routes } from "@blitzjs/next"
+import { usePaginatedQuery } from "@blitzjs/rpc"
 import Head from "next/head"
 import Link from "next/link"
-import { usePaginatedQuery } from "@blitzjs/rpc"
 import { useRouter } from "next/router"
+import { Suspense } from "react"
 import Layout from "src/core/layouts/Layout"
 import getItemTypes from "src/item-types/queries/getItemTypes"
 
@@ -49,10 +49,6 @@ const ItemTypesPage = () => {
       </Head>
 
       <div>
-        <p>
-          <Link href={Routes.NewItemTypePage()}>Create ItemType</Link>
-        </p>
-
         <Suspense fallback={<div>Loading...</div>}>
           <ItemTypesList />
         </Suspense>

@@ -15,7 +15,6 @@ import {
 } from "@mantine/core"
 import { IconChevronRight, IconPlus } from "@tabler/icons-react"
 import dayjs from "dayjs"
-import { FORM_ERROR } from "final-form"
 import { useRouter } from "next/router"
 import { Suspense, useMemo, useState } from "react"
 import { BroccoliFooter } from "src/core/components/BroccoliFooter"
@@ -156,19 +155,16 @@ const GroceryTripsPage: BlitzPage = () => {
       >
         <GroceryTripForm
           submitText="save"
-          schema={CreateGroceryTripSchema.omit({ userId: true })}
           onSubmit={async (values) => {
+            const formValues = CreateGroceryTripSchema.omit({ userId: true }).parse(values)
             try {
               const groceryTrip = await createGroceryTripMutation({
-                ...values,
+                ...formValues,
                 userId: userId ?? 0,
               })
               await router.push(Routes.ShowGroceryTripPage({ groceryTripId: groceryTrip.id }))
             } catch (error: any) {
               console.error(error)
-              return {
-                [FORM_ERROR]: error.toString(),
-              }
             }
           }}
         />

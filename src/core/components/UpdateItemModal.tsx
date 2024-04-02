@@ -2,12 +2,11 @@ import { useSession } from "@blitzjs/auth"
 import { useMutation, useQuery } from "@blitzjs/rpc"
 import { Modal } from "@mantine/core"
 import dayjs from "dayjs"
-import { FORM_ERROR } from "final-form"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import useItemTypes from "src/items/hooks/useItemTypes"
 import updateItem from "src/items/mutations/updateItem"
 import { UpdateItemSchema } from "src/items/schemas"
-import { CombinedItemType } from "src/pages/items"
+import type { CombinedItemType } from "src/pages/items"
 import { ItemTypeGrouper } from "../utils/ItemTypeGrouper"
 import { ItemForm } from "./ItemForm"
 
@@ -43,23 +42,20 @@ export const UpdateItemModal = ({ onModalClose, item }: UpdateItemModalProps): J
         submitText="Update Item"
         itemTypeData={ItemTypeGrouper(itemTypes)}
         groceryTripData={groceryTripsData}
-        schema={UpdateItemSchema}
         initialValues={{
           ...item,
           groceryTripId: item.groceryTripId.toString(),
           itemTypes: item.itemTypes.map((type) => type.id.toString()),
         }}
         onSubmit={async (values) => {
+          const formValues = UpdateItemSchema.parse(values)
           try {
             await updateItemMutation({
-              ...values,
+              ...formValues,
             })
             onModalClose()
-          } catch (error: any) {
+          } catch (error) {
             console.error(error)
-            return {
-              [FORM_ERROR]: error.toString(),
-            }
           }
         }}
       />
