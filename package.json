@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "blitz dev",
-    "build": "yarn blitz prisma migrate deploy && yarn blitz prisma generate && yarn blitz build",
+    "build": "yarn blitz prisma migrate deploy && yarn blitz db seed && yarn blitz prisma generate && yarn blitz build",
     "start": "blitz start",
     "studio": "blitz prisma studio",
     "lint": "eslint --ignore-path .gitignore --ext .js,.ts,.tsx .",
