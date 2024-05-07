@@ -37,7 +37,7 @@
     "@mantine/next": "6.0.21",
     "@mantine/notifications": "7.2.2",
     "@prisma/client": "4.6.1",
-    "@tabler/icons-react": "2.21.0",
+    "@tabler/icons-react": "3.3.0",
     "@tanstack/match-sorter-utils": "8.8.4",
     "@tanstack/react-table": "8.10.7",
     "@uploadthing/react": "5.7.0",
