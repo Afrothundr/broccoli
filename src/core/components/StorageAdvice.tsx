@@ -5,6 +5,7 @@ import { ItemStatusType } from "@prisma/client"
 import { IconBulb } from "@tabler/icons-react"
 import { useState } from "react"
 import getItems from "src/items/queries/getItems"
+import { NON_PERISHABLE_TYPE } from "../types"
 
 type Advice = {
   id: number
@@ -17,8 +18,9 @@ export const StorageAdvice = () => {
   const [{ items }] = useQuery(getItems, {
     where: {
       userId: userId ?? 0,
+      name: { not: NON_PERISHABLE_TYPE },
     },
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "asc" },
   })
   const [storageAdvice, setStorageAdvice] = useState<Record<number, Advice>>({})
 
@@ -57,12 +59,12 @@ export const StorageAdvice = () => {
       {Object.values(storageAdvice).map((storageAdvice) => (
         <Card shadow="sm" radius="md" withBorder key={storageAdvice.id}>
           <Group justify="space-between" mb="xs">
-            <Text fw={500}>Did You Know?</Text>
+            <Text fw={500}>{storageAdvice.name}</Text>
             <IconBulb />
           </Group>
 
           <Text size="sm" c="dimmed">
-            {storageAdvice.name} can last longer if you {storageAdvice.advice.toLowerCase()}
+            {storageAdvice.advice.toLowerCase()}
           </Text>
         </Card>
       ))}
