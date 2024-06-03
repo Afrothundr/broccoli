@@ -1,5 +1,6 @@
 import dayjs from "dayjs"
 import duration from "dayjs/plugin/duration"
+import { NON_PERISHABLE_TYPE } from "src/core/types"
 
 dayjs.extend(duration)
 
@@ -655,5 +656,11 @@ export const ITEM_TYPES: Record<
     storage_advice: "Refrigerate airtight container",
     suggested_life_span_seconds: dayjs.duration({ weeks: 2, days: 3 }).asSeconds(),
     category: "Dairy",
+  },
+  [NON_PERISHABLE_TYPE]: {
+    name: NON_PERISHABLE_TYPE,
+    storage_advice: "",
+    suggested_life_span_seconds: 0,
+    category: "Other",
   },
 }
