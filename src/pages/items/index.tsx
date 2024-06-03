@@ -5,6 +5,7 @@ import {
   ActionIcon,
   Badge,
   Card,
+  Chip,
   CloseButton,
   Container,
   Group,
@@ -37,6 +38,7 @@ import Layout from "src/core/layouts/Layout"
 import updateItem from "src/items/mutations/updateItem"
 import getItems from "src/items/queries/getItems"
 import styles from "src/styles/ActionItem.module.css"
+import { getItemStatusColor } from "src/utils/ItemStatusTypeHelpers"
 import { NewItemModal } from "../../core/components/NewItemModal"
 
 export type CombinedItemType = Item & {
@@ -46,7 +48,7 @@ export type CombinedItemType = Item & {
   }[]
 }
 
-export const ItemsList = ({ search }: { search: string }) => {
+export const ItemsList = ({ search, filters }: { search: string; filters: ItemStatusType[] }) => {
   const [updateItemMutation] = useMutation(updateItem)
   const [percentageEatenModalOpen, setPercentageEatenModalOpen] = useState(false)
   const [updateItemModalOpened, setUpdateItemModalOpened] = useState(false)
@@ -58,14 +60,16 @@ export const ItemsList = ({ search }: { search: string }) => {
       name: {
         search: search.trim().split(" ").join(" & "),
       },
+      status: filters.length ? { in: filters } : undefined,
     },
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "asc" },
   })
   const [{ items: defaultItems }, { refetch: refetchDefault }] = useQuery(getItems, {
     where: {
       userId: userId ?? 0,
+      status: filters.length ? { in: filters } : undefined,
     },
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "asc" },
     take: 50,
   })
   const handleUpdate = async () => {
@@ -212,6 +216,14 @@ export const ItemsList = ({ search }: { search: string }) => {
 const ItemsPage = () => {
   const [newItemModalOpened, setNewItemModalOpened] = useState(false)
   const [search, setSearch] = useState("")
+  const [filters, setFilters] = useState<ItemStatusType[]>([
+    ItemStatusType.FRESH,
+    ItemStatusType.OLD,
+  ])
+
+  const handleFilterChange = (value: ItemStatusType[]) => {
+    setFilters(value)
+  }
 
   return (
     <Container size="lg">
@@ -239,8 +251,23 @@ const ItemsPage = () => {
         leftSection={<IconSearch />}
         rightSection={search && <CloseButton onClick={() => setSearch("")} />}
       />
+      <Group my={"md"}>
+        <Text>Status:</Text>
+        <Chip.Group multiple value={filters} onChange={handleFilterChange}>
+          {Object.values(ItemStatusType).map((type) => (
+            <Chip
+              key={type}
+              checked={filters.includes(type)}
+              value={type}
+              color={getItemStatusColor(type)}
+            >
+              {type.toLowerCase()}
+            </Chip>
+          ))}
+        </Chip.Group>
+      </Group>
       <Suspense fallback={<div>Loading...</div>}>
-        <ItemsList search={search} />
+        <ItemsList search={search} filters={filters} />
       </Suspense>
       {newItemModalOpened && (
         <Suspense fallback={<div>Loading...</div>}>
