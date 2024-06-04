@@ -4,7 +4,6 @@ import { useQuery } from "@blitzjs/rpc"
 import { Card, NumberFormatter, Text, Title, useMantineTheme } from "@mantine/core"
 import { ItemStatusType } from "@prisma/client"
 import Link from "next/link"
-import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 
 export const AverageLoss = () => {
@@ -41,33 +40,20 @@ export const AverageLoss = () => {
     <Card mt="sm" withBorder shadow="sm" radius="md" style={{ minHeight: 150 }}>
       <Card.Section withBorder inheritPadding py="xs">
         <Title order={4} style={{ textAlign: "center" }}>
-          Average percentage of items used per grocery trip:{" "}
-          {<NumberFormatter suffix="%" value={Math.round(averageConsumed * 100)} />}
+          Percentage of items used per grocery trip
         </Title>
       </Card.Section>
       <Card.Section>
         {groceryTrips.length ? (
-          <ResponsiveContainer width={"100%"} height={400}>
-            <PieChart width={600} height={600} data={data}>
-              <Pie
-                dataKey="value"
-                labelLine={false}
-                label={renderCustomizedLabel}
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                fill="#8884d8"
-                outerRadius={150}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.name === "eaten" ? theme.colors.green[4] : theme.colors.red[4]}
-                  />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
+          <Text
+            variant="gradient"
+            gradient={{ from: "green", to: "teal" }}
+            fw={900}
+            ta="center"
+            style={{ fontSize: "3rem" }}
+          >
+            <NumberFormatter suffix="%" value={Math.round(averageConsumed * 100)} />
+          </Text>
         ) : (
           <Text>
             No grocery trips yet! <Link href={Routes.GroceryTripsPage()}>Add one</Link>
