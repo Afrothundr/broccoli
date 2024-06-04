@@ -37,7 +37,7 @@ export const CurrentSavings = () => {
     <Card withBorder shadow="sm" radius="md" style={{ minHeight: 150 }}>
       <Card.Section withBorder inheritPadding py="xs">
         <Title order={4} style={{ textAlign: "center" }}>
-          Average Savings compared to typical household
+          Savings compared to typical household
         </Title>
       </Card.Section>
       <Card.Section>

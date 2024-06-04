@@ -4,6 +4,7 @@ import { Suspense } from "react"
 import { AverageGroceryCost } from "src/core/components/AverageGroceryCost"
 import { AverageLoss } from "src/core/components/AverageLoss"
 import { CurrentSavings } from "src/core/components/CurrentSavings"
+import { ItemTypeBreakdown } from "src/core/components/ItemTypeBreakdown"
 import { StorageAdvice } from "src/core/components/StorageAdvice"
 import Layout from "src/core/layouts/Layout"
 
@@ -19,6 +20,9 @@ export const Dashboard = () => {
         <SimpleGrid cols={{ base: 1, lg: 2 }}>
           <Suspense fallback={<Loader />}>
             <AverageGroceryCost />
+          </Suspense>
+          <Suspense fallback={<Loader />}>
+            <ItemTypeBreakdown />
           </Suspense>
           <Suspense fallback={<Loader />}>
             <AverageLoss />
