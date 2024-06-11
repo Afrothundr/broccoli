@@ -6,6 +6,7 @@ import {
   Box,
   Burger,
   Group,
+  Image,
   Loader,
   NavLink,
   Stack,
@@ -44,10 +45,10 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
             padding="md"
           >
             <AppShell.Header>
-              <Group h="100%" px="md" justify="space-between">
+              <Group h="100%" px="28px" justify="space-between">
                 <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
                 <Link href={Routes.DashboardsPage()}>
-                  <span>Broccoli App</span>
+                  <Image src="/logo.png" alt="Broccoli logo" h={45} />
                 </Link>
                 <ActionIcon
                   size="lg"

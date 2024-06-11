@@ -120,7 +120,7 @@ export const GroceryTrip = () => {
         cell: ({ row }) => (
           <Group>
             {row.original.itemTypes.map((itemType) => (
-              <Badge variant="light" key={itemType.name + row.original.id}>
+              <Badge variant="light" color="gray" key={itemType.name + row.original.id}>
                 {itemType.name}
               </Badge>
             ))}

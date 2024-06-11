@@ -4,14 +4,7 @@ import { useQuery } from "@blitzjs/rpc"
 import { Card, Text, Title, useMantineTheme } from "@mantine/core"
 import Link from "next/link"
 import { useMemo } from "react"
-import {
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-} from "recharts"
+import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts"
 import getItemTypes from "src/item-types/queries/getItemTypes"
 
 export const ItemTypeBreakdown = () => {
@@ -51,28 +44,45 @@ export const ItemTypeBreakdown = () => {
   }, [itemTypes])
 
   const theme = useMantineTheme()
+  const COLORS = [
+    "#ff6666",
+    "#2ecc70",
+    "#ff9900",
+    "#ffcc99",
+    "#33cc33",
+    "#9933ff", // Purple
+    "#3366ff", // Blue
+    "#6699ff", // Light Blue
+    "#ff33cc", // Pink
+    "#cc33ff", // Violet
+    "#33ffd1", // Turquoise
+    "#339999", // Teal
+    "#8d6a9f", // Muted Purple
+  ]
 
   return (
-    <Card mt="sm" withBorder shadow="sm" radius="md" style={{ minHeight: 150 }}>
+    <Card radius="md" style={{ minHeight: 150 }}>
       <Card.Section withBorder inheritPadding py="xs">
-        <Title order={4} style={{ textAlign: "center" }}>
-          Item type breakdown
-        </Title>
+        <Title order={4}>Item purchase breakdown</Title>
       </Card.Section>
       <Card.Section>
         {itemTypes.length ? (
-          <ResponsiveContainer width={"100%"} height={400}>
-            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={itemTypesCategories}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="name" />
-              <PolarRadiusAxis />
-              <Radar
+          <ResponsiveContainer width={"100%"} height={300}>
+            <PieChart cx="70%" cy="70%">
+              <Pie
+                data={itemTypesCategories}
+                innerRadius={30}
+                outerRadius={80}
+                fill="#8884d8"
+                paddingAngle={3}
                 dataKey="value"
-                stroke={theme.colors.green[8]}
-                fill={theme.colors.green[2]}
-                fillOpacity={0.6}
-              />
-            </RadarChart>
+                label={({ index }) => itemTypesCategories[index]?.name}
+              >
+                {itemTypesCategories.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+            </PieChart>
           </ResponsiveContainer>
         ) : (
           <Text>

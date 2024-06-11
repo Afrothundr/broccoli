@@ -1,5 +1,5 @@
 import { Routes } from "@blitzjs/next"
-import { Container, Flex, Loader, SimpleGrid, Title } from "@mantine/core"
+import { Divider, Flex, Group, Loader, Stack, Title } from "@mantine/core"
 import { Suspense } from "react"
 import { AverageGroceryCost } from "src/core/components/AverageGroceryCost"
 import { AverageLoss } from "src/core/components/AverageLoss"
@@ -7,37 +7,43 @@ import { CurrentSavings } from "src/core/components/CurrentSavings"
 import { ItemTypeBreakdown } from "src/core/components/ItemTypeBreakdown"
 import { StorageAdvice } from "src/core/components/StorageAdvice"
 import Layout from "src/core/layouts/Layout"
+import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 
 export const Dashboard = () => {
+  const user = useCurrentUser()
   return (
     <Flex
       direction={{ base: "column", md: "row" }}
       gap={{ base: "sm", md: "md" }}
-      justify={{ sm: "center" }}
+      justify={{ md: "space-between", base: "center" }}
+      p={{ base: "sm", md: "md" }}
     >
-      <Container>
-        <Title>Dashboards</Title>
-        <SimpleGrid cols={{ base: 1, lg: 2 }}>
-          <Suspense fallback={<Loader />}>
-            <AverageGroceryCost />
-          </Suspense>
-          <Suspense fallback={<Loader />}>
-            <ItemTypeBreakdown />
-          </Suspense>
-          <Suspense fallback={<Loader />}>
-            <AverageLoss />
-          </Suspense>
-          <Suspense fallback={<Loader />}>
-            <CurrentSavings />
-          </Suspense>
-        </SimpleGrid>
-      </Container>
-      <Container size="xs">
-        <Title order={2}>Storage Advice</Title>
+      <Stack px="md" justify="between" style={{ flexGrow: 3 }}>
+        <Title>Hello, {user?.firstName}</Title>
+        <Stack gap="md" my="md">
+          <Divider />
+          <Group justify="space-between" gap="xl" grow>
+            <Suspense fallback={<Loader />}>
+              <CurrentSavings />
+            </Suspense>
+            <Suspense fallback={<Loader />}>
+              <AverageLoss />
+            </Suspense>
+          </Group>
+          <Divider />
+        </Stack>
+        <Suspense fallback={<Loader />}>
+          <AverageGroceryCost />
+        </Suspense>
+      </Stack>
+      <Stack style={{ minWidth: "30%" }}>
+        <Suspense fallback={<Loader />}>
+          <ItemTypeBreakdown />
+        </Suspense>
         <Suspense fallback={<Loader />}>
           <StorageAdvice />
         </Suspense>
-      </Container>
+      </Stack>
     </Flex>
   )
 }
