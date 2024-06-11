@@ -1,8 +1,9 @@
 import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { useQuery } from "@blitzjs/rpc"
-import { Card, Text, Title } from "@mantine/core"
+import { ActionIcon, Group, Text, Title } from "@mantine/core"
 import { ItemStatusType } from "@prisma/client"
+import { IconCoin } from "@tabler/icons-react"
 import Link from "next/link"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 
@@ -34,20 +35,19 @@ export const CurrentSavings = () => {
   const averageAmountSaved = (totalCost * savingsPercentage) / data.length
 
   return (
-    <Card withBorder shadow="sm" radius="md" style={{ minHeight: 150 }}>
-      <Card.Section withBorder inheritPadding py="xs">
-        <Title order={4} style={{ textAlign: "center" }}>
-          Savings compared to typical household
-        </Title>
-      </Card.Section>
-      <Card.Section>
+    <Group>
+      <ActionIcon variant="filled" size="xl" radius="xl" aria-label="Savings" color="gray">
+        <IconCoin style={{ width: "70%", height: "70%" }} stroke={1.5} />
+      </ActionIcon>
+      <div>
+        <Title order={4}>Savings</Title>
         {groceryTrips.length ? (
           <Text
             variant="gradient"
             gradient={{ from: "green", to: "teal" }}
             fw={900}
             ta="center"
-            style={{ fontSize: "3rem" }}
+            style={{ fontSize: "2rem" }}
           >
             ${isNaN(averageAmountSaved) ? 0 : averageAmountSaved.toFixed(2)}
           </Text>
@@ -56,7 +56,7 @@ export const CurrentSavings = () => {
             No grocery trips yet! <Link href={Routes.GroceryTripsPage()}>Add one</Link>
           </Text>
         )}
-      </Card.Section>
-    </Card>
+      </div>
+    </Group>
   )
 }

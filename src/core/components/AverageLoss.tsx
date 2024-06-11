@@ -1,8 +1,9 @@
 import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { useQuery } from "@blitzjs/rpc"
-import { Card, NumberFormatter, Text, Title, useMantineTheme } from "@mantine/core"
+import { ActionIcon, Group, NumberFormatter, Text, Title } from "@mantine/core"
 import { ItemStatusType } from "@prisma/client"
+import { IconToolsKitchen2 } from "@tabler/icons-react"
 import Link from "next/link"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 
@@ -23,34 +24,23 @@ export const AverageLoss = () => {
       0
     ),
   }))
-  const theme = useMantineTheme()
 
   const averageConsumed =
     data.reduce((acc, curr) => acc + curr.itemsConsumed / curr.totalItems, 0) / data.length
 
-  const chartData = [
-    { name: "eaten", value: averageConsumed },
-    {
-      name: "loss",
-      value: 1 - averageConsumed,
-    },
-  ]
-
   return (
-    <Card mt="sm" withBorder shadow="sm" radius="md" style={{ minHeight: 150 }}>
-      <Card.Section withBorder inheritPadding py="xs">
-        <Title order={4} style={{ textAlign: "center" }}>
-          Percentage of items used per grocery trip
-        </Title>
-      </Card.Section>
-      <Card.Section>
+    <Group>
+      <ActionIcon variant="filled" size="xl" radius="xl" aria-label="Savings" color="gray">
+        <IconToolsKitchen2 style={{ width: "70%", height: "70%" }} stroke={1.5} />
+      </ActionIcon>
+      <div>
+        <Title order={4}>Usage rate</Title>
         {groceryTrips.length ? (
           <Text
             variant="gradient"
             gradient={{ from: "green", to: "teal" }}
             fw={900}
-            ta="center"
-            style={{ fontSize: "3rem" }}
+            style={{ fontSize: "2rem" }}
           >
             <NumberFormatter suffix="%" value={Math.round(averageConsumed * 100)} />
           </Text>
@@ -59,20 +49,7 @@ export const AverageLoss = () => {
             No grocery trips yet! <Link href={Routes.GroceryTripsPage()}>Add one</Link>
           </Text>
         )}
-      </Card.Section>
-    </Card>
-  )
-}
-
-const RADIAN = Math.PI / 180
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5
-  const x = cx + radius * Math.cos(-midAngle * RADIAN)
-  const y = cy + radius * Math.sin(-midAngle * RADIAN)
-
-  return (
-    <text x={x} y={y} fill="white" textAnchor={x > cx ? "start" : "end"} dominantBaseline="central">
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
+      </div>
+    </Group>
   )
 }

@@ -1,6 +1,6 @@
 import { useSession } from "@blitzjs/auth"
 import { useQuery } from "@blitzjs/rpc"
-import { Card, Group, Stack, Text } from "@mantine/core"
+import { Card, Divider, Group, Stack, Text, Title } from "@mantine/core"
 import { ItemStatusType } from "@prisma/client"
 import { IconBulb } from "@tabler/icons-react"
 import { useState } from "react"
@@ -52,12 +52,17 @@ export const StorageAdvice = () => {
   }
 
   return (
-    <Stack mt={"lg"}>
+    <Stack>
+      <Divider
+        my="xs"
+        label={<Title order={4}>Item storage advice</Title>}
+        labelPosition="center"
+      />
       {!Object.values(storageAdvice).length && (
         <Text>Add some items to get some handy advice!</Text>
       )}
       {Object.values(storageAdvice).map((storageAdvice) => (
-        <Card shadow="sm" radius="md" withBorder key={storageAdvice.id}>
+        <Card radius="md" withBorder key={storageAdvice.id} style={{ minWidth: "70%" }}>
           <Group justify="space-between" mb="xs">
             <Text fw={500}>{storageAdvice.name}</Text>
             <IconBulb />

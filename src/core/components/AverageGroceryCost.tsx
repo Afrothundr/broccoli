@@ -36,9 +36,9 @@ export const AverageGroceryCost = () => {
   const averageCost = (data.reduce((acc, curr) => acc + curr.cost, 0) / data.length).toFixed(2)
   const regressionLine = calculateLineOfBestFit(data)
   return (
-    <Card mt="sm" withBorder shadow="sm" radius="md" style={{ minHeight: 150 }}>
+    <Card mt="sm" radius="md" style={{ minHeight: 150 }}>
       <Card.Section withBorder inheritPadding py="xs">
-        <Title order={4} style={{ textAlign: "center" }}>
+        <Title order={4}>
           Average Grocery Trip Cost:{" "}
           {<NumberFormatter prefix="$" value={averageCost} thousandSeparator />}
         </Title>
