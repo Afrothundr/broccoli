@@ -33,6 +33,7 @@ export const CurrentSavings = () => {
   const BASELINE_LOSS = (1 / 3) * -1
   const savingsPercentage = BASELINE_LOSS + averageConsumed
   const averageAmountSaved = (totalCost * savingsPercentage) / data.length
+  console.log({ averageConsumed, averageAmountSaved, savingsPercentage })
 
   return (
     <Group>
@@ -49,7 +50,7 @@ export const CurrentSavings = () => {
             ta="center"
             style={{ fontSize: "2rem" }}
           >
-            ${isNaN(averageAmountSaved) ? 0 : averageAmountSaved.toFixed(2)}
+            ${Number.isNaN(averageAmountSaved) ? 0 : averageAmountSaved.toFixed(2)}
           </Text>
         ) : (
           <Text>
