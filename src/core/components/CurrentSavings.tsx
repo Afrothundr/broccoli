@@ -27,13 +27,15 @@ export const CurrentSavings = () => {
   }))
 
   const averageConsumed =
-    data.reduce((acc, curr) => acc + curr.itemsConsumed / curr.totalItems, 0) / data.length
+    data.reduce(
+      (acc, curr) => acc + curr.itemsConsumed / (curr.totalItems > 0 ? curr.totalItems : 1),
+      0
+    ) / data.length
   const totalCost = data.reduce((total, trip) => total + trip.cost, 0)
 
   const BASELINE_LOSS = (1 / 3) * -1
   const savingsPercentage = BASELINE_LOSS + averageConsumed
   const averageAmountSaved = (totalCost * savingsPercentage) / data.length
-  console.log({ averageConsumed, averageAmountSaved, savingsPercentage })
 
   return (
     <Group>

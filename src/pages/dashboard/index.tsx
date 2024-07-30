@@ -2,10 +2,10 @@ import { Routes } from "@blitzjs/next"
 import { Divider, Flex, Group, Loader, Stack, Title } from "@mantine/core"
 import { Suspense } from "react"
 import { AverageGroceryCost } from "src/core/components/AverageGroceryCost"
-import { AverageLoss } from "src/core/components/AverageLoss"
 import { CurrentSavings } from "src/core/components/CurrentSavings"
 import { ItemTypeBreakdown } from "src/core/components/ItemTypeBreakdown"
 import { StorageAdvice } from "src/core/components/StorageAdvice"
+import { UsageRate } from "src/core/components/UsageRate"
 import Layout from "src/core/layouts/Layout"
 import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 
@@ -27,7 +27,7 @@ export const Dashboard = () => {
               <CurrentSavings />
             </Suspense>
             <Suspense fallback={<Loader />}>
-              <AverageLoss />
+              <UsageRate />
             </Suspense>
           </Group>
           <Divider />

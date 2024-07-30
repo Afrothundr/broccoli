@@ -7,7 +7,7 @@ import { IconToolsKitchen2 } from "@tabler/icons-react"
 import Link from "next/link"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 
-export const AverageLoss = () => {
+export const UsageRate = () => {
   const { userId } = useSession()
   const [{ groceryTrips }] = useQuery(getGroceryTrips, {
     orderBy: { createdAt: "asc" },
@@ -26,9 +26,11 @@ export const AverageLoss = () => {
   }))
 
   const averageConsumed =
-    data.reduce((acc, curr) => acc + curr.itemsConsumed / curr.totalItems, 0) / data.length
+    data.reduce(
+      (acc, curr) => acc + curr.itemsConsumed / (curr.totalItems > 0 ? curr.totalItems : 1),
+      0
+    ) / data.length
 
-  console.log({ averageConsumed })
   return (
     <Group>
       <ActionIcon variant="filled" size="xl" radius="xl" aria-label="Savings" color="gray">
