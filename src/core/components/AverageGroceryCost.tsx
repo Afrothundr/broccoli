@@ -27,13 +27,15 @@ export const AverageGroceryCost = () => {
   })
 
   const data = groceryTrips.map((trip) => ({
-    name: dayjs(trip.createdAt).format("MM/D"),
-    cost: trip.items.reduce((acc, curr) => acc + curr.price, 0),
+    name: dayjs(trip.createdAt).format("MM/DD/YY"),
+    cost: trip.items.reduce((acc, curr) => acc + curr.price, 0).toFixed(2),
     id: trip.id,
   }))
   const theme = useMantineTheme()
 
-  const averageCost = (data.reduce((acc, curr) => acc + curr.cost, 0) / data.length).toFixed(2)
+  const averageCost = (
+    data.reduce((acc, curr) => acc + Number.parseFloat(curr.cost), 0) / data.length
+  ).toFixed(2)
   const regressionLine = calculateLineOfBestFit(data)
   return (
     <Card mt="sm" radius="md" style={{ minHeight: 150 }}>
@@ -95,7 +97,7 @@ export const calculateLineOfBestFit = (data) => {
     (sum, point, index) => sum + (index - meanX) * (point.cost - meanY),
     0
   )
-  const denominator = data.reduce((sum, _, index) => sum + Math.pow(index - meanX, 2), 0)
+  const denominator = data.reduce((sum, _, index) => sum + (index - meanX) ** 2, 0)
 
   const slope = numerator / denominator
   const yIntercept = meanY - slope * meanX

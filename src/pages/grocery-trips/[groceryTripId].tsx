@@ -34,8 +34,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react"
 import dayjs from "dayjs"
-
-import { backOff } from "exponential-backoff"
+import pRetry from "p-retry"
 import { processImageQueue } from "src/api/processImageQueue"
 import BroccoliTable from "src/core/components/BroccoliTable"
 import { ConfirmationModal } from "src/core/components/ConfirmationModal"
@@ -54,7 +53,6 @@ import styles from "src/styles/ActionItem.module.css"
 import uploadStyles from "src/styles/UploadButton.module.css"
 import { getReceiptStatusColor } from "src/utils/receiptStatusTypeHelper"
 import { NewItemModal } from "../../core/components/NewItemModal"
-
 export const GroceryTrip = () => {
   const groceryTripId = useParam("groceryTripId", "number")
   const [groceryTrip, { refetch }] = useQuery(getGroceryTrip, { id: groceryTripId })
@@ -183,6 +181,14 @@ export const GroceryTrip = () => {
     setPercentageEatenModalOpen(false)
   }
 
+  const checkReceiptStatus = async () => {
+    const data = await refetch()
+    if (data?.data?.receipts?.some((receipt) => receipt.status === "PROCESSING")) {
+      throw new Error("Not ready")
+    }
+    return data
+  }
+
   const totalCost = groceryTrip.items.reduce((total, item) => total + item.price, 0)
 
   return (
@@ -231,7 +237,6 @@ export const GroceryTrip = () => {
             }}
             onClientUploadComplete={async (res) => {
               // Do something with the response
-              console.log("Files: ", res)
               res?.forEach(async (image, index) => {
                 const receipt = await createReceiptMutation({
                   url: image.url,
@@ -242,10 +247,8 @@ export const GroceryTrip = () => {
                   url: image.url,
                 })
                 if (res.length === index + 1) {
-                  await backOff(async () => {
-                    console.log("attempt")
-                    await refetch()
-                  })
+                  await refetch()
+                  await pRetry(checkReceiptStatus, { factor: 3 })
                 }
               })
 
@@ -256,7 +259,7 @@ export const GroceryTrip = () => {
               })
             }}
             onUploadError={(error: Error) => {
-              console.log("ERROR", error)
+              console.error("ERROR", error)
               notifications.show({
                 color: "red",
                 title: "Error",
