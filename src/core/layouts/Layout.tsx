@@ -70,7 +70,7 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
                 </Box>
                 <NavLink
                   onClick={async () => await logoutMutation()}
-                  label="log out"
+                  label="Log Out"
                   leftSection={<IconLogout2 />}
                 />
               </Stack>
@@ -83,6 +83,6 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
   )
 }
 
-Layout.authenticate = { redirectTo: Routes.LoginPage() }
+Layout.authenticate = { redirectTo: Routes.LoginPage().href }
 
 export default Layout
