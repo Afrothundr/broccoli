@@ -10,7 +10,7 @@ type LoginFormProps = {
 }
 
 export const LoginForm = (props: LoginFormProps) => {
-  const [loginMutation] = useMutation(login)
+  const [loginMutation, { error }] = useMutation(login)
   const form = useForm({
     initialValues: {
       email: "",
@@ -24,8 +24,13 @@ export const LoginForm = (props: LoginFormProps) => {
   })
 
   const handleSubmit = async (values) => {
-    const user = await loginMutation(values)
-    props.onSuccess?.(user)
+    form.clearErrors()
+    try {
+      const user = await loginMutation(values)
+      props.onSuccess?.(user)
+    } catch (error) {
+      form.setErrors({ email: "Invalid email or password" })
+    }
   }
 
   return (
