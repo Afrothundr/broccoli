@@ -93,8 +93,6 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
   }
 
   useEffect(() => {
-    if (importedData.length) return
-
     const scrapedData = JSON.parse(receipt.scrapedData as string)
     if ("items" in scrapedData) {
       const mergedData = (scrapedData.items as ImportedItemProps[]).map((data) => {
@@ -106,7 +104,7 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
       setImportedData(mergedData)
       setActiveItem(mergedData[itemIndex])
     }
-  }, [receipt, itemIndex, importedData])
+  }, [receipt, itemIndex])
 
   const isItemSaved = !!receipt?.items.find((item) => item.importId === activeItem?.importId)
 
