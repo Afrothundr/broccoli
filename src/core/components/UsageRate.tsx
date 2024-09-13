@@ -3,7 +3,7 @@ import { Routes } from "@blitzjs/next"
 import { useQuery } from "@blitzjs/rpc"
 import { ActionIcon, Group, NumberFormatter, Text, Title } from "@mantine/core"
 import { ItemStatusType } from "@prisma/client"
-import { IconToolsKitchen2 } from "@tabler/icons-react"
+import { IconPaperBag } from "@tabler/icons-react"
 import Link from "next/link"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 
@@ -34,7 +34,7 @@ export const UsageRate = () => {
   return (
     <Group>
       <ActionIcon variant="filled" size="xl" radius="xl" aria-label="Savings" color="gray">
-        <IconToolsKitchen2 style={{ width: "70%", height: "70%" }} stroke={1.5} />
+        <IconPaperBag style={{ width: "70%", height: "70%" }} stroke={1.5} />
       </ActionIcon>
       <div>
         <Title order={4}>Usage rate</Title>

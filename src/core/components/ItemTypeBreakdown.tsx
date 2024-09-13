@@ -1,10 +1,11 @@
+"use client"
 import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { useQuery } from "@blitzjs/rpc"
-import { Card, Text, Title, useMantineTheme } from "@mantine/core"
+import { Card, Text, Title, useMantineColorScheme } from "@mantine/core"
+import { PieChart, type PieChartOptions, type ResponsiveOptions } from "chartist"
 import Link from "next/link"
-import { useMemo } from "react"
-import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts"
+import { useEffect, useMemo, useRef } from "react"
 import getItemTypes from "src/item-types/queries/getItemTypes"
 
 export const ItemTypeBreakdown = () => {
@@ -15,8 +16,10 @@ export const ItemTypeBreakdown = () => {
       items: { every: { userId: userId ?? undefined } },
     },
   })
-  const itemTypesCategories = useMemo<{ name: string; value: number }[]>(() => {
-    const categoryCounts: { name: string; value: number }[] = []
+  const chart = useRef<HTMLDivElement>(null)
+  const { colorScheme } = useMantineColorScheme()
+  const itemTypesCategories = useMemo(() => {
+    const data: { labels: string[]; series: number[] } = { labels: [], series: [] }
     const itemCategoryMapper = {}
 
     for (const itemType of itemTypes) {
@@ -35,30 +38,52 @@ export const ItemTypeBreakdown = () => {
     }
 
     for (const category in itemCategoryMapper) {
-      categoryCounts.push({
-        name: category,
-        value: itemCategoryMapper[category].reduce((acc, curr) => (acc += curr.value), 0),
-      })
+      data.labels.push(category)
+      data.series.push(itemCategoryMapper[category].reduce((acc, curr) => acc + curr.value, 0))
     }
-    return categoryCounts
+    return data
   }, [itemTypes])
 
-  const theme = useMantineTheme()
-  const COLORS = [
-    "#ff6666",
-    "#2ecc70",
-    "#ff9900",
-    "#ffcc99",
-    "#33cc33",
-    "#9933ff", // Purple
-    "#3366ff", // Blue
-    "#6699ff", // Light Blue
-    "#ff33cc", // Pink
-    "#cc33ff", // Violet
-    "#33ffd1", // Turquoise
-    "#339999", // Teal
-    "#8d6a9f", // Muted Purple
-  ]
+  useEffect(() => {
+    if (chart.current) {
+      const options: PieChartOptions = {
+        donut: true,
+        donutWidth: 60,
+        startAngle: 270,
+        chartPadding: 20,
+        labelOffset: 50,
+      }
+
+      const responsiveOptions: ResponsiveOptions<PieChartOptions> = [
+        [
+          "screen and (min-width: 640px)",
+          {
+            chartPadding: 20,
+            labelOffset: 50,
+            labelDirection: "explode",
+          },
+        ],
+        [
+          "screen and (min-width: 1024px)",
+          {
+            labelOffset: 40,
+            labelDirection: "explode",
+            chartPadding: 20,
+          },
+        ],
+      ]
+      const pie = new PieChart("#pie", itemTypesCategories, options, responsiveOptions)
+      pie.on("draw", (context) => {
+        if (context.type === "label") {
+          context.element.attr({
+            style: `fill: ${
+              colorScheme === "light" ? "#495057" : "rgb(201, 201, 201)"
+            }; font-size: .75rem;`,
+          })
+        }
+      })
+    }
+  }, [itemTypesCategories, colorScheme])
 
   return (
     <Card radius="md" style={{ minHeight: 150 }}>
@@ -67,23 +92,7 @@ export const ItemTypeBreakdown = () => {
       </Card.Section>
       <Card.Section>
         {itemTypes.length ? (
-          <ResponsiveContainer width={"100%"} height={300}>
-            <PieChart cx="70%" cy="70%">
-              <Pie
-                data={itemTypesCategories}
-                innerRadius={30}
-                outerRadius={80}
-                fill="#8884d8"
-                paddingAngle={3}
-                dataKey="value"
-                label={({ index }) => itemTypesCategories[index]?.name}
-              >
-                {itemTypesCategories.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
+          <div ref={chart} id="pie" style={{ height: "25vh" }} />
         ) : (
           <Text>
             No grocery trips yet! <Link href={Routes.GroceryTripsPage()}>Add one</Link>
