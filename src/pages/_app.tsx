@@ -1,11 +1,11 @@
 import {
+  type AppProps,
   ErrorBoundary,
   ErrorComponent,
-  Routes,
-  type AppProps,
   type ErrorFallbackProps,
+  Routes,
 } from "@blitzjs/next"
-import { MantineColorsTuple, MantineProvider, createTheme } from "@mantine/core"
+import { type MantineColorsTuple, MantineProvider, createTheme } from "@mantine/core"
 import "@mantine/core/styles.css"
 import { Notifications } from "@mantine/notifications"
 import "@mantine/notifications/styles.css"
@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation"
 import { withBlitz } from "src/blitz-client"
 import "src/styles/globals.css"
 
-const broccoliGreen: MantineColorsTuple = [
+export const broccoliGreen: MantineColorsTuple = [
   "#effbeb",
   "#e3f2dc",
   "#c6e1ba",

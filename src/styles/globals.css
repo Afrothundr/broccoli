@@ -26,3 +26,7 @@ i {
 * {
   box-sizing: border-box;
 }
+
+.ct-label {
+  color: inherit !important;
+}
