@@ -24,7 +24,6 @@ import {
 import { notifications } from "@mantine/notifications"
 import { ItemStatusType, ReceiptStatus } from "@prisma/client"
 import {
-  IconCamera,
   IconDotsVertical,
   IconPaperBag,
   IconPencil,
@@ -34,15 +33,13 @@ import {
   IconTrash,
 } from "@tabler/icons-react"
 import dayjs from "dayjs"
-import pRetry from "p-retry"
-import { processImageQueue } from "src/api/processImageQueue"
 import BroccoliTable from "src/core/components/BroccoliTable"
 import { ConfirmationModal } from "src/core/components/ConfirmationModal"
+import { ImageUpload } from "src/core/components/ImageUpload"
 import { ItemStatusBadge } from "src/core/components/ItemStatusBadge"
 import { ReceiptImportModal } from "src/core/components/ReceiptImportModal"
 import { UpdateConsumedModal } from "src/core/components/UpdateConsumedModal"
 import { UpdateItemModal } from "src/core/components/UpdateItemModal"
-import { UploadButton } from "src/core/components/UploadThing"
 import Layout from "src/core/layouts/Layout"
 import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
 import deleteItems from "src/items/mutations/deleteItems"
@@ -50,7 +47,6 @@ import updatePercentage from "src/items/mutations/updatePercentage"
 import updateStatus from "src/items/mutations/updateStatus"
 import createReceipt from "src/receipts/mutations/createReceipt"
 import styles from "src/styles/ActionItem.module.css"
-import uploadStyles from "src/styles/UploadButton.module.css"
 import { getReceiptStatusColor } from "src/utils/receiptStatusTypeHelper"
 import { NewItemModal } from "../../core/components/NewItemModal"
 export const GroceryTrip = () => {
@@ -217,60 +213,12 @@ export const GroceryTrip = () => {
       <Stack style={{ marginBottom: "3rem", alignItems: "flex-start" }}>
         <Group align="start">
           <Title order={2}>Receipts</Title>
-          <UploadButton
-            endpoint="imageUploader"
-            content={{
-              button: (
-                <Tooltip label="Add new receipt" openDelay={500}>
-                  <IconCamera />
-                </Tooltip>
-              ),
-            }}
-            appearance={{
-              button({ ready, isUploading }) {
-                return `custom-button ${
-                  ready ? uploadStyles.customButton : "custom-button-not-ready"
-                } ${isUploading ? "custom-button-uploading" : ""}`
-              },
-              container: uploadStyles.customContainer,
-              allowedContent: "custom-allowed-content",
-            }}
-            onClientUploadComplete={async (res) => {
-              // Do something with the response
-              res?.forEach(async (image, index) => {
-                const receipt = await createReceiptMutation({
-                  url: image.url,
-                  groceryTripId: groceryTrip.id,
-                })
-                await processImageQueue({
-                  receiptId: receipt.id,
-                  url: image.url,
-                })
-                if (res.length === index + 1) {
-                  await refetch()
-                  await pRetry(checkReceiptStatus, { factor: 3 })
-                }
-              })
-
-              notifications.show({
-                color: "green",
-                title: "Success",
-                message: "File(s) uploaded!",
-              })
-            }}
-            onUploadError={(error: Error) => {
-              console.error("ERROR", error)
-              notifications.show({
-                color: "red",
-                title: "Error",
-                message: error.message,
-              })
-            }}
-          />
+          <ImageUpload {...{ refetch, groceryTripId: groceryTrip.id, checkReceiptStatus }} />
         </Group>
         <Group gap="lg">
           {groceryTrip.receipts.map((receipt) => (
             <button
+              type="button"
               key={receipt.id}
               onClick={() => {
                 setReceiptToImport(receipt.id)

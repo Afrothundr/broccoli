@@ -4,6 +4,8 @@
 :root {
   --border-radius: 0.75rem;
   --screen-width: 90vmin;
+  --ai-size-xxl: 65px;
+  --mantine-radius-xxl: 65px;
 }
 
 html,

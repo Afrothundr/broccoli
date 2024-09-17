@@ -3,7 +3,7 @@ import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { useQuery } from "@blitzjs/rpc"
 import { Card, NumberFormatter, Text, Title, useMantineColorScheme } from "@mantine/core"
-import { LineChart } from "chartist"
+import { LineChart, type LineChartOptions, type ResponsiveOptions } from "chartist"
 import "chartist/dist/index.css"
 import dayjs from "dayjs"
 import Link from "next/link"
@@ -43,6 +43,24 @@ export const AverageGroceryCost = () => {
         labels.push(dayjs(trip.createdAt).format("MM/DD/YY"))
         series.push(trip.items.reduce((acc, curr) => acc + curr.price, 0).toFixed(2))
       }
+      const responsiveOptions: ResponsiveOptions<LineChartOptions> = [
+        [
+          "screen and (min-width: 640px)",
+          {
+            chartPadding: {
+              right: 90,
+            },
+          },
+        ],
+        [
+          "screen and (min-width: 1024px)",
+          {
+            chartPadding: {
+              right: 120,
+            },
+          },
+        ],
+      ]
       const chart = new LineChart(
         "#chart",
         {
@@ -55,13 +73,13 @@ export const AverageGroceryCost = () => {
           showPoint: true,
           fullWidth: true,
           chartPadding: {
-            right: 120,
+            right: 45,
           },
-        }
+        },
+        responsiveOptions
       )
       // Apply custom styles
       chart.on("draw", (context) => {
-        console.log(context.type)
         if (context.type === "line") {
           context.element.attr({
             style: `stroke: ${lineColor};`,

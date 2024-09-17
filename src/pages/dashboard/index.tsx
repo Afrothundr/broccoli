@@ -1,16 +1,19 @@
 import { Routes } from "@blitzjs/next"
 import { Divider, Flex, Group, Loader, Stack, Title } from "@mantine/core"
-import { Suspense } from "react"
+import { Suspense, useState } from "react"
 import { AverageGroceryCost } from "src/core/components/AverageGroceryCost"
 import { CurrentSavings } from "src/core/components/CurrentSavings"
+import { FloatingUploadButton } from "src/core/components/FloatingUploadButton"
 import { ItemTypeBreakdown } from "src/core/components/ItemTypeBreakdown"
 import { StorageAdvice } from "src/core/components/StorageAdvice"
+import { UploadModal } from "src/core/components/UploadModal"
 import { UsageRate } from "src/core/components/UsageRate"
 import Layout from "src/core/layouts/Layout"
 import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 
 export const Dashboard = () => {
   const user = useCurrentUser()
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
   return (
     <Flex
       direction={{ base: "column", md: "row" }}
@@ -18,7 +21,7 @@ export const Dashboard = () => {
       justify={{ md: "space-between", base: "center" }}
       p={{ base: "sm", md: "md" }}
     >
-      <Stack px="md" justify="between" style={{ flexGrow: 3 }}>
+      <Stack px="md" justify="between" style={{ flexGrow: 3 }} className="relative">
         <Title>Hello, {user?.firstName}</Title>
         <Stack gap="md" my="md">
           <Divider />
@@ -44,6 +47,8 @@ export const Dashboard = () => {
           <StorageAdvice />
         </Suspense>
       </Stack>
+      <FloatingUploadButton handleClick={() => setIsUploadOpen(true)} />
+      {isUploadOpen ? <UploadModal onModalClose={() => setIsUploadOpen(false)} /> : null}
     </Flex>
   )
 }
