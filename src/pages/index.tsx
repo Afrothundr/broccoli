@@ -1,4 +1,4 @@
-import { BlitzPage, Routes } from "@blitzjs/next"
+import { type BlitzPage, Routes } from "@blitzjs/next"
 import { HeroTitle } from "src/core/components/HeroTitle"
 
 const Home: BlitzPage = () => {
