@@ -663,4 +663,10 @@ export const ITEM_TYPES: Record<
     suggested_life_span_seconds: 0,
     category: "Other",
   },
+  "Frozen food": {
+    name: "Frozen food",
+    storage_advice: "",
+    suggested_life_span_seconds: 0,
+    category: "Frozen",
+  },
 }

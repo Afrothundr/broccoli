@@ -18,7 +18,7 @@ export const AverageGroceryCost = () => {
     where: {
       userId: userId ?? undefined,
     },
-    take: 10,
+    take: 5,
   })
   const chart = useRef(null)
   const data = groceryTrips.map((trip) => ({
@@ -40,7 +40,7 @@ export const AverageGroceryCost = () => {
       const labels: string[] = []
       const series: string[] = []
       for (const trip of groceryTrips) {
-        labels.push(dayjs(trip.createdAt).format("MM/DD/YY"))
+        labels.push(dayjs(trip.createdAt).format("MMM D"))
         series.push(trip.items.reduce((acc, curr) => acc + curr.price, 0).toFixed(2))
       }
       const responsiveOptions: ResponsiveOptions<LineChartOptions> = [
@@ -50,6 +50,9 @@ export const AverageGroceryCost = () => {
             chartPadding: {
               right: 90,
             },
+            axisY: {
+              onlyInteger: true,
+            },
           },
         ],
         [
@@ -57,6 +60,9 @@ export const AverageGroceryCost = () => {
           {
             chartPadding: {
               right: 120,
+            },
+            axisY: {
+              onlyInteger: true,
             },
           },
         ],
@@ -73,7 +79,7 @@ export const AverageGroceryCost = () => {
           showPoint: true,
           fullWidth: true,
           chartPadding: {
-            right: 45,
+            right: 40,
           },
         },
         responsiveOptions
@@ -101,6 +107,9 @@ export const AverageGroceryCost = () => {
               colorScheme === "light" ? "black" : "rgb(201, 201, 201)"
             }; font-size: 1rem;`,
           })
+          if (context.x === 10) {
+            context.element.addClass("custom-y-axis-label")
+          }
         }
         if (context.type === "grid") {
           context.element.attr({
