@@ -1,18 +1,18 @@
 import {
   Button,
+  type ComboboxItem,
+  type ComboboxItemGroup,
   Group,
   MultiSelect,
   NativeSelect,
   NumberInput,
   TextInput,
-  type ComboboxItem,
-  type ComboboxItemGroup,
 } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import Qty from "js-quantities"
 import isEqual from "lodash.isequal"
 import { useEffect, useRef } from "react"
-import { RequiredValidation, type FormProps } from "../types"
+import { type FormProps, RequiredValidation } from "../types"
 
 interface ExtendedItemFormProps {
   itemTypeData: ComboboxItemGroup[]
@@ -92,6 +92,7 @@ export function ItemForm({
         label="Price"
         decimalScale={2}
         defaultValue={0}
+        fixedDecimalScale
         prefix="$"
         {...form.getInputProps("price")}
       />

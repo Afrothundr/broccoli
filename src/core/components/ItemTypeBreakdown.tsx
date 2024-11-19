@@ -58,7 +58,7 @@ export const ItemTypeBreakdown = () => {
         [
           "screen and (min-width: 640px)",
           {
-            chartPadding: 20,
+            chartPadding: 10,
             labelOffset: 50,
             labelDirection: "explode",
           },
@@ -92,7 +92,7 @@ export const ItemTypeBreakdown = () => {
       </Card.Section>
       <Card.Section>
         {itemTypes.length ? (
-          <div ref={chart} id="pie" style={{ height: "25vh" }} />
+          <div ref={chart} id="pie" />
         ) : (
           <Text>
             No grocery trips yet! <Link href={Routes.GroceryTripsPage()}>Add one</Link>

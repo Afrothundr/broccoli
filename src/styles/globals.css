@@ -32,3 +32,15 @@ i {
 .ct-label {
   color: inherit !important;
 }
+
+.custom-y-axis-label span::before {
+  content: "$";
+}
+
+#pie {
+  height: 33vh;
+  margin: 1rem 0;
+  @media screen and (min-width: 1024px) {
+    height: 25vh;
+  }
+}

@@ -13,12 +13,13 @@ import {
   Menu,
   NumberFormatter,
   SimpleGrid,
+  Skeleton,
   Text,
   Title,
   Tooltip,
   rem,
 } from "@mantine/core"
-import { Item, ItemStatusType } from "@prisma/client"
+import { type Item, ItemStatusType } from "@prisma/client"
 import {
   IconDots,
   IconEdit,
@@ -266,7 +267,15 @@ const ItemsPage = () => {
           ))}
         </Chip.Group>
       </Group>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense
+        fallback={
+          <div className="grid gap-2 grid-flow-row-dense grid-cols-3 grid-rows-3">
+            {Array.from({ length: 9 }, (_, i) => i + 1).map((key) => (
+              <Skeleton height={"110px"} key={key} />
+            ))}
+          </div>
+        }
+      >
         <ItemsList search={search} filters={filters} />
       </Suspense>
       {newItemModalOpened && (

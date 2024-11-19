@@ -1,4 +1,4 @@
-import { BlitzLayout, Routes } from "@blitzjs/next"
+import { type BlitzLayout, Routes } from "@blitzjs/next"
 import { useMutation } from "@blitzjs/rpc"
 import {
   ActionIcon,
@@ -8,6 +8,7 @@ import {
   Group,
   Image,
   Loader,
+  LoadingOverlay,
   NavLink,
   Stack,
   useMantineColorScheme,
@@ -17,8 +18,10 @@ import { useDisclosure } from "@mantine/hooks"
 import { IconLogout2, IconMoon, IconSunLow } from "@tabler/icons-react"
 import Head from "next/head"
 import Link from "next/link"
-import React, { Suspense } from "react"
+import type React from "react"
+import { Suspense } from "react"
 import logout from "src/auth/mutations/logout"
+import loaderStyles from "src/styles/Loader.module.css"
 import { UserProvider } from "src/users/hooks/useCurrentUser"
 import { Navigation } from "../components/Navigation"
 
@@ -37,7 +40,19 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
         <title>{title || "broccoli"}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Suspense fallback={<Loader color="blue" />}>
+      <Suspense
+        fallback={
+          <LoadingOverlay
+            visible={true}
+            zIndex={1000}
+            overlayProps={{
+              radius: "sm",
+              blur: 2,
+            }}
+            loaderProps={{ children: <div className={loaderStyles.loader} /> }}
+          />
+        }
+      >
         <UserProvider>
           <AppShell
             header={{ height: 60 }}
