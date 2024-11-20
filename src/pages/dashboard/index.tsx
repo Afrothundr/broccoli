@@ -1,5 +1,5 @@
 import { Routes } from "@blitzjs/next"
-import { Divider, Flex, Group, Loader, Stack, Title } from "@mantine/core"
+import { Divider, Flex, Group, Loader, Stack } from "@mantine/core"
 import { Suspense, useState } from "react"
 import { AverageGroceryCost } from "src/core/components/AverageGroceryCost"
 import { CurrentSavings } from "src/core/components/CurrentSavings"
@@ -9,10 +9,8 @@ import { StorageAdvice } from "src/core/components/StorageAdvice"
 import { UploadModal } from "src/core/components/UploadModal"
 import { UsageRate } from "src/core/components/UsageRate"
 import Layout from "src/core/layouts/Layout"
-import { useCurrentUser } from "src/users/hooks/useCurrentUser"
 
 export const Dashboard = () => {
-  const user = useCurrentUser()
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   return (
     <Flex
@@ -22,9 +20,7 @@ export const Dashboard = () => {
       p={{ base: "sm", md: "md" }}
     >
       <Stack px="md" justify="between" style={{ flexGrow: 3 }} className="relative">
-        <Title>Hello, {user?.firstName}</Title>
-        <Stack gap="md" my="md">
-          <Divider />
+        <Stack gap="md">
           <Group justify="space-between" gap="xl" grow>
             <Suspense fallback={<Loader />}>
               <CurrentSavings />
