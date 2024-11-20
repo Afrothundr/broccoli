@@ -60,10 +60,10 @@ const Layout: BlitzLayout<{ title?: string; children?: React.ReactNode }> = ({
             padding="md"
           >
             <AppShell.Header>
-              <Group h="100%" px="28px" justify="space-between">
+              <Group h="100%" px="md" justify="space-between">
                 <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
                 <Link href={Routes.DashboardsPage()}>
-                  <Image src="/logo.png" alt="Broccoli logo" h={45} />
+                  <Image src="/logo.png" alt="Broccoli logo" className="w-[8rem] md:w-32 lg:w-48" />
                 </Link>
                 <ActionIcon
                   size="lg"

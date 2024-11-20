@@ -29,6 +29,10 @@ i {
   box-sizing: border-box;
 }
 
+input {
+  font-size: 1rem !important;
+}
+
 .ct-label {
   color: inherit !important;
 }
