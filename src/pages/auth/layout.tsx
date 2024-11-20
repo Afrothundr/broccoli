@@ -1,4 +1,4 @@
-import { BlitzLayout } from "@blitzjs/next"
+import type { BlitzLayout } from "@blitzjs/next"
 import { Paper, Title } from "@mantine/core"
 import classes from "src/styles/AuthLayout.module.css"
 
