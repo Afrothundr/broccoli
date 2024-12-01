@@ -1,7 +1,7 @@
 import { Routes, useParam } from "@blitzjs/next"
 import { useMutation, useQuery } from "@blitzjs/rpc"
 import Link from "next/link"
-import { Suspense, useMemo, useState } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 
 import {
   ActionIcon,
@@ -22,7 +22,7 @@ import {
   rem,
 } from "@mantine/core"
 import { notifications } from "@mantine/notifications"
-import { ItemStatusType, ReceiptStatus } from "@prisma/client"
+import { ItemStatusType, type Receipt, ReceiptStatus } from "@prisma/client"
 import {
   IconDotsVertical,
   IconPaperBag,
@@ -33,6 +33,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react"
 import dayjs from "dayjs"
+import pRetry from "p-retry"
 import BroccoliTable from "src/core/components/BroccoliTable"
 import { ConfirmationModal } from "src/core/components/ConfirmationModal"
 import { ImageUpload } from "src/core/components/ImageUpload"
@@ -45,7 +46,6 @@ import getGroceryTrip from "src/grocery-trips/queries/getGroceryTrip"
 import deleteItems from "src/items/mutations/deleteItems"
 import updatePercentage from "src/items/mutations/updatePercentage"
 import updateStatus from "src/items/mutations/updateStatus"
-import createReceipt from "src/receipts/mutations/createReceipt"
 import styles from "src/styles/ActionItem.module.css"
 import { getReceiptStatusColor } from "src/utils/receiptStatusTypeHelper"
 import { NewItemModal } from "../../core/components/NewItemModal"
@@ -58,7 +58,6 @@ export const GroceryTrip = () => {
   const [itemToUpdate, setItemToUpdate] = useState()
   const [receiptToImport, setReceiptToImport] = useState(0)
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false)
-  const [createReceiptMutation] = useMutation(createReceipt)
   const [rowSelection, setRowSelection] = useState({})
   const [deleteItemsMutation] = useMutation(deleteItems)
   const [updatePercentages] = useMutation(updatePercentage)
@@ -185,7 +184,26 @@ export const GroceryTrip = () => {
     return data
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    const checkForWaitingImages = async () => {
+      if (groceryTrip.receipts.some((receipt) => receipt.status === ReceiptStatus.PROCESSING)) {
+        await pRetry(checkReceiptStatus, { factor: 3 })
+      }
+    }
+    void checkForWaitingImages()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const totalCost = groceryTrip.items.reduce((total, item) => total + item.price, 0)
+
+  const getImportedCount = (receipt: Receipt): number => {
+    const parsed = JSON.parse(receipt.scrapedData as string)
+    if (parsed && "items" in parsed) {
+      return parsed?.items?.length || 0
+    }
+    return 0
+  }
 
   return (
     <Container size="lg">
@@ -226,13 +244,24 @@ export const GroceryTrip = () => {
               }}
               style={{ backgroundColor: "transparent", border: "none", cursor: "pointer" }}
             >
-              <Tooltip label={receipt.status.toLocaleLowerCase()}>
+              <Tooltip
+                label={
+                  receipt.status === ReceiptStatus.IMPORTED
+                    ? `${getImportedCount(receipt)} results`
+                    : receipt.status.toLocaleLowerCase()
+                }
+              >
                 <Indicator
                   size={16}
                   color={getReceiptStatusColor(receipt.status)}
                   key={receipt.id}
                   offset={5}
                   processing={receipt.status === ReceiptStatus.PROCESSING}
+                  label={
+                    receipt.status === ReceiptStatus.IMPORTED
+                      ? `${getImportedCount(receipt)} results`
+                      : undefined
+                  }
                   onClick={() => {
                     setReceiptToImport(receipt.id)
                     setReceiptModalOpen(!receiptModalOpen)

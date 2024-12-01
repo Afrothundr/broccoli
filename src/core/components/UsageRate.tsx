@@ -2,11 +2,22 @@ import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { useQuery } from "@blitzjs/rpc"
 import { ActionIcon, Group, NumberFormatter, Text, Title } from "@mantine/core"
-import { ItemStatusType } from "@prisma/client"
+import { type GroceryTrip, ItemStatusType } from "@prisma/client"
 import { IconPaperBag } from "@tabler/icons-react"
 import Link from "next/link"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
+import { STEPS, colors } from "../utils/TextColors"
 
+type TripType = GroceryTrip & {
+  items: {
+    status: ItemStatusType
+    price: number
+    percentConsumed: number
+  }[]
+  _count: {
+    items: number
+  }
+}
 export const UsageRate = () => {
   const { userId } = useSession()
   const [{ groceryTrips }] = useQuery(getGroceryTrips, {
@@ -16,20 +27,45 @@ export const UsageRate = () => {
     },
   })
 
-  const data = groceryTrips.map((trip) => ({
-    totalItems: trip.items.length,
-    itemsConsumed: trip.items.reduce(
-      (total, item) =>
-        item.status === ItemStatusType.EATEN ? total + 1 : total + item.percentConsumed * 0.01,
-      0
-    ),
-  }))
+  const filteredTrips = groceryTrips.reduce(
+    (acc, curr) => {
+      if (curr.items.length > 0) {
+        acc.push({
+          totalItems: curr.items.length,
+          itemsConsumed: curr.items.reduce(
+            (total, item) =>
+              item.status === ItemStatusType.EATEN
+                ? total + 1
+                : total + item.percentConsumed * 0.01,
+            0
+          ),
+        })
+      }
+      return acc
+    },
+    [] as {
+      totalItems: number
+      itemsConsumed: number
+    }[]
+  )
+
+  const getTextColor = (value: number) => {
+    if (value >= 33) {
+      return colors[STEPS.GOOD]
+    }
+    if (value < 33 && value >= 23) {
+      return colors[STEPS.WARNING]
+    }
+    if (value < 23) {
+      return colors[STEPS.BAD]
+    }
+  }
 
   const averageConsumed =
-    data.reduce(
+    filteredTrips.reduce(
       (acc, curr) => acc + curr.itemsConsumed / (curr.totalItems > 0 ? curr.totalItems : 1),
       0
-    ) / data.length
+    ) / filteredTrips.length
 
   return (
     <Group>
@@ -38,10 +74,10 @@ export const UsageRate = () => {
       </ActionIcon>
       <div>
         <Title order={4}>Usage rate</Title>
-        {groceryTrips.length ? (
+        {filteredTrips.length ? (
           <Text
             variant="gradient"
-            gradient={{ from: "green", to: "teal" }}
+            gradient={getTextColor(Math.round(averageConsumed * 100))}
             fw={900}
             style={{ fontSize: "2rem" }}
           >

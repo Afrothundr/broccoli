@@ -1,5 +1,5 @@
 import { Badge, NumberFormatter, Tooltip } from "@mantine/core"
-import { ItemStatusType } from "@prisma/client"
+import type { ItemStatusType } from "@prisma/client"
 import { getItemStatusColor } from "src/utils/ItemStatusTypeHelpers"
 
 type ItemStatusBadgeProps = {
