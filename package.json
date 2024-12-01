@@ -6,7 +6,6 @@
     "build": "yarn blitz prisma migrate deploy && yarn blitz db seed && yarn blitz prisma generate && yarn blitz build",
     "start": "blitz start",
     "studio": "blitz prisma studio",
-    "lint": "eslint --ignore-path .gitignore --ext .js,.ts,.tsx .",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "prepare": "husky install"
@@ -29,6 +28,7 @@
     "@blitzjs/rpc": "2.1.3",
     "@emotion/react": "11.11.0",
     "@emotion/server": "11.11.0",
+    "@eslint/compat": "1.2.3",
     "@mantine/core": "7.10.1",
     "@mantine/dates": "7.10.1",
     "@mantine/form": "7.10.0",

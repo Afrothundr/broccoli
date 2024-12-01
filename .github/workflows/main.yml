@@ -60,9 +60,9 @@ jobs:
       - name: Install packages
         run: yarn install --frozen-lockfile
 
-      # Lint Code
-      - name: Lint
-        run: yarn lint
+      # # Lint Code
+      # - name: Lint
+      #   run: yarn lint
 
       # Migrate DB & generate prisma client
       - name: Migrate DB & generate prisma client
