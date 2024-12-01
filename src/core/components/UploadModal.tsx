@@ -54,7 +54,9 @@ export const UploadModal = ({ onModalClose }: { onModalClose: () => void }) => {
       closeOnClickOutside={false}
       transitionProps={{ transition: "fade", duration: 200, timingFunction: "ease" }}
     >
-      <ImageUpload style="dropzone" groceryTripId={groceryTripId} onSuccess={handleSuccess} />
+      <div className="container mx-auto px-4 py-8 border-solid border-2 border-sky-500">
+        <ImageUpload style="button" groceryTripId={groceryTripId} onSuccess={handleSuccess} />
+      </div>
     </Modal>
   )
 }

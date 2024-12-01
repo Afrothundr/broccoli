@@ -14,18 +14,28 @@ import { broccoliGreen } from "src/pages/_app"
 export const AverageGroceryCost = () => {
   const { userId } = useSession()
   const [{ groceryTrips }] = useQuery(getGroceryTrips, {
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
     where: {
       userId: userId ?? undefined,
     },
-    take: 5,
   })
   const chart = useRef(null)
-  const data = groceryTrips.map((trip) => ({
-    name: dayjs(trip.createdAt).format("MM/DD/YY"),
-    cost: trip.items.reduce((acc, curr) => acc + curr.price, 0).toFixed(2),
-    id: trip.id,
-  }))
+  const data = groceryTrips
+    .reduce((acc, curr) => {
+      if (curr.items.length > 0) {
+        acc.push({
+          createdAt: curr.createdAt,
+          name: dayjs(curr.createdAt).format("MM/DD/YY"),
+          cost: curr.items.reduce((acc, curr) => acc + curr.price, 0).toFixed(2),
+          id: curr.id,
+        })
+      }
+      return acc
+    }, [] as { name: string; cost: string; id: number; createdAt: Date }[])
+    .reverse()
+
+  const dataToDisplay = data.slice(-5)
+
   const { colorScheme } = useMantineColorScheme()
 
   const averageCost = (
@@ -39,9 +49,9 @@ export const AverageGroceryCost = () => {
     if (chart.current) {
       const labels: string[] = []
       const series: string[] = []
-      for (const trip of groceryTrips) {
+      for (const trip of dataToDisplay) {
         labels.push(dayjs(trip.createdAt).format("MMM D"))
-        series.push(trip.items.reduce((acc, curr) => acc + curr.price, 0).toFixed(2))
+        series.push(trip.cost)
       }
       const responsiveOptions: ResponsiveOptions<LineChartOptions> = [
         [
@@ -118,7 +128,7 @@ export const AverageGroceryCost = () => {
         }
       })
     }
-  }, [groceryTrips, colorScheme])
+  }, [dataToDisplay, colorScheme])
 
   return (
     <Card mt="sm" radius="md" style={{ minHeight: 150 }}>

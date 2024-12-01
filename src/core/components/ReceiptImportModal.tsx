@@ -1,6 +1,6 @@
 import { useSession } from "@blitzjs/auth"
 import { useMutation, useQuery } from "@blitzjs/rpc"
-import { Box, Button, Group, Modal, Progress, Stack, Tooltip } from "@mantine/core"
+import { Box, Button, Group, Modal, Progress, Stack, Text, Tooltip } from "@mantine/core"
 import { IconCheck, IconCircleArrowLeft, IconCircleArrowRight } from "@tabler/icons-react"
 import dayjs from "dayjs"
 import { useEffect, useState } from "react"
@@ -59,7 +59,7 @@ type ImportedItemProps = {
 
 export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps): JSX.Element => {
   const { userId } = useSession()
-  const [receipt, { refetch }] = useQuery(getReceipt, { id })
+  const [receipt, { refetch, isLoading }] = useQuery(getReceipt, { id })
   const [updateReceiptMutation] = useMutation(updateReceipt)
   const [groceryTrip] = useQuery(getGroceryTrip, {
     id: receipt.groceryTripId ?? 0,
@@ -94,7 +94,7 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
 
   useEffect(() => {
     const scrapedData = JSON.parse(receipt.scrapedData as string)
-    if ("items" in scrapedData) {
+    if (scrapedData && "items" in scrapedData) {
       const mergedData = (scrapedData.items as ImportedItemProps[]).map((data) => {
         const foundSubmittedItem = receipt?.items.find((item) => item.importId === data?.importId)
         return foundSubmittedItem
@@ -148,6 +148,9 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
     }
   }
 
+  const isEmpty = importedData.length < 1 && !isLoading
+  const minimumValue = 15
+
   return (
     <Modal.Root
       opened={true}
@@ -159,50 +162,64 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header style={{ display: "block" }}>
-          <Progress.Root size={20} w={"100%"}>
-            <Tooltip label={`${itemIndex + 1} of ${importedData.length}`}>
-              <Progress.Section value={((itemIndex + 1) / importedData.length) * 100}>
-                <Progress.Label>{`${itemIndex + 1} of ${importedData.length}`}</Progress.Label>
-              </Progress.Section>
-            </Tooltip>
-          </Progress.Root>
+          {!isEmpty && (
+            <Progress.Root size={20} w={"100%"}>
+              <Tooltip label={`${itemIndex + 1} of ${importedData.length}`}>
+                <Progress.Section
+                  value={(() => {
+                    const actualValue = ((itemIndex + 1) / importedData.length) * 100
+                    return actualValue < minimumValue ? minimumValue : actualValue
+                  })()}
+                >
+                  <Progress.Label>{`${itemIndex + 1} of ${importedData.length}`}</Progress.Label>
+                </Progress.Section>
+              </Tooltip>
+            </Progress.Root>
+          )}
           <Group justify="space-between" mt="lg">
             <Group>
               <Modal.CloseButton ml={0} />
               <Modal.Title>Import items from receipt</Modal.Title>
             </Group>
-            <Group>
-              <Button leftSection={<IconCircleArrowLeft />} variant="default" onClick={prevStep}>
-                Back
-              </Button>
-              {itemIndex + 1 === importedData.length ? (
-                <Button onClick={() => onModalClose()} rightSection={<IconCheck />}>
-                  Finish
+            {!isEmpty && (
+              <Group>
+                <Button leftSection={<IconCircleArrowLeft />} variant="default" onClick={prevStep}>
+                  Back
                 </Button>
-              ) : (
-                <Button onClick={nextStep} rightSection={<IconCircleArrowRight />}>
-                  Next item
-                </Button>
-              )}
-            </Group>
+                {itemIndex + 1 === importedData.length ? (
+                  <Button onClick={() => onModalClose()} rightSection={<IconCheck />}>
+                    Finish
+                  </Button>
+                ) : (
+                  <Button onClick={nextStep} rightSection={<IconCircleArrowRight />}>
+                    Next item
+                  </Button>
+                )}
+              </Group>
+            )}
           </Group>
         </Modal.Header>
         <Modal.Body>
           <Box mt="lg" h={"100%"}>
             <Stack justify="space-between">
               <Group justify="center">
-                <ItemForm
-                  onSubmit={isItemSaved ? handleItemUpdate : handleNewItemSave}
-                  submitText={isItemSaved ? "Update Item" : "Save Item"}
-                  itemTypeData={ItemTypeGrouper(itemTypes)}
-                  groceryTripData={[groceryTripsData]}
-                  initialValues={{
-                    ...activeItem,
-                    importId: activeItem?.importId || "",
-                    groceryTripId: receipt.groceryTripId?.toString(),
-                    itemTypes: activeItem?.itemTypes?.map((type) => type.id.toString()) ?? [],
-                  }}
-                />
+                {" "}
+                {isEmpty ? (
+                  <Text>Unable to import items, try another receipt or a clearer photo!</Text>
+                ) : (
+                  <ItemForm
+                    onSubmit={isItemSaved ? handleItemUpdate : handleNewItemSave}
+                    submitText={isItemSaved ? "Update Item" : "Save Item"}
+                    itemTypeData={ItemTypeGrouper(itemTypes)}
+                    groceryTripData={[groceryTripsData]}
+                    initialValues={{
+                      ...activeItem,
+                      importId: activeItem?.importId || "",
+                      groceryTripId: receipt.groceryTripId?.toString(),
+                      itemTypes: activeItem?.itemTypes?.map((type) => type.id.toString()) ?? [],
+                    }}
+                  />
+                )}
               </Group>
             </Stack>
           </Box>
