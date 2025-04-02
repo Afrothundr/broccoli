@@ -3,6 +3,7 @@ import { useQuery } from "@blitzjs/rpc"
 import { Card, Divider, Group, Stack, Text, Title } from "@mantine/core"
 import { ItemStatusType } from "@prisma/client"
 import { IconBulb } from "@tabler/icons-react"
+import { IKImage } from "imagekitio-react"
 import { useState } from "react"
 import getItems from "src/items/queries/getItems"
 import { NON_PERISHABLE_TYPE } from "../types"
@@ -63,14 +64,25 @@ export const StorageAdvice = () => {
       )}
       {Object.values(storageAdvice).map((storageAdvice) => (
         <Card radius="md" withBorder key={storageAdvice.id} style={{ minWidth: "70%" }}>
-          <Group justify="space-between" mb="xs">
-            <Text fw={500}>{storageAdvice.name}</Text>
-            <IconBulb />
+          <Group>
+            <Stack bg="#f4f4f4" align="center">
+              <IKImage
+                urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL}
+                path={`/icons/${storageAdvice.name}.png`}
+                height={50}
+                lqip={{ active: true, quality: 20 }}
+              />
+            </Stack>
+            <Group justify="space-between" mb="xs" className="grow">
+              <Stack justify="space-around">
+                <Text fw={500}>{storageAdvice.name}</Text>
+                <Text size="sm" c="dimmed">
+                  {storageAdvice.advice.toLowerCase()}
+                </Text>
+              </Stack>
+              <IconBulb />
+            </Group>
           </Group>
-
-          <Text size="sm" c="dimmed">
-            {storageAdvice.advice.toLowerCase()}
-          </Text>
         </Card>
       ))}
     </Stack>

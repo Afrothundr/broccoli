@@ -1,4 +1,4 @@
-import { BlitzPage, useSession } from "@blitzjs/auth"
+import { type BlitzPage, useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { useMutation, usePaginatedQuery } from "@blitzjs/rpc"
 import {
@@ -9,6 +9,7 @@ import {
   Modal,
   NavLink,
   NumberFormatter,
+  Stack,
   Text,
   Title,
   Tooltip,
@@ -90,9 +91,9 @@ export const GroceryTripsList = () => {
   )
 
   return (
-    <div>
+    <div className="h-svh">
       {groceryTrips.length > 0 ? (
-        <>
+        <Stack justify="space-between" className="h-svh pb-[20%]">
           <BroccoliTable
             {...{
               data: groceryTrips,
@@ -111,7 +112,7 @@ export const GroceryTripsList = () => {
               totalCount: count,
             }}
           />
-        </>
+        </Stack>
       ) : (
         <Text>Create a grocery trip to get started!</Text>
       )}
@@ -127,7 +128,7 @@ const GroceryTripsPage: BlitzPage = () => {
 
   return (
     <>
-      <Container size="lg">
+      <Container size="lg" className="h-dvh">
         <Group mb={"md"}>
           <Title order={1}>Grocery Trips</Title>
           <Tooltip label="Add new grocery trip" openDelay={500}>

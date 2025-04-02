@@ -3,7 +3,6 @@ import { Routes } from "@blitzjs/next"
 import { useMutation, usePaginatedQuery, useQuery } from "@blitzjs/rpc"
 import {
   ActionIcon,
-  Badge,
   Card,
   Chip,
   CloseButton,
@@ -14,6 +13,7 @@ import {
   NumberFormatter,
   SimpleGrid,
   Skeleton,
+  Stack,
   Text,
   Title,
   Tooltip,
@@ -25,14 +25,15 @@ import {
   IconEdit,
   IconPaperBag,
   IconPlus,
+  IconProgressCheck,
   IconSearch,
   IconShoppingCart,
   IconToolsKitchen2,
   IconTrash,
 } from "@tabler/icons-react"
+import { IKImage } from "imagekitio-react"
 import { useRouter } from "next/router"
 import { Suspense, useState } from "react"
-import { ItemStatusBadge } from "src/core/components/ItemStatusBadge"
 import { UpdateConsumedModal } from "src/core/components/UpdateConsumedModal"
 import { UpdateItemModal } from "src/core/components/UpdateItemModal"
 import Layout from "src/core/layouts/Layout"
@@ -101,50 +102,26 @@ export const ItemsList = ({ search, filters }: { search: string; filters: ItemSt
   const itemsToDisplay = items.length > 0 ? items : defaultItems
 
   return (
-    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} mt="lg">
+    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} mt="lg" spacing="xl">
       {itemsToDisplay.map((item) => (
-        <Card key={item.id} withBorder shadow="sm" radius="md">
-          <Card.Section withBorder inheritPadding py="xs">
-            <Group justify="space-between">
-              <Text fw={500}>{item.name}</Text>
-              <Group>
-                <Text c="dimmed">
-                  {item.quantity} {item.unit}
-                </Text>{" "}
-                <Menu position="bottom-end" shadow="sm">
+        <Card key={item.id} shadow="sm" radius="md">
+          <Card.Section>
+            <Stack bg="#f4f4f4" align="center">
+              <IKImage
+                urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL}
+                path={`/icons/${item.itemTypes[0]?.name}.png`}
+                height={200}
+                lqip={{ active: true, quality: 20 }}
+              />
+              <div style={{ position: "absolute", top: 8, right: 8 }}>
+                <Menu withinPortal position="bottom-end" shadow="sm">
                   <Menu.Target>
                     <ActionIcon variant="subtle" color="gray">
-                      <IconDots style={{ width: rem(16), height: rem(16) }} />
+                      <IconDots size={24} />
                     </ActionIcon>
                   </Menu.Target>
 
                   <Menu.Dropdown>
-                    <Menu.Item
-                      leftSection={
-                        <IconToolsKitchen2 style={{ width: rem(14), height: rem(14) }} />
-                      }
-                      color="green"
-                      onClick={() => handleItemEaten(item)}
-                    >
-                      I ate all of this!
-                    </Menu.Item>
-                    <Menu.Item
-                      onClick={() => {
-                        setItemToUpdate(item)
-                        setPercentageEatenModalOpen(true)
-                      }}
-                      leftSection={<IconPaperBag style={{ width: rem(14), height: rem(14) }} />}
-                    >
-                      I ate some of this.
-                    </Menu.Item>
-                    <Menu.Item
-                      leftSection={<IconTrash style={{ width: rem(14), height: rem(14) }} />}
-                      color="red"
-                      onClick={() => handleItemDiscarded(item)}
-                    >
-                      I tossed this...
-                    </Menu.Item>
-                    <Menu.Divider />
                     <Menu.Item
                       leftSection={<IconEdit style={{ width: rem(14), height: rem(14) }} />}
                       onClick={() => {
@@ -166,30 +143,69 @@ export const ItemsList = ({ search, filters }: { search: string; filters: ItemSt
                     </Menu.Item>
                   </Menu.Dropdown>
                 </Menu>
-              </Group>
+              </div>
+            </Stack>
+          </Card.Section>
+          <Card.Section p="lg">
+            <div>
+              <Text size="lg" c="#445154">
+                {item.itemTypes[0]?.name}
+              </Text>
+              <Text c="dimmed" size="sm">
+                {item.name}
+              </Text>{" "}
+            </div>
+            <Group justify="space-between" align="center" mt="sm">
+              <Text fw={900} size="xl" c="#445154">
+                <NumberFormatter
+                  prefix="$ "
+                  value={item.price}
+                  thousandSeparator
+                  decimalScale={2}
+                />
+              </Text>
+              <Menu shadow="sm">
+                <Menu.Target>
+                  <ActionIcon
+                    variant="filled"
+                    size="xl"
+                    radius="xl"
+                    aria-label="Settings"
+                    color={getItemStatusColor(item.status)}
+                  >
+                    <IconProgressCheck />
+                  </ActionIcon>
+                </Menu.Target>
+
+                <Menu.Dropdown>
+                  <Menu.Item
+                    leftSection={<IconToolsKitchen2 style={{ width: rem(14), height: rem(14) }} />}
+                    color="green"
+                    onClick={() => handleItemEaten(item)}
+                  >
+                    I ate all of this!
+                  </Menu.Item>
+                  <Menu.Item
+                    onClick={() => {
+                      setItemToUpdate(item)
+                      setPercentageEatenModalOpen(true)
+                    }}
+                    leftSection={<IconPaperBag style={{ width: rem(14), height: rem(14) }} />}
+                  >
+                    I ate some of this.
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconTrash style={{ width: rem(14), height: rem(14) }} />}
+                    color="red"
+                    onClick={() => handleItemDiscarded(item)}
+                  >
+                    I tossed this...
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+              {/* <ItemStatusBadge status={item.status} percentConsumed={item.percentConsumed} /> */}
             </Group>
           </Card.Section>
-          <Group>
-            {item.description && (
-              <Text mt="md" c="dimmed">
-                {item.description}
-              </Text>
-            )}
-          </Group>
-          <Group mt="md" justify="space-between">
-            <Group>
-              <Text>
-                <NumberFormatter prefix="$ " value={item.price} thousandSeparator />
-              </Text>
-
-              {item.itemTypes.length > 0 && (
-                <Badge variant="light" color="grey">
-                  {item.itemTypes[0]?.name}
-                </Badge>
-              )}
-            </Group>
-            <ItemStatusBadge status={item.status} percentConsumed={item.percentConsumed} />
-          </Group>
         </Card>
       ))}
       {percentageEatenModalOpen && itemToUpdate && (
@@ -233,7 +249,7 @@ const ItemsPage = () => {
         <Tooltip label="Add new item" openDelay={500}>
           <ActionIcon
             className={styles.paperActionButton}
-            color="blue"
+            color="green"
             size="l"
             radius="xl"
             variant="filled"

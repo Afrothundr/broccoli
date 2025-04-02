@@ -1,6 +1,6 @@
 import { Routes } from "@blitzjs/next"
 import { Divider, Flex, Group, Loader, Stack } from "@mantine/core"
-import { Suspense, useState } from "react"
+import { Suspense } from "react"
 import { AverageGroceryCost } from "src/core/components/AverageGroceryCost"
 import { CurrentSavings } from "src/core/components/CurrentSavings"
 import { ImageUpload } from "src/core/components/ImageUpload"
@@ -10,8 +10,6 @@ import { UsageRate } from "src/core/components/UsageRate"
 import Layout from "src/core/layouts/Layout"
 
 export const Dashboard = () => {
-  const [isUploadOpen, setIsUploadOpen] = useState(false)
-
   return (
     <>
       <Flex
@@ -44,7 +42,6 @@ export const Dashboard = () => {
             <StorageAdvice />
           </Suspense>
         </Stack>
-        {/* {isUploadOpen ? <UploadModal onModalClose={() => setIsUploadOpen(false)} /> : null} */}
       </Flex>
       <div className="fixed bottom-[2rem] right-[2rem]">
         <ImageUpload style="floating" />

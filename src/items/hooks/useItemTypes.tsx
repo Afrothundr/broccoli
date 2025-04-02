@@ -1,6 +1,6 @@
 import { useQuery } from "@blitzjs/rpc"
-import { ComboboxItemGroup } from "@mantine/core"
-import { ItemType } from "@prisma/client"
+import type { ComboboxItemGroup } from "@mantine/core"
+import type { ItemType } from "@prisma/client"
 import React from "react"
 import getItemTypes from "src/item-types/queries/getItemTypes"
 

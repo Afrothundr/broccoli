@@ -55,6 +55,7 @@ type ImportedItemProps = {
     id: number
     name: string
   }[]
+  category?: string
 }
 
 export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps): JSX.Element => {
@@ -97,14 +98,19 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
     if (scrapedData && "items" in scrapedData) {
       const mergedData = (scrapedData.items as ImportedItemProps[]).map((data) => {
         const foundSubmittedItem = receipt?.items.find((item) => item.importId === data?.importId)
-        return foundSubmittedItem
-          ? foundSubmittedItem
-          : { ...data, price: Number.parseFloat(data?.price?.toString() || "0") }
+        const itemTypeFound = itemTypes.find((item) => item.name === data.category)
+        return (
+          foundSubmittedItem || {
+            ...data,
+            price: Number.parseFloat(data?.price?.toString() || "0"),
+            itemTypes: itemTypeFound ? [itemTypeFound] : [],
+          }
+        )
       })
       setImportedData(mergedData)
       setActiveItem(mergedData[itemIndex])
     }
-  }, [receipt, itemIndex])
+  }, [receipt, itemIndex, itemTypes])
 
   const isItemSaved = !!receipt?.items.find((item) => item.importId === activeItem?.importId)
 
