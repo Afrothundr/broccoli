@@ -1,10 +1,10 @@
-import { ComboboxItemGroup } from "@mantine/core"
-import { ItemType } from "@prisma/client"
+import type { ComboboxItemGroup } from "@mantine/core"
+import type { ItemType } from "@prisma/client"
 
 export const ItemTypeGrouper = (itemTypes: ItemType[]) => {
   const itemTypesGrouped = {}
 
-  itemTypes.forEach((type) => {
+  for (const type of itemTypes) {
     if (itemTypesGrouped[type.category]) {
       itemTypesGrouped[type.category].items.push({
         label: type.name,
@@ -21,6 +21,7 @@ export const ItemTypeGrouper = (itemTypes: ItemType[]) => {
         ],
       }
     }
-  })
+  }
+
   return Object.values(itemTypesGrouped) as unknown as ComboboxItemGroup[]
 }

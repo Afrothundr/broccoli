@@ -82,7 +82,7 @@ export const CurrentSavings = () => {
             ta="center"
             style={{ fontSize: "2rem" }}
           >
-            ${Number.isNaN(averageAmountSaved) ? 0 : averageAmountSaved.toFixed(2)}
+            ${(value > 0 ? value : 0).toFixed(2)}
           </Text>
         ) : (
           <Text>
