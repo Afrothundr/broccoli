@@ -102,7 +102,7 @@ export const ReceiptImportModal = ({ onModalClose, id }: ReceiptImportModalProps
         return (
           foundSubmittedItem || {
             ...data,
-            price: Number.parseFloat(data?.price?.toString() || "0"),
+            price: Number.parseFloat(data?.price?.toString().replaceAll("$", "") || "0"),
             itemTypes: itemTypeFound ? [itemTypeFound] : [],
           }
         )
