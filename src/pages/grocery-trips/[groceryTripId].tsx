@@ -195,7 +195,7 @@ export const GroceryTrip = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const totalCost = groceryTrip.items.reduce((total, item) => total + item.price, 0)
+  const totalCost = groceryTrip?.items?.reduce((total, item) => total + item.price, 0) || 0
 
   const getImportedCount = (receipt: Receipt): number => {
     const parsed = JSON.parse(receipt.scrapedData as string)
