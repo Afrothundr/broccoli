@@ -103,111 +103,119 @@ export const ItemsList = ({ search, filters }: { search: string; filters: ItemSt
 
   return (
     <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} mt="lg" spacing="xl">
-      {itemsToDisplay.map((item) => (
-        <Card key={item.id} shadow="sm" radius="md">
-          <Card.Section>
-            <Stack bg="#f4f4f4" align="center">
-              <IKImage
-                urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL}
-                path={`/icons/${item.itemTypes[0]?.name}.png`}
-                height={200}
-                lqip={{ active: true, quality: 20 }}
-              />
-              <div style={{ position: "absolute", top: 8, right: 8 }}>
-                <Menu withinPortal position="bottom-end" shadow="sm">
+      {itemsToDisplay.length ? (
+        itemsToDisplay.map((item) => (
+          <Card key={item.id} shadow="sm" radius="md">
+            <Card.Section>
+              <Stack bg="#f4f4f4" align="center" p="md">
+                <IKImage
+                  urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL}
+                  path={`/icons/${item.itemTypes[0]?.name}.png`}
+                  height={100}
+                  lqip={{ active: true, quality: 20 }}
+                />
+                <div style={{ position: "absolute", top: 8, right: 8 }}>
+                  <Menu withinPortal position="bottom-end" shadow="sm">
+                    <Menu.Target>
+                      <ActionIcon variant="subtle" color="gray">
+                        <IconDots size={24} />
+                      </ActionIcon>
+                    </Menu.Target>
+
+                    <Menu.Dropdown>
+                      <Menu.Item
+                        leftSection={<IconEdit style={{ width: rem(14), height: rem(14) }} />}
+                        onClick={() => {
+                          setItemToUpdate(item)
+                          setUpdateItemModalOpened(true)
+                        }}
+                      >
+                        Edit Item
+                      </Menu.Item>
+                      <Menu.Item
+                        leftSection={
+                          <IconShoppingCart style={{ width: rem(14), height: rem(14) }} />
+                        }
+                        onClick={() =>
+                          router.push(
+                            Routes.ShowGroceryTripPage({ groceryTripId: item.groceryTripId })
+                          )
+                        }
+                      >
+                        View Grocery Trip
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
+                </div>
+              </Stack>
+            </Card.Section>
+            <Card.Section p="lg">
+              <div>
+                <Text size="lg" c="#445154">
+                  {item.itemTypes[0]?.name}
+                </Text>
+                <Text c="dimmed" size="sm">
+                  {item.name}
+                </Text>{" "}
+              </div>
+              <Group justify="space-between" align="center" mt="sm">
+                <Text fw={900} size="xl" c="#445154">
+                  <NumberFormatter
+                    prefix="$ "
+                    value={item.price}
+                    thousandSeparator
+                    decimalScale={2}
+                  />
+                </Text>
+                <Menu shadow="sm">
                   <Menu.Target>
-                    <ActionIcon variant="subtle" color="gray">
-                      <IconDots size={24} />
+                    <ActionIcon
+                      variant="filled"
+                      size="xl"
+                      radius="xl"
+                      aria-label="Settings"
+                      color={getItemStatusColor(item.status)}
+                    >
+                      <IconProgressCheck />
                     </ActionIcon>
                   </Menu.Target>
 
                   <Menu.Dropdown>
                     <Menu.Item
-                      leftSection={<IconEdit style={{ width: rem(14), height: rem(14) }} />}
-                      onClick={() => {
-                        setItemToUpdate(item)
-                        setUpdateItemModalOpened(true)
-                      }}
+                      leftSection={
+                        <IconToolsKitchen2 style={{ width: rem(14), height: rem(14) }} />
+                      }
+                      color="green"
+                      onClick={() => handleItemEaten(item)}
                     >
-                      Edit Item
+                      I ate all of this!
                     </Menu.Item>
                     <Menu.Item
-                      leftSection={<IconShoppingCart style={{ width: rem(14), height: rem(14) }} />}
-                      onClick={() =>
-                        router.push(
-                          Routes.ShowGroceryTripPage({ groceryTripId: item.groceryTripId })
-                        )
-                      }
+                      onClick={() => {
+                        setItemToUpdate(item)
+                        setPercentageEatenModalOpen(true)
+                      }}
+                      leftSection={<IconPaperBag style={{ width: rem(14), height: rem(14) }} />}
                     >
-                      View Grocery Trip
+                      I ate some of this.
+                    </Menu.Item>
+                    <Menu.Item
+                      leftSection={<IconTrash style={{ width: rem(14), height: rem(14) }} />}
+                      color="red"
+                      onClick={() => handleItemDiscarded(item)}
+                    >
+                      I tossed this...
                     </Menu.Item>
                   </Menu.Dropdown>
                 </Menu>
-              </div>
-            </Stack>
-          </Card.Section>
-          <Card.Section p="lg">
-            <div>
-              <Text size="lg" c="#445154">
-                {item.itemTypes[0]?.name}
-              </Text>
-              <Text c="dimmed" size="sm">
-                {item.name}
-              </Text>{" "}
-            </div>
-            <Group justify="space-between" align="center" mt="sm">
-              <Text fw={900} size="xl" c="#445154">
-                <NumberFormatter
-                  prefix="$ "
-                  value={item.price}
-                  thousandSeparator
-                  decimalScale={2}
-                />
-              </Text>
-              <Menu shadow="sm">
-                <Menu.Target>
-                  <ActionIcon
-                    variant="filled"
-                    size="xl"
-                    radius="xl"
-                    aria-label="Settings"
-                    color={getItemStatusColor(item.status)}
-                  >
-                    <IconProgressCheck />
-                  </ActionIcon>
-                </Menu.Target>
-
-                <Menu.Dropdown>
-                  <Menu.Item
-                    leftSection={<IconToolsKitchen2 style={{ width: rem(14), height: rem(14) }} />}
-                    color="green"
-                    onClick={() => handleItemEaten(item)}
-                  >
-                    I ate all of this!
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={() => {
-                      setItemToUpdate(item)
-                      setPercentageEatenModalOpen(true)
-                    }}
-                    leftSection={<IconPaperBag style={{ width: rem(14), height: rem(14) }} />}
-                  >
-                    I ate some of this.
-                  </Menu.Item>
-                  <Menu.Item
-                    leftSection={<IconTrash style={{ width: rem(14), height: rem(14) }} />}
-                    color="red"
-                    onClick={() => handleItemDiscarded(item)}
-                  >
-                    I tossed this...
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
-              {/* <ItemStatusBadge status={item.status} percentConsumed={item.percentConsumed} /> */}
-            </Group>
-          </Card.Section>
-        </Card>
-      ))}
+                {/* <ItemStatusBadge status={item.status} percentConsumed={item.percentConsumed} /> */}
+              </Group>
+            </Card.Section>
+          </Card>
+        ))
+      ) : (
+        <Text>Add a receipt to get started!</Text>
+      )}
       {percentageEatenModalOpen && itemToUpdate && (
         <UpdateConsumedModal
           onModalClose={async () => {
@@ -234,8 +242,9 @@ const ItemsPage = () => {
   const [newItemModalOpened, setNewItemModalOpened] = useState(false)
   const [search, setSearch] = useState("")
   const [filters, setFilters] = useState<ItemStatusType[]>([
-    ItemStatusType.FRESH,
+    ItemStatusType.BAD,
     ItemStatusType.OLD,
+    ItemStatusType.FRESH,
   ])
 
   const handleFilterChange = (value: ItemStatusType[]) => {

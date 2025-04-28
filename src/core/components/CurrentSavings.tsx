@@ -1,9 +1,8 @@
 import { useSession } from "@blitzjs/auth"
 import { Routes } from "@blitzjs/next"
 import { useQuery } from "@blitzjs/rpc"
-import { ActionIcon, Group, Text, Title } from "@mantine/core"
+import { Stack, Text } from "@mantine/core"
 import { ItemStatusType } from "@prisma/client"
-import { IconCoin } from "@tabler/icons-react"
 import Link from "next/link"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import { STEPS, colors } from "../utils/TextColors"
@@ -68,28 +67,25 @@ export const CurrentSavings = () => {
     : Number.parseFloat(averageAmountSaved.toFixed(2))
 
   return (
-    <Group>
-      <ActionIcon variant="filled" size="xl" radius="xl" aria-label="Savings" color="gray">
-        <IconCoin style={{ width: "70%", height: "70%" }} stroke={1.5} />
-      </ActionIcon>
-      <div>
-        <Title order={4}>Savings</Title>
-        {filteredTrips.length ? (
-          <Text
-            variant="gradient"
-            gradient={getTextColor(value)}
-            fw={900}
-            ta="center"
-            style={{ fontSize: "2rem" }}
-          >
-            ${(value > 0 ? value : 0).toFixed(2)}
-          </Text>
-        ) : (
-          <Text>
-            No grocery trips yet! <Link href={Routes.GroceryTripsPage()}>Add one</Link>
-          </Text>
-        )}
-      </div>
-    </Group>
+    <Stack align="center" justify="center" className="h-full" gap={0}>
+      <Text mb="-.5rem" className="ml-[15px]" c="dimmed" fw={700}>
+        total savings
+      </Text>
+      {filteredTrips.length ? (
+        <Text
+          variant="gradient"
+          gradient={getTextColor(value)}
+          fw={900}
+          ta="center"
+          className="text-5xl font-black"
+        >
+          ${(value > 0 ? value : 0).toFixed(2)}
+        </Text>
+      ) : (
+        <Text>
+          No grocery trips yet! <Link href={Routes.GroceryTripsPage()}>Add one</Link>
+        </Text>
+      )}
+    </Stack>
   )
 }

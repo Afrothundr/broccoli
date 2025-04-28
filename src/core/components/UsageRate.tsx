@@ -1,23 +1,11 @@
 import { useSession } from "@blitzjs/auth"
-import { Routes } from "@blitzjs/next"
 import { useQuery } from "@blitzjs/rpc"
-import { ActionIcon, Group, NumberFormatter, Text, Title } from "@mantine/core"
-import { type GroceryTrip, ItemStatusType } from "@prisma/client"
-import { IconPaperBag } from "@tabler/icons-react"
-import Link from "next/link"
+import { Text } from "@mantine/core"
+import { ItemStatusType } from "@prisma/client"
+import { PieChart } from "react-minimal-pie-chart"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
 import { STEPS, colors } from "../utils/TextColors"
 
-type TripType = GroceryTrip & {
-  items: {
-    status: ItemStatusType
-    price: number
-    percentConsumed: number
-  }[]
-  _count: {
-    items: number
-  }
-}
 export const UsageRate = () => {
   const { userId } = useSession()
   const [{ groceryTrips }] = useQuery(getGroceryTrips, {
@@ -61,34 +49,40 @@ export const UsageRate = () => {
     }
   }
 
-  const averageConsumed =
-    filteredTrips.reduce(
+  const averageConsumed = Math.round(
+    (filteredTrips.reduce(
       (acc, curr) => acc + curr.itemsConsumed / (curr.totalItems > 0 ? curr.totalItems : 1),
       0
-    ) / filteredTrips.length
+    ) /
+      filteredTrips.length) *
+      100
+  )
 
   return (
-    <Group>
-      <ActionIcon variant="filled" size="xl" radius="xl" aria-label="Savings" color="gray">
-        <IconPaperBag style={{ width: "70%", height: "70%" }} stroke={1.5} />
-      </ActionIcon>
-      <div>
-        <Title order={4}>Usage rate</Title>
-        {filteredTrips.length ? (
-          <Text
-            variant="gradient"
-            gradient={getTextColor(Math.round(averageConsumed * 100))}
-            fw={900}
-            style={{ fontSize: "2rem" }}
-          >
-            <NumberFormatter suffix="%" value={Math.round(averageConsumed * 100)} />
-          </Text>
-        ) : (
-          <Text>
-            No grocery trips yet! <Link href={Routes.GroceryTripsPage()}>Add one</Link>
-          </Text>
-        )}
+    <div className="grid mx-auto p-lg md:w-1/2 lg:w-1/4">
+      <div className="row-span-full col-span-full w-full">
+        <PieChart
+          background="#e9ecef"
+          data={[{ value: averageConsumed, color: getTextColor(averageConsumed)?.to || "grey" }]}
+          totalValue={100}
+          label={({ dataEntry }) => `${dataEntry.value}%`}
+          lineWidth={20}
+          labelStyle={{
+            fontSize: "20px",
+            fontFamily:
+              "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji",
+            fontWeight: "600",
+            fill: getTextColor(averageConsumed)?.to,
+          }}
+          labelPosition={0}
+          style={{ height: "200px" }}
+        />
       </div>
-    </Group>
+      <div className="row-span-full col-span-full w-full h-full content-center justify-items-center">
+        <Text c="dimmed" fw={700} className="mb-[75px] text-center">
+          usage rate
+        </Text>
+      </div>
+    </div>
   )
 }

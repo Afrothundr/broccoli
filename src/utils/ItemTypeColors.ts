@@ -1,0 +1,15 @@
+export const ItemCategoryColors = {
+  Vegetables: "#4CAF50",
+  Fruit: "#FF9800",
+  Other: "#f5deb3",
+  Proteins: "#8D6E63",
+  "Non-Dairy Milk": "#6495ed",
+  Meat: "#F44336",
+  Eggs: "#FFF59D",
+  Test: "#2196F3",
+  Frozen: "#90CAF9",
+  Pantry: "#FFCC80",
+  Mushrooms: "#795548",
+  Dairy: "#FCE4EC",
+  Herbs: "#66BB6A",
+}

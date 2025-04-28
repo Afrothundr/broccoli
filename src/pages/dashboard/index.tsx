@@ -1,52 +1,46 @@
 import { Routes } from "@blitzjs/next"
-import { Divider, Flex, Group, Loader, Stack } from "@mantine/core"
+import { Loader, Stack, Text } from "@mantine/core"
+import { ItemStatusType } from "@prisma/client"
 import { Suspense } from "react"
 import { AverageGroceryCost } from "src/core/components/AverageGroceryCost"
 import { CurrentSavings } from "src/core/components/CurrentSavings"
 import { ImageUpload } from "src/core/components/ImageUpload"
 import { ItemTypeBreakdown } from "src/core/components/ItemTypeBreakdown"
-import { StorageAdvice } from "src/core/components/StorageAdvice"
 import { UsageRate } from "src/core/components/UsageRate"
 import Layout from "src/core/layouts/Layout"
+import { ItemsList } from "../items"
 
 export const Dashboard = () => {
   return (
-    <>
-      <Flex
-        direction={{ base: "column", md: "row" }}
-        gap={{ base: "sm", md: "md" }}
-        justify={{ md: "space-between", base: "center" }}
-        p={{ base: "sm", md: "md" }}
-      >
-        <Stack px="md" justify="between" style={{ flexGrow: 3 }} className="relative">
-          <Stack gap="md">
-            <Group justify="space-between" gap="xl" grow>
-              <Suspense fallback={<Loader />}>
-                <CurrentSavings />
-              </Suspense>
-              <Suspense fallback={<Loader />}>
-                <UsageRate />
-              </Suspense>
-            </Group>
-            <Divider />
-          </Stack>
-          <Suspense fallback={<Loader />}>
-            <AverageGroceryCost />
-          </Suspense>
-        </Stack>
-        <Stack style={{ minWidth: "30%" }}>
-          <Suspense fallback={<Loader />}>
-            <ItemTypeBreakdown />
-          </Suspense>
-          <Suspense fallback={<Loader />}>
-            <StorageAdvice />
-          </Suspense>
-        </Stack>
-      </Flex>
+    <Stack gap="lg">
+      <Stack gap={0}>
+        <Text size="xl" fw={900} variant="gradient" gradient={{ from: "green", to: "teal" }}>
+          household breakdown
+        </Text>
+      </Stack>
+      <Suspense fallback={<Loader />}>
+        <ItemTypeBreakdown>
+          <CurrentSavings />
+        </ItemTypeBreakdown>
+      </Suspense>
+      <div className="flex flex-col md:flex-row gap-4 align-center mt-5">
+        <Suspense fallback={<Loader />}>
+          <AverageGroceryCost />
+        </Suspense>
+        <Suspense fallback={<Loader />}>
+          <UsageRate />
+        </Suspense>
+      </div>
+      <div className="flex flex-col gap-0">
+        <Text c="dimmed" fw={700}>
+          items at risk
+        </Text>
+        <ItemsList search="" filters={[ItemStatusType.BAD, ItemStatusType.OLD]} />
+      </div>
       <div className="fixed bottom-[2rem] right-[2rem]">
         <ImageUpload style="floating" />
       </div>
-    </>
+    </Stack>
   )
 }
 
