@@ -3,7 +3,7 @@ import { Routes } from "@blitzjs/next"
 import { useMutation } from "@blitzjs/rpc"
 import { Tooltip, rem } from "@mantine/core"
 import { notifications } from "@mantine/notifications"
-import { IconCamera, IconCameraPlus } from "@tabler/icons-react"
+import { IconCamera } from "@tabler/icons-react"
 import cx from "classnames"
 import dayjs from "dayjs"
 import type { GroceryTrip } from "db"
@@ -58,7 +58,11 @@ export const ImageUpload = ({
       case "floating":
         return (
           <Tooltip label="Add new receipt">
-            <IconCameraPlus style={{ width: rem(32), height: rem(32) }} />
+            <img
+              src="/billing_icon.svg"
+              alt="add new receipt"
+              style={{ width: rem(32), height: rem(32), fill: "white", marginLeft: "5px" }}
+            />
           </Tooltip>
         )
     }

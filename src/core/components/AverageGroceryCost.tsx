@@ -1,15 +1,12 @@
 "use client"
 import { useSession } from "@blitzjs/auth"
-import { Routes } from "@blitzjs/next"
 import { useQuery } from "@blitzjs/rpc"
-import { Card, NumberFormatter, Text, Title, useMantineColorScheme } from "@mantine/core"
-import { LineChart, type LineChartOptions, type ResponsiveOptions } from "chartist"
+import { Sparkline } from "@mantine/charts"
+import { Group, NumberFormatter, Stack, Text } from "@mantine/core"
 import "chartist/dist/index.css"
 import dayjs from "dayjs"
-import Link from "next/link"
-import { useEffect, useRef } from "react"
+import { useMemo } from "react"
 import getGroceryTrips from "src/grocery-trips/queries/getGroceryTrips"
-import { broccoliGreen } from "src/pages/_app"
 
 export const AverageGroceryCost = () => {
   const { userId } = useSession()
@@ -19,134 +16,71 @@ export const AverageGroceryCost = () => {
       userId: userId ?? undefined,
     },
   })
-  const chart = useRef(null)
   const data = groceryTrips
     .reduce((acc, curr) => {
       if (curr.items.length > 0) {
         acc.push({
           createdAt: curr.createdAt,
           name: dayjs(curr.createdAt).format("MM/DD/YY"),
-          cost: curr.items.reduce((acc, curr) => acc + curr.price, 0).toFixed(2),
+          cost: curr.items.reduce((acc, curr) => acc + curr.price, 0),
           id: curr.id,
         })
       }
       return acc
-    }, [] as { name: string; cost: string; id: number; createdAt: Date }[])
+    }, [] as { name: string; cost: number; id: number; createdAt: Date }[])
     .reverse()
 
   const dataToDisplay = data.slice(-5)
 
-  const { colorScheme } = useMantineColorScheme()
+  const averageCost = (data.reduce((acc, curr) => acc + curr.cost, 0) / data.length).toFixed(2)
 
-  const averageCost = (
-    data.reduce((acc, curr) => acc + Number.parseFloat(curr.cost), 0) / data.length
-  ).toFixed(2)
+  const percentageChange = useMemo(() => {
+    if (data.length > 3) {
+      const rollingAverage = data.slice(-3).reduce((acc, curr) => acc + curr.cost, 0) / data.length
 
-  useEffect(() => {
-    const lineColor = broccoliGreen[6]
-    const areaColor = broccoliGreen[4]
-    const pointColor = broccoliGreen[broccoliGreen.length - 1]
-    if (chart.current) {
-      const labels: string[] = []
-      const series: string[] = []
-      for (const trip of dataToDisplay) {
-        labels.push(dayjs(trip.createdAt).format("MMM D"))
-        series.push(trip.cost)
-      }
-      const responsiveOptions: ResponsiveOptions<LineChartOptions> = [
-        [
-          "screen and (min-width: 640px)",
-          {
-            chartPadding: {
-              right: 90,
-            },
-            axisY: {
-              onlyInteger: true,
-            },
-          },
-        ],
-        [
-          "screen and (min-width: 1024px)",
-          {
-            chartPadding: {
-              right: 120,
-            },
-            axisY: {
-              onlyInteger: true,
-            },
-          },
-        ],
-      ]
-      const chart = new LineChart(
-        "#chart",
-        {
-          labels,
-          series: [series],
-        },
-        {
-          low: 0,
-          showArea: true,
-          showPoint: true,
-          fullWidth: true,
-          chartPadding: {
-            right: 40,
-          },
-        },
-        responsiveOptions
+      return Math.round(
+        ((rollingAverage - Number.parseFloat(averageCost)) / Number.parseFloat(averageCost)) * 100
       )
-      // Apply custom styles
-      chart.on("draw", (context) => {
-        if (context.type === "line") {
-          context.element.attr({
-            style: `stroke: ${lineColor};`,
-          })
-        }
-        if (context.type === "area") {
-          context.element.attr({
-            style: `fill: ${areaColor};`,
-          })
-        }
-        if (context.type === "point") {
-          context.element.attr({
-            style: `stroke: ${pointColor};`,
-          })
-        }
-        if (context.type === "label") {
-          context.element.attr({
-            style: `color: ${
-              colorScheme === "light" ? "black" : "rgb(201, 201, 201)"
-            }; font-size: 1rem;`,
-          })
-          if (context.x === 10) {
-            context.element.addClass("custom-y-axis-label")
-          }
-        }
-        if (context.type === "grid") {
-          context.element.attr({
-            style: `stroke: ${colorScheme === "light" ? "rgb(222, 226, 230)" : "#828282"};`,
-          })
-        }
-      })
     }
-  }, [dataToDisplay, colorScheme])
+    return null
+  }, [data, averageCost])
 
   return (
-    <Card mt="sm" radius="md" style={{ minHeight: 150 }}>
-      <Card.Section withBorder inheritPadding py="xs">
-        <Title order={4}>
-          Average Grocery Trip Cost:{" "}
-          {<NumberFormatter prefix="$" value={averageCost} thousandSeparator />}
-        </Title>
-      </Card.Section>
-      <Card.Section mt="sm">
-        {groceryTrips.length ? (
-          <div id="chart" ref={chart} style={{ height: "50vh" }} />
-        ) : (
-          <Text>
-            No grocery trips yet! <Link href={Routes.GroceryTripsPage()}>Add one</Link>
-          </Text>
-        )}
-      </Card.Section>
-    </Card>
+    <div className="row-span-full col-span-full h-full w-full px-6 md:w-1/2 lg:w-1/2 bg-green-100 p-3 rounded-lg">
+      {" "}
+      <Stack>
+        <Group justify="space-between">
+          <Group>
+            <div
+              className="inline-flex items-center justify-center p-1 text-sm font-medium rounded-md bg-gray-200/80 text-gray-700 gap-2 opacity-75
+
+"
+            >
+              $
+            </div>
+            <Text c="dimmed" fw={700}>
+              average trip
+            </Text>
+          </Group>
+          {percentageChange && (
+            <div className="inline-flex items-center justify-center px-3 py-1 text-sm font-medium rounded-full bg-gray-200/80 text-gray-700 gap-2 opacity-75">
+              <span>{percentageChange > 0 ? "+" : "-"}</span>
+              <span>{Math.abs(percentageChange)}%</span>
+            </div>
+          )}
+        </Group>
+        <Text className="pl-8 text-4xl font-black mb-[-10px]" c="#32831c">
+          <NumberFormatter prefix="$" value={averageCost} thousandSeparator color="#32831c" />
+        </Text>
+        <Sparkline
+          h={60}
+          data={dataToDisplay.map((data) => data.cost)}
+          curveType="linear"
+          color="#32831c"
+          fillOpacity={0}
+          strokeWidth={4}
+        />
+      </Stack>
+    </div>
   )
 }
