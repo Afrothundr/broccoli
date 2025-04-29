@@ -30,20 +30,42 @@ export const AverageGroceryCost = () => {
     }, [] as { name: string; cost: number; id: number; createdAt: Date }[])
     .reverse()
 
-  const dataToDisplay = data.slice(-5)
+  const dataToDisplay = data.slice(-6)
 
   const averageCost = (data.reduce((acc, curr) => acc + curr.cost, 0) / data.length).toFixed(2)
 
   const percentageChange = useMemo(() => {
-    if (data.length > 3) {
-      const rollingAverage = data.slice(-3).reduce((acc, curr) => acc + curr.cost, 0) / data.length
+    const simpleMovingAverage = (prices: number[], interval: number) => {
+      let index = interval - 1
+      const length = prices.length + 1
+      const results: number[] = []
 
-      return Math.round(
-        ((rollingAverage - Number.parseFloat(averageCost)) / Number.parseFloat(averageCost)) * 100
+      while (index < length) {
+        index = index + 1
+        const intervalSlice = prices.slice(index - interval, index)
+        const sum = intervalSlice.reduce((prev, curr) => prev + curr, 0)
+        results.push(sum / interval)
+      }
+
+      return results
+    }
+
+    if (data.length >= 6) {
+      const rollingAverages = simpleMovingAverage(
+        data.map((trip) => trip.cost),
+        3
       )
+      if (!rollingAverages.length) return null
+      const secondToLast = rollingAverages?.[rollingAverages.length - 2]
+      const last = rollingAverages?.[rollingAverages.length - 1]
+      if (secondToLast && last) {
+        return Math.round(((last - secondToLast) / secondToLast) * 100)
+      }
     }
     return null
-  }, [data, averageCost])
+  }, [data])
+
+  console.log({ percentageChange })
 
   return (
     <div className="row-span-full col-span-full h-full w-full px-6 md:w-1/2 lg:w-1/2 bg-green-100 p-3 rounded-lg">
