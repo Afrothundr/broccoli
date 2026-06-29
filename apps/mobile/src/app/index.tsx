@@ -1,6 +1,6 @@
 import * as Device from 'expo-device';
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedIcon } from '@/components/animated-icon';
@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { API_URL, getHealth } from '@/lib/api';
+import { authClient } from '@/lib/auth-client';
 
 type ApiStatus = 'checking' | 'connected' | 'unreachable';
 
@@ -48,6 +49,7 @@ function getDevMenuHint() {
 
 export default function HomeScreen() {
   const apiStatus = useApiHealth();
+  const { data: session } = authClient.useSession();
   const apiHint =
     apiStatus === 'checking'
       ? 'checking…'
@@ -80,7 +82,19 @@ export default function HomeScreen() {
             hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
           />
           <HintRow title="Dev tools" hint={getDevMenuHint()} />
+          {session && (
+            <HintRow
+              title="Signed in"
+              hint={<ThemedText type="small">{session.user.email}</ThemedText>}
+            />
+          )}
         </ThemedView>
+
+        {session && (
+          <Pressable onPress={() => authClient.signOut()}>
+            <ThemedText type="linkPrimary">Sign out</ThemedText>
+          </Pressable>
+        )}
 
         {Platform.OS === 'web' && <WebBadge />}
       </SafeAreaView>
