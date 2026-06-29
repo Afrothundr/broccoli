@@ -1,0 +1,34 @@
+{
+  "name": "broccoli-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mobile-facing API, auth, and data layer for Broccoli. Owns the Prisma schema and migrations.",
+  "exports": {
+    "./router": {
+      "types": "./src/router.ts"
+    }
+  },
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+    "start": "tsx --env-file-if-exists=.env src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@prisma/client": "^6.1.0",
+    "@trpc/server": "^11.0.0",
+    "better-auth": "^1.1.0",
+    "hono": "^4.6.14",
+    "tsx": "^4.19.2",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "prisma": "^6.1.0",
+    "typescript": "^5.7.2"
+  }
+}

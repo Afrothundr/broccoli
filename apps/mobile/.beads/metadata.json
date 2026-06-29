@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "broccoli_mobile",
+  "project_id": "1d9d458f-589c-4c60-90d0-f9c4a520cadc"
+}
