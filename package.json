@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.4.1",
+  "engines": {
+    "node": ">=22"
+  },
   "description": "Broccoli monorepo — mobile app + API. Cut food waste; track grocery spend.",
   "scripts": {
     "dev": "turbo run dev",

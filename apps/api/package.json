@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Mobile-facing API, auth, and data layer for Broccoli. Owns the Prisma schema and migrations.",
+  "engines": {
+    "node": ">=22"
+  },
   "exports": {
     "./router": {
       "types": "./src/router.ts"
