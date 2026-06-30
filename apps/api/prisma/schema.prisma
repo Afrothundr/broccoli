@@ -26,6 +26,8 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  receipts      Receipt[]
+  items         Item[]
 
   @@map("user")
 }
@@ -75,5 +77,71 @@ model Verification {
 }
 
 // ---------------------------------------------------------------------------
-// App models land here as we build (Phase 1+): Receipt, Item, etc.
+// App models (Phase 1 — capture → extract → review).
 // ---------------------------------------------------------------------------
+
+// A captured grocery receipt. Created as PROCESSING when the photo is uploaded;
+// broccoli-model parses it asynchronously, then the user reviews + saves.
+model Receipt {
+  id            String        @id @default(cuid())
+  userId        String
+  imageUrl      String // fetchable URL (UploadThing); broccoli-model reads this
+  imageKey      String? // UploadThing key, for later deletion
+  status        ReceiptStatus @default(PROCESSING)
+  storeName     String?
+  purchasedAt   DateTime?
+  total         Float? // receipt total (spend tracking, PRD §4)
+  rawExtraction Json? // raw broccoli-model output, for debugging + feedback
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items         Item[]
+
+  @@index([userId])
+  @@map("receipt")
+}
+
+// A single line item from a receipt. `category` holds the snapped ItemType name
+// (the parser maps to the catalog); the explicit ItemType relation + expiration
+// fields arrive in Phase 3.
+model Item {
+  id        String   @id @default(cuid())
+  receiptId String
+  userId    String
+  name      String
+  price     Float? // line price (spend tracking, PRD §4)
+  quantity  Int      @default(1)
+  unit      String   @default("")
+  category  String? // snapped ItemType name, or null/Unknown
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  receipt   Receipt  @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([receiptId])
+  @@index([userId])
+  @@map("item")
+}
+
+// Shelf-life catalog seeded from USDA FoodKeeper (CC0). The parser categorizes
+// items against `name`; Phase 3 derives expiration advice from the shelf-life
+// data. Location-agnostic for now — `raw` keeps the full FoodKeeper record so
+// Phase 3 can expand to pantry/fridge/freezer ranges without re-running the ETL.
+model ItemType {
+  id                       String @id @default(cuid())
+  name                     String @unique
+  category                 String
+  suggestedLifeSpanSeconds Int
+  storageAdvice            String @default("")
+  source                   String @default("FoodKeeper")
+  raw                      Json?
+
+  @@map("item_type")
+}
+
+enum ReceiptStatus {
+  PROCESSING
+  READY
+  SAVED
+  ERROR
+}
