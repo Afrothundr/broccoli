@@ -18,8 +18,14 @@ Node/TypeScript · Hono · tRPC · Prisma (Postgres) · better-auth · runs with
 cp .env.example .env        # then fill in DATABASE_URL + secrets
 npm install
 npm run db:migrate          # creates the schema in your Postgres
+npm run db:seed             # loads the ItemType catalog (FoodKeeper)
 npm run dev                 # http://localhost:3000/health
 ```
+`db:seed` is **required** for receipt parsing: `receipt.create` hands the
+`ItemType` catalog to `broccoli-model` so it can categorize line items. An
+empty catalog makes every item come back `Unknown`. The seed is idempotent —
+re-run it any time. (Prisma only auto-seeds on `migrate dev`/`migrate reset`,
+not on `migrate deploy`, so it's a separate step.)
 
 ## Endpoints
 - `GET /health` — liveness
@@ -32,7 +38,9 @@ npm run dev                 # http://localhost:3000/health
 Railway auto-detects Node. Set `DATABASE_URL`, `BETTER_AUTH_SECRET`,
 `BETTER_AUTH_URL`, `INTERNAL_SERVICE_TOKEN`, and `UPLOADTHING_TOKEN`. Start
 command: `npm start`.
-Run `npm run db:deploy` on release to apply migrations.
+Migrations + seed run automatically on release via `railway.json`'s start
+command (`prisma migrate deploy && prisma db seed && start`) — `migrate deploy`
+never seeds on its own, so the seed is chained explicitly.
 
 ## Issues
 Tracked with [beads](https://github.com/steveyegge/beads) in `.beads/`. Run

@@ -5,7 +5,7 @@
     "watchPatterns": ["apps/api/**", "pnpm-lock.yaml", "railway.json"]
   },
   "deploy": {
-    "startCommand": "pnpm --filter broccoli-api exec prisma migrate deploy && pnpm --filter broccoli-api start",
+    "startCommand": "pnpm --filter broccoli-api exec prisma migrate deploy && pnpm --filter broccoli-api exec prisma db seed && pnpm --filter broccoli-api start",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }

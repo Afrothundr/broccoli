@@ -104,6 +104,11 @@ function main() {
       };
     });
 
+  // Idempotent: wipe and rebuild the FoodKeeper rows so re-running (locally or
+  // on every Railway deploy) re-derives the catalog. Safe now because Phase 1
+  // stores the ItemType *name* on Item.category, not a foreign key. Phase 3 adds
+  // an explicit Item -> ItemType relation; at that point switch this to an
+  // upsert on the unique `name` so ids stay stable and don't orphan Items.
   return prisma.$transaction(async (tx) => {
     await tx.itemType.deleteMany({ where: { source: "FoodKeeper" } });
     await tx.itemType.createMany({ data: rows });
