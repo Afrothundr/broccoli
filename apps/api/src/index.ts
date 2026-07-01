@@ -4,6 +4,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
 import { createContext } from "./trpc";
 import { auth } from "./auth";
+import { uploadthingHandlers } from "./uploadthing";
 
 const app = new Hono();
 
@@ -12,6 +13,10 @@ app.get("/health", (c) => c.json({ status: "ok", service: "broccoli-api" }));
 
 // better-auth owns all /api/auth/* routes (sign-up, sign-in, session, etc.).
 app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+
+// UploadThing — the app uploads receipt files (photo or PDF) here (auth-gated
+// in the FileRouter middleware) and gets back a fetchable url + key.
+app.all("/api/uploadthing", (c) => uploadthingHandlers(c.req.raw));
 
 // tRPC — the typed surface the mobile app and the scheduler call.
 app.all("/trpc/*", (c) =>
