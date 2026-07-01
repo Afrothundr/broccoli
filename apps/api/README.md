@@ -24,11 +24,14 @@ npm run dev                 # http://localhost:3000/health
 ## Endpoints
 - `GET /health` — liveness
 - `GET|POST /api/auth/*` — better-auth
+- `ALL /api/uploadthing` — UploadThing receipt-image uploads (auth-gated;
+  returns `{ url, key }` for `receipt.create`)
 - `ALL /trpc/*` — tRPC (`health`, `me`, `internal.ping`)
 
 ## Deploy (Railway)
 Railway auto-detects Node. Set `DATABASE_URL`, `BETTER_AUTH_SECRET`,
-`BETTER_AUTH_URL`, and `INTERNAL_SERVICE_TOKEN`. Start command: `npm start`.
+`BETTER_AUTH_URL`, `INTERNAL_SERVICE_TOKEN`, and `UPLOADTHING_TOKEN`. Start
+command: `npm start`.
 Run `npm run db:deploy` on release to apply migrations.
 
 ## Issues
