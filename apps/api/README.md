@@ -24,8 +24,8 @@ npm run dev                 # http://localhost:3000/health
 ## Endpoints
 - `GET /health` — liveness
 - `GET|POST /api/auth/*` — better-auth
-- `ALL /api/uploadthing` — UploadThing receipt-image uploads (auth-gated;
-  returns `{ url, key }` for `receipt.create`)
+- `ALL /api/uploadthing` — UploadThing receipt uploads: image or PDF, ≤16MB
+  (auth-gated; returns `{ url, key }` for `receipt.create`)
 - `ALL /trpc/*` — tRPC (`health`, `me`, `internal.ping`)
 
 ## Deploy (Railway)

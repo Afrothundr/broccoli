@@ -8,18 +8,25 @@ import { auth } from "./auth";
 
 const f = createUploadthing();
 
-// UploadThing FileRouter. The mobile app uploads a receipt photo directly to
-// UploadThing (not through this service) after a short auth handshake with the
-// `middleware` below; UploadThing then calls `onUploadComplete` server-side.
+// UploadThing FileRouter. The mobile app uploads a receipt (photo or PDF)
+// directly to UploadThing (not through this service) after a short auth
+// handshake with the `middleware` below; UploadThing then calls
+// `onUploadComplete` server-side.
 //
 // This task (2r8.3) stops at handing the app a fetchable `url` + `key`. The app
 // passes those to `receipt.create` (2r8.5), which persists the Receipt row.
 // broccoli-model later fetches `url`; `key` lets us delete the file.
 export const uploadRouter = {
-  receiptImage: f({
+  receiptFile: f({
+    // A long, high-res receipt photo is only bounded by file size (UploadThing
+    // imposes no pixel-dimension limit), so we allow generous headroom.
     image: {
-      // Receipts are tall; allow headroom over the default 4MB.
-      maxFileSize: "8MB",
+      maxFileSize: "16MB",
+      maxFileCount: 1,
+    },
+    // Receipts also arrive as PDFs (email receipts, multi-page scans).
+    pdf: {
+      maxFileSize: "16MB",
       maxFileCount: 1,
     },
   })
