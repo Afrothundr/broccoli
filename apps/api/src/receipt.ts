@@ -1,8 +1,16 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import type { Prisma } from "@prisma/client";
 import { router, protectedProcedure } from "./trpc";
 import { prisma } from "./db";
 import { requestOcr, type OcrData } from "./model";
+
+// What get/confirm hand back to the app. Annotating the resolvers with this
+// flat alias keeps the router's inferred output shallow — without it, clients
+// importing AppRouter re-derive Prisma's conditional types and hit TS2589.
+export type ReceiptWithItems = Prisma.ReceiptGetPayload<{
+  include: { items: true };
+}>;
 
 // The capture → extract → review loop (PRD §4, epic broccoli-api-2r8):
 //   1. create  — app hands us the uploaded image; we persist a PROCESSING
@@ -116,7 +124,7 @@ export const receiptRouter = router({
   // read another's receipts.
   get: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ ctx, input }): Promise<ReceiptWithItems> => {
       const receipt = await prisma.receipt.findFirst({
         where: { id: input.id, userId: ctx.user.id },
         include: { items: { orderBy: { createdAt: "asc" } } },
@@ -138,7 +146,7 @@ export const receiptRouter = router({
         items: z.array(confirmItemSchema),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }): Promise<ReceiptWithItems> => {
       const existing = await prisma.receipt.findFirst({
         where: { id: input.id, userId: ctx.user.id },
         select: { id: true },

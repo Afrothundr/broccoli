@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ReceiptReview } from '@/components/receipt-review';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useReceiptParse } from '@/hooks/use-receipt-parse';
+import { ParsedReceipt, useReceiptParse } from '@/hooks/use-receipt-parse';
 import { useImageUploader } from '@/lib/uploadthing';
 
 // A receipt as it exists right after upload: stored on UploadThing, not yet
@@ -19,6 +20,7 @@ type UploadedReceipt = {
 export default function CaptureScreen() {
   const [uploaded, setUploaded] = useState<UploadedReceipt | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<ParsedReceipt | null>(null);
   const parse = useReceiptParse();
 
   const { openImagePicker, isUploading } = useImageUploader('receiptFile', {
@@ -35,6 +37,7 @@ export default function CaptureScreen() {
   const capture = (source: 'camera' | 'library') => {
     setUploadError(null);
     setUploaded(null);
+    setSaved(null);
     parse.reset();
     openImagePicker({
       source,
@@ -51,6 +54,24 @@ export default function CaptureScreen() {
     });
   };
 
+  // Parse landed: hand the whole screen over to review (vqy.3/vqy.4).
+  if (parse.state.status === 'ready') {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={[styles.safeArea, styles.reviewSafeArea]}>
+          <ReceiptReview
+            receipt={parse.state.receipt}
+            onSaved={(receipt) => {
+              setSaved(receipt);
+              setUploaded(null);
+              parse.reset();
+            }}
+          />
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
   const error = uploadError ?? (parse.state.status === 'error' ? parse.state.message : null);
   const busy = isUploading || parse.state.status === 'processing';
 
@@ -58,7 +79,17 @@ export default function CaptureScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedView style={styles.heroSection}>
-          {uploaded ? (
+          {saved ? (
+            <>
+              <ThemedText type="subtitle" style={styles.title}>
+                Saved ✓
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.title}>
+                {saved.items.length} {saved.items.length === 1 ? 'item' : 'items'}
+                {saved.storeName ? ` from ${saved.storeName}` : ''} added to your groceries.
+              </ThemedText>
+            </>
+          ) : uploaded ? (
             <>
               <Image source={{ uri: uploaded.url }} style={styles.preview} contentFit="cover" />
               {parse.state.status === 'processing' && (
@@ -68,18 +99,6 @@ export default function CaptureScreen() {
                     Reading your receipt…
                   </ThemedText>
                 </ThemedView>
-              )}
-              {parse.state.status === 'ready' && (
-                <>
-                  <ThemedText type="smallBold">
-                    Found {parse.state.receipt.items.length}{' '}
-                    {parse.state.receipt.items.length === 1 ? 'item' : 'items'}
-                    {parse.state.receipt.storeName ? ` at ${parse.state.receipt.storeName}` : ''}
-                  </ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary" style={styles.title}>
-                    Review and edit comes next.
-                  </ThemedText>
-                </>
               )}
             </>
           ) : (
@@ -106,7 +125,7 @@ export default function CaptureScreen() {
               <ActivityIndicator />
             ) : (
               <ThemedText type="smallBold">
-                {uploaded ? 'Snap another receipt' : 'Open camera'}
+                {saved !== null || uploaded !== null ? 'Snap another receipt' : 'Open camera'}
               </ThemedText>
             )}
           </ThemedView>
@@ -133,6 +152,11 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
     maxWidth: MaxContentWidth,
+  },
+  reviewSafeArea: {
+    paddingHorizontal: 0,
+    paddingBottom: 0,
+    alignItems: 'stretch',
   },
   heroSection: {
     alignItems: 'center',
