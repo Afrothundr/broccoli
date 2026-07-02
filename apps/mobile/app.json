@@ -37,7 +37,14 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Broccoli uses the camera to snap photos of your grocery receipts.",
+          "photosPermission": "Broccoli uses your photo library so you can pick an existing receipt photo."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
