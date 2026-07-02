@@ -36,6 +36,7 @@
     "react-native-worklets": "0.8.3"
   },
   "devDependencies": {
+    "@trpc/server": "^11.18.0",
     "@types/react": "~19.2.2",
     "broccoli-api": "workspace:*",
     "eslint": "^9.0.0",
