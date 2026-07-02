@@ -11,9 +11,10 @@ import { authClient } from '@/lib/auth-client';
 type Mode = 'sign-in' | 'sign-up';
 
 // Email/password auth against broccoli-api's /api/auth/* routes. On success
-// the session lands in expo-secure-store via the expoClient plugin, so the
-// useSession() in the root layout flips the app over to the main tabs.
-export function SignIn() {
+// the session lands in expo-secure-store via the expoClient plugin, and
+// `onAuthed` tells the root layout to refetch useSession() — on Expo the hook
+// doesn't pick up a new session by itself.
+export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
   const theme = useTheme();
   const [mode, setMode] = useState<Mode>('sign-in');
   const [name, setName] = useState('');
@@ -30,8 +31,13 @@ export function SignIn() {
         ? await authClient.signIn.email({ email, password })
         : await authClient.signUp.email({ email, password, name });
     setSubmitting(false);
-    // No navigation here: useSession() in the layout reacts to the new session.
-    if (result.error) setError(result.error.message ?? 'Something went wrong.');
+    if (result.error) {
+      setError(result.error.message ?? 'Something went wrong.');
+      return;
+    }
+    // No navigation here: the layout swaps to the app once its session
+    // refetch (triggered by onAuthed) comes back.
+    onAuthed?.();
   }
 
   const inputStyle = [

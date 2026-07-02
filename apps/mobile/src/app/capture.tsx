@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { ParsedReceipt, useReceiptParse } from '@/hooks/use-receipt-parse';
-import { useImageUploader } from '@/lib/uploadthing';
+import { useUploadThing } from '@/lib/uploadthing';
 
 // A receipt as it exists right after upload: stored on UploadThing, not yet
 // parsed. `url` + `key` are exactly what receipt.create wants.
@@ -23,7 +24,7 @@ export default function CaptureScreen() {
   const [saved, setSaved] = useState<ParsedReceipt | null>(null);
   const parse = useReceiptParse();
 
-  const { openImagePicker, isUploading } = useImageUploader('receiptFile', {
+  const { startUpload, isUploading } = useUploadThing('receiptFile', {
     onClientUploadComplete: (files) => {
       const data = files[0]?.serverData;
       if (!data) return;
@@ -34,24 +35,47 @@ export default function CaptureScreen() {
     onUploadError: (e) => setUploadError(e.message),
   });
 
-  const capture = (source: 'camera' | 'library') => {
+  // We drive expo-image-picker ourselves instead of the library's
+  // openImagePicker helper: that helper converts the picked asset via
+  // fetch(uri) → blob → File, and on Expo's WinterCG fetch that dies with
+  // "Creating blobs from 'ArrayBuffer' ... not supported" (RN's Blob can't be
+  // built from ArrayBuffers). uploadthing's transport doesn't need a File at
+  // all — a {uri, name, type, size} object goes straight into RN's FormData.
+  const capture = async (source: 'camera' | 'library') => {
     setUploadError(null);
     setUploaded(null);
     setSaved(null);
     parse.reset();
-    openImagePicker({
-      source,
-      // Full frame, no crop step — receipts are long and the parser wants the
-      // whole thing. Light compression keeps long photos under the 16MB cap.
-      allowsEditing: false,
-      quality: 0.8,
-      onInsufficientPermissions: () =>
-        setUploadError(
-          source === 'camera'
-            ? 'Camera access is off. Enable it for Broccoli in Settings.'
-            : 'Photo access is off. Enable it for Broccoli in Settings.'
-        ),
-    });
+
+    if (source === 'camera') {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) {
+        setUploadError('Camera access is off. Enable it for Broccoli in Settings.');
+        return;
+      }
+    }
+
+    // Full frame, no crop step — receipts are long and the parser wants the
+    // whole thing. Light compression keeps long photos under the 16MB cap.
+    const options = { mediaTypes: ['images'] as ImagePicker.MediaType[], quality: 0.8 };
+    const result =
+      source === 'camera'
+        ? await ImagePicker.launchCameraAsync(options)
+        : await ImagePicker.launchImageLibraryAsync(options);
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+    const file = {
+      uri: asset.uri,
+      name: asset.fileName ?? asset.uri.split('/').pop() ?? 'receipt.jpg',
+      type: asset.mimeType ?? 'image/jpeg',
+      size: asset.fileSize ?? 0,
+    };
+    try {
+      await startUpload([file as unknown as File]);
+    } catch {
+      setUploadError('Upload failed. Please try again.');
+    }
   };
 
   // Parse landed: hand the whole screen over to review (vqy.3/vqy.4).

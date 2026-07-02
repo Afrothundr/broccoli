@@ -49,7 +49,9 @@ function getDevMenuHint() {
 
 export default function HomeScreen() {
   const apiStatus = useApiHealth();
-  const { data: session } = authClient.useSession();
+  // refetch: on Expo the useSession atom doesn't refresh after signOut, so we
+  // nudge it explicitly or the app would stay on the tabs with a dead session.
+  const { data: session, refetch } = authClient.useSession();
   const apiHint =
     apiStatus === 'checking'
       ? 'checking…'
@@ -91,7 +93,7 @@ export default function HomeScreen() {
         </ThemedView>
 
         {session && (
-          <Pressable onPress={() => authClient.signOut()}>
+          <Pressable onPress={() => authClient.signOut().then(() => refetch())}>
             <ThemedText type="linkPrimary">Sign out</ThemedText>
           </Pressable>
         )}

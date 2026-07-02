@@ -10,7 +10,7 @@ import { authClient } from "./auth-client";
 // Uploads are a two-step dance: a handshake with broccoli-api (which gates on
 // the better-auth session) and then a direct upload to UploadThing's servers.
 // The custom fetch attaches the session cookie only to the handshake requests.
-export const { useImageUploader } = generateReactNativeHelpers<OurFileRouter>({
+export const { useUploadThing } = generateReactNativeHelpers<OurFileRouter>({
   url: `${API_URL}/api/uploadthing`,
   fetch: (input, init) => {
     const cookie = authClient.getCookie();

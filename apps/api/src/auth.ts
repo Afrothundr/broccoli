@@ -24,4 +24,12 @@ export const auth = betterAuth({
   plugins: [expo()],
   // Allow the mobile app's deep-link scheme so auth redirects/callbacks work.
   trustedOrigins: ["broccolimobile://"],
+  // Behind Railway's proxy the client IP arrives in x-forwarded-for. Without
+  // this, better-auth can't tell clients apart and rate-limits ALL users out
+  // of one shared per-path bucket (3 sign-in attempts/min globally).
+  advanced: {
+    ipAddress: {
+      ipAddressHeaders: ["x-forwarded-for"],
+    },
+  },
 });
