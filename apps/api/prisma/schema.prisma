@@ -120,13 +120,25 @@ model Item {
   category   String? // snapped ItemType name, or null/Unknown
   status     ItemStatus @default(ACTIVE)
   resolvedAt DateTime? // when the user swiped it eaten/tossed; null while ACTIVE
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  receipt    Receipt    @relation(fields: [receiptId], references: [id], onDelete: Cascade)
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Expiration advice (Phase 3). Set at save time from the ItemType's
+  // per-location shelf life; `expirationSource` says where the estimate came
+  // from so the app can always show a reason (PRD Pillar 3). EXPIRED items
+  // keep their expiresAt; resolvedAt stays null until the user acts.
+  itemTypeId       String?
+  storageLocation  StorageLocation?
+  expiresAt        DateTime?
+  expirationSource ExpirationSource?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  receipt   Receipt   @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemType  ItemType? @relation(fields: [itemTypeId], references: [id], onDelete: SetNull)
 
   @@index([receiptId])
   @@index([userId, status]) // inventory + check-in deck query by owner and status
+  @@index([status, expiresAt]) // scheduler sweep: ACTIVE items past their date
   @@map("item")
 }
 
@@ -143,6 +155,17 @@ model ItemType {
   source                   String @default("FoodKeeper")
   raw                      Json?
 
+  // Per-location shelf life (Phase 3), derived from the raw FoodKeeper record
+  // by the seed. Null = FoodKeeper has no usable timeframe for that location.
+  pantrySeconds  Int?
+  fridgeSeconds  Int?
+  freezerSeconds Int?
+  pantryTip      String @default("")
+  fridgeTip      String @default("")
+  freezerTip     String @default("")
+
+  items Item[]
+
   @@map("item_type")
 }
 
@@ -153,10 +176,27 @@ enum ReceiptStatus {
   ERROR
 }
 
-// Item lifecycle. EATEN and TOSSED come from the daily check-in; Phase 3 adds
-// an EXPIRED transition driven by the scheduler.
+// Item lifecycle. EATEN and TOSSED come from the daily check-in; EXPIRED is
+// applied by the scheduler when an ACTIVE item passes its expiresAt (the user
+// still resolves it to EATEN/TOSSED afterwards — expiry isn't an outcome).
 enum ItemStatus {
   ACTIVE
   EATEN
   TOSSED
+  EXPIRED
+}
+
+// Where the item is stored — picks which FoodKeeper timeframe applies.
+enum StorageLocation {
+  PANTRY
+  FRIDGE
+  FREEZER
+}
+
+// Where an item's expiration estimate came from (PRD Pillar 3: every estimate
+// shows its reason). USER always wins over recomputation.
+enum ExpirationSource {
+  FOODKEEPER
+  LLM
+  USER
 }
