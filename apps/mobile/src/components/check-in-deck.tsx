@@ -19,12 +19,15 @@ import { estimateFreshness } from '@/lib/freshness';
 import { trpc } from '@/lib/trpc';
 
 // The daily check-in (PRD Pillar 5): flip through your items like cards —
-// swipe right for "ate it", left for "tossed it". Every swipe is one
-// item.resolve call; undo is item.unresolve. Swipes commit optimistically so
-// the deck never waits on the network; a failed save puts the card back at
-// the end of the deck with a note.
+// swipe right for "ate it", left for "tossed it", down for "still have it"
+// (most items on a given day are simply still in the kitchen — that's not a
+// terminal status, so it's a purely local skip: no api call, the item stays
+// in inventory and just leaves this session's deck). Eaten/tossed swipes are
+// one item.resolve call each; undo is item.unresolve. Swipes commit
+// optimistically so the deck never waits on the network; a failed save puts
+// the card back at the end of the deck with a note.
 
-type Outcome = 'EATEN' | 'TOSSED';
+type Outcome = 'EATEN' | 'TOSSED' | 'KEPT';
 type SwipeRecord = { item: InventoryItem; outcome: Outcome };
 
 const SWIPE_THRESHOLD = 110;
@@ -58,9 +61,11 @@ export function CheckInDeck({
   const top = deck[0] ?? null;
   const total = deck.length + records.length;
   const eaten = records.filter((r) => r.outcome === 'EATEN').length;
-  const tossed = records.length - eaten;
+  const tossed = records.filter((r) => r.outcome === 'TOSSED').length;
+  const kept = records.filter((r) => r.outcome === 'KEPT').length;
 
   const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
 
   const commit = (outcome: Outcome) => {
     const item = deck[0];
@@ -69,6 +74,10 @@ export function CheckInDeck({
     setDeck((d) => d.slice(1));
     setRecords((r) => [...r, { item, outcome }]);
     translateX.value = 0;
+    translateY.value = 0;
+
+    // "Still have it" is not a status change — nothing to save.
+    if (outcome === 'KEPT') return;
 
     // Optimistic: the deck moves on immediately. A failed save rejoins the
     // deck at the back so the outcome is never silently lost.
@@ -85,15 +94,22 @@ export function CheckInDeck({
     setError(null);
     setRecords((r) => r.slice(0, -1));
     setDeck((d) => [last.item, ...d]);
+    if (last.outcome === 'KEPT') return; // local skip — nothing to unwind
     trpc.item.unresolve.mutate({ id: last.item.id }).catch(() => {
       setError(`Couldn't undo ${last.item.name}. Pull to refresh and try again.`);
     });
   };
 
-  // Fly the card out in `direction` (1 = right/eaten, -1 = left/tossed), then
-  // commit. Shared by the swipe gesture and the tap-target fallback buttons.
-  const flyOut = (direction: 1 | -1) => {
-    const outcome: Outcome = direction === 1 ? 'EATEN' : 'TOSSED';
+  // Fly the card off-screen, then commit. Shared by the swipe gesture and the
+  // tap-target fallback buttons: right = eaten, left = tossed, down = kept.
+  const flyOut = (outcome: Outcome) => {
+    if (outcome === 'KEPT') {
+      translateY.value = withTiming(width * 1.2, { duration: 180 }, () =>
+        runOnJS(commit)('KEPT')
+      );
+      return;
+    }
+    const direction = outcome === 'EATEN' ? 1 : -1;
     translateX.value = withTiming(direction * width * 1.2, { duration: 180 }, () =>
       runOnJS(commit)(outcome)
     );
@@ -102,22 +118,32 @@ export function CheckInDeck({
   const pan = Gesture.Pan()
     .onUpdate((e) => {
       translateX.value = e.translationX;
+      // Only downward drag matters; upward drags spring back.
+      translateY.value = Math.max(0, e.translationY);
     })
     .onEnd((e) => {
-      if (Math.abs(e.translationX) > SWIPE_THRESHOLD) {
+      const horizontal = Math.abs(e.translationX);
+      const vertical = e.translationY;
+      if (horizontal > SWIPE_THRESHOLD && horizontal >= vertical) {
         const direction = e.translationX > 0 ? 1 : -1;
         const outcome: Outcome = direction === 1 ? 'EATEN' : 'TOSSED';
         translateX.value = withTiming(direction * width * 1.2, { duration: 180 }, () =>
           runOnJS(commit)(outcome)
         );
+      } else if (vertical > SWIPE_THRESHOLD) {
+        translateY.value = withTiming(width * 1.2, { duration: 180 }, () =>
+          runOnJS(commit)('KEPT')
+        );
       } else {
         translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
       }
     });
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
+      { translateY: translateY.value },
       { rotate: `${translateX.value / 18}deg` },
     ],
   }));
@@ -126,6 +152,9 @@ export function CheckInDeck({
   }));
   const tossedOverlayStyle = useAnimatedStyle(() => ({
     opacity: interpolate(translateX.value, [-SWIPE_THRESHOLD, -30], [1, 0], 'clamp'),
+  }));
+  const keptOverlayStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateY.value, [30, SWIPE_THRESHOLD], [0, 1], 'clamp'),
   }));
 
   const freshness = top ? estimateFreshness(top) : null;
@@ -151,7 +180,8 @@ export function CheckInDeck({
       {top ? (
         <>
           <ThemedText type="small" themeColor="textSecondary" style={styles.progress}>
-            {records.length + 1} of {total} · swipe right if you ate it, left if you tossed it
+            {records.length + 1} of {total} · ate it → right · tossed → left · still have it →
+            down
           </ThemedText>
 
           <ThemedView style={styles.deckArea}>
@@ -169,6 +199,11 @@ export function CheckInDeck({
                   <Animated.View style={[styles.overlay, styles.overlayRight, tossedOverlayStyle]}>
                     <ThemedText type="smallBold" style={{ color: theme.statusBad }}>
                       TOSSED
+                    </ThemedText>
+                  </Animated.View>
+                  <Animated.View style={[styles.overlay, styles.overlayBottom, keptOverlayStyle]}>
+                    <ThemedText type="smallBold" themeColor="textSecondary">
+                      STILL HAVE IT
                     </ThemedText>
                   </Animated.View>
 
@@ -204,14 +239,21 @@ export function CheckInDeck({
           </ThemedView>
 
           <ThemedView style={styles.actions}>
-            <Pressable onPress={() => flyOut(-1)} style={styles.actionButton}>
+            <Pressable onPress={() => flyOut('TOSSED')} style={styles.actionButton}>
               <ThemedView type="backgroundElement" style={styles.action}>
                 <ThemedText type="smallBold" style={{ color: theme.statusBad }}>
                   ✗ Tossed
                 </ThemedText>
               </ThemedView>
             </Pressable>
-            <Pressable onPress={() => flyOut(1)} style={styles.actionButton}>
+            <Pressable onPress={() => flyOut('KEPT')} style={styles.actionButton}>
+              <ThemedView type="backgroundElement" style={styles.action}>
+                <ThemedText type="smallBold" themeColor="textSecondary">
+                  Still have it
+                </ThemedText>
+              </ThemedView>
+            </Pressable>
+            <Pressable onPress={() => flyOut('EATEN')} style={styles.actionButton}>
               <ThemedView type="backgroundElement" style={styles.action}>
                 <ThemedText type="smallBold" style={{ color: theme.statusGood }}>
                   ✓ Ate it
@@ -226,7 +268,7 @@ export function CheckInDeck({
             Check-in complete
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            {eaten} eaten · {tossed} tossed
+            {eaten} eaten · {tossed} tossed{kept > 0 ? ` · ${kept} still in your kitchen` : ''}
           </ThemedText>
           <Pressable onPress={onClose} style={styles.doneButton}>
             <ThemedView type="backgroundSelected" style={styles.action}>
@@ -239,7 +281,12 @@ export function CheckInDeck({
       {last && top && (
         <ThemedView type="backgroundElement" style={styles.undoBar}>
           <ThemedText type="small" themeColor="textSecondary" style={styles.undoText} numberOfLines={1}>
-            {last.item.name} — {last.outcome === 'EATEN' ? 'eaten' : 'tossed'}
+            {last.item.name} —{' '}
+            {last.outcome === 'EATEN'
+              ? 'eaten'
+              : last.outcome === 'TOSSED'
+                ? 'tossed'
+                : 'still have it'}
           </ThemedText>
           <Pressable onPress={undo} hitSlop={Spacing.two}>
             <ThemedText type="linkPrimary">Undo</ThemedText>
@@ -299,6 +346,14 @@ const styles = StyleSheet.create({
   },
   overlayRight: {
     right: Spacing.three,
+  },
+  overlayBottom: {
+    top: undefined,
+    bottom: Spacing.three,
+    alignSelf: 'center',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
   },
   actions: {
     flexDirection: 'row',
