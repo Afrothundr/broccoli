@@ -98,6 +98,60 @@ export const itemRouter = router({
       });
     }),
 
+  // The user says where an item actually lives ("I froze that chicken").
+  // Import stays silent about location — this is the correction path from
+  // item detail. Recomputes expiresAt for the new location's shelf life
+  // (an explicit location change supersedes even a USER-set date: the user
+  // is asking what the estimate is *there*). If FoodKeeper has no timeframe
+  // for that location, the location updates and the date stays put.
+  setStorageLocation: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        storageLocation: z.enum(["PANTRY", "FRIDGE", "FREEZER"]),
+      })
+    )
+    .mutation(async ({ ctx, input }): Promise<ItemWithReceipt> => {
+      const item = await prisma.item.findFirst({
+        where: { id: input.id, userId: ctx.user.id },
+        include: {
+          itemType: {
+            select: { pantrySeconds: true, fridgeSeconds: true, freezerSeconds: true },
+          },
+          receipt: { select: { purchasedAt: true } },
+        },
+      });
+      if (!item) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const seconds = item.itemType
+        ? {
+            PANTRY: item.itemType.pantrySeconds,
+            FRIDGE: item.itemType.fridgeSeconds,
+            FREEZER: item.itemType.freezerSeconds,
+          }[input.storageLocation]
+        : null;
+      const basis = item.receipt.purchasedAt ?? item.createdAt;
+      const expiresAt =
+        seconds != null ? new Date(basis.getTime() + seconds * 1000) : null;
+
+      await prisma.item.update({
+        where: { id: item.id },
+        data: {
+          storageLocation: input.storageLocation,
+          ...(expiresAt
+            ? { expiresAt, expirationSource: "FOODKEEPER" as const }
+            : {}),
+          ...(expiresAt && expiresAt > new Date() && item.status === "EXPIRED"
+            ? { status: "ACTIVE" as const }
+            : {}),
+        },
+      });
+      return prisma.item.findFirstOrThrow({
+        where: { id: item.id },
+        include: { receipt: { select: { storeName: true, purchasedAt: true } } },
+      });
+    }),
+
   // The user corrects an item's expiration date ("this yogurt is fine until
   // Friday"). USER-sourced dates are authoritative — nothing recomputes over
   // them. A future date also un-expires an EXPIRED item (but never resurrects
