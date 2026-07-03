@@ -149,9 +149,54 @@ export const receiptRouter = router({
     .mutation(async ({ ctx, input }): Promise<ReceiptWithItems> => {
       const existing = await prisma.receipt.findFirst({
         where: { id: input.id, userId: ctx.user.id },
-        select: { id: true },
+        select: { id: true, purchasedAt: true },
       });
       if (!existing) throw new TRPCError({ code: "NOT_FOUND" });
+
+      // Expiration advice (Phase 3): link each item to its ItemType by the
+      // snapped category name and stamp expiresAt from the per-location shelf
+      // life. Storage location defaults to the "freshest" applicable
+      // timeframe — fridge, then pantry, then freezer — until the user can
+      // say where things actually went. Shelf life runs from purchase.
+      const categories = [
+        ...new Set(
+          input.items.map((i) => i.category).filter((c): c is string => !!c)
+        ),
+      ];
+      const types = categories.length
+        ? await prisma.itemType.findMany({
+            where: { name: { in: categories } },
+            select: {
+              id: true,
+              name: true,
+              pantrySeconds: true,
+              fridgeSeconds: true,
+              freezerSeconds: true,
+            },
+          })
+        : [];
+      const typeByName = new Map(types.map((t) => [t.name, t]));
+      const purchasedAt = input.purchasedAt ?? existing.purchasedAt ?? new Date();
+
+      const expirationFor = (category: string | null | undefined) => {
+        const type = category ? typeByName.get(category) : undefined;
+        if (!type) return {};
+        const [storageLocation, seconds] =
+          type.fridgeSeconds != null
+            ? (["FRIDGE", type.fridgeSeconds] as const)
+            : type.pantrySeconds != null
+              ? (["PANTRY", type.pantrySeconds] as const)
+              : type.freezerSeconds != null
+                ? (["FREEZER", type.freezerSeconds] as const)
+                : [null, null];
+        if (storageLocation === null) return { itemTypeId: type.id };
+        return {
+          itemTypeId: type.id,
+          storageLocation,
+          expiresAt: new Date(purchasedAt.getTime() + seconds * 1000),
+          expirationSource: "FOODKEEPER" as const,
+        };
+      };
 
       await prisma.$transaction([
         prisma.item.deleteMany({ where: { receiptId: input.id } }),
@@ -166,6 +211,7 @@ export const receiptRouter = router({
                   quantity: item.quantity,
                   unit: item.unit,
                   category: item.category ?? null,
+                  ...expirationFor(item.category),
                 })),
               }),
             ]

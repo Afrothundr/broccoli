@@ -6,6 +6,7 @@ import {
 } from "./trpc";
 import { receiptRouter } from "./receipt";
 import { itemRouter } from "./item";
+import { prisma } from "./db";
 
 export const appRouter = router({
   // Liveness check for the app and for Railway.
@@ -24,10 +25,20 @@ export const appRouter = router({
   item: itemRouter,
 
   // Internal namespace — called by broccoli-scheduler over tRPC with the
-  // service token. Phase 3+ adds the real writes here (e.g. item status
-  // transitions). For now just a reachability check.
+  // service token, so broccoli-api stays the single DB writer (PRD §4).
   internal: router({
     ping: internalProcedure.query(() => ({ ok: true as const })),
+
+    // Scheduler sweep: flip ACTIVE items past their date to EXPIRED. The user
+    // still resolves them (eaten/tossed) — expiry is a state, not an outcome,
+    // so resolvedAt stays null. Idempotent; returns how many flipped.
+    expireItems: internalProcedure.mutation(async () => {
+      const { count } = await prisma.item.updateMany({
+        where: { status: "ACTIVE", expiresAt: { lt: new Date() } },
+        data: { status: "EXPIRED" },
+      });
+      return { expired: count };
+    }),
   }),
 });
 

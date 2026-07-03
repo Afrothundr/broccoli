@@ -71,6 +71,30 @@ function storageAdvice(row: Ingredient): string {
   return "";
 }
 
+// One location's shelf life in seconds (Phase 3). Plain keys first (general
+// storage life), then DOP_* ("from date of purchase") as fallback — both are
+// measured from purchase for our purposes. Uses the max of the range: the
+// advice reads "up to N", and the app warns well before the end anyway.
+function locationSeconds(row: Ingredient, prefix: "Pantry" | "Refrigerate" | "Freeze"): number | null {
+  for (const p of [prefix, `DOP_${prefix}`]) {
+    const metric = row[`${p}_Metric`];
+    if (!metric) continue;
+    if (metric === "Indefinitely") return INDEFINITELY;
+    const factor = SECONDS[metric];
+    if (!factor) continue;
+    const value = Number(row[`${p}_Max`] || row[`${p}_Min`]);
+    if (Number.isFinite(value) && value > 0) return Math.round(value * factor);
+  }
+  return null;
+}
+
+function locationTip(row: Ingredient, keys: string[]): string {
+  for (const key of keys) {
+    if (row[key]) return row[key];
+  }
+  return "";
+}
+
 function main() {
   const data: FoodKeeper = JSON.parse(
     readFileSync(join(__dirname, "seeds", "foodkeeper.json"), "utf8")
@@ -101,17 +125,26 @@ function main() {
         storageAdvice: storageAdvice(r),
         source: "FoodKeeper",
         raw: r,
+        pantrySeconds: locationSeconds(r, "Pantry"),
+        fridgeSeconds: locationSeconds(r, "Refrigerate"),
+        freezerSeconds: locationSeconds(r, "Freeze"),
+        pantryTip: locationTip(r, ["Pantry_tips", "DOP_Pantry_tips"]),
+        fridgeTip: locationTip(r, ["Refrigerate_tips", "DOP_Refrigerate_tips"]),
+        freezerTip: locationTip(r, ["Freeze_Tips", "DOP_Freeze_Tips"]),
       };
     });
 
-  // Idempotent: wipe and rebuild the FoodKeeper rows so re-running (locally or
-  // on every Railway deploy) re-derives the catalog. Safe now because Phase 1
-  // stores the ItemType *name* on Item.category, not a foreign key. Phase 3 adds
-  // an explicit Item -> ItemType relation; at that point switch this to an
-  // upsert on the unique `name` so ids stay stable and don't orphan Items.
+  // Idempotent via upsert on the unique `name` (not wipe-and-rebuild): Items
+  // now hold an ItemType foreign key, so ids must stay stable across re-runs
+  // (locally and on every Railway deploy).
   return prisma.$transaction(async (tx) => {
-    await tx.itemType.deleteMany({ where: { source: "FoodKeeper" } });
-    await tx.itemType.createMany({ data: rows });
+    for (const row of rows) {
+      await tx.itemType.upsert({
+        where: { name: row.name },
+        create: row,
+        update: row,
+      });
+    }
     return rows.length;
   });
 }
