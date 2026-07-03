@@ -11,12 +11,17 @@ export default function TabLayout() {
   // Session is restored from secure storage on launch. While it resolves we
   // show only the splash; then unauthenticated users get the sign-in screen
   // and authenticated users get the app.
-  const { data: session, isPending } = authClient.useSession();
+  //
+  // `refetch` is threaded to SignIn because on Expo the useSession atom does
+  // not refresh itself after signIn/signUp (unlike web) — without an explicit
+  // refetch the app stays on the sign-in screen even though the session
+  // cookie landed in secure storage.
+  const { data: session, isPending, refetch } = authClient.useSession();
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AnimatedSplashOverlay />
-      {!isPending && (session ? <AppTabs /> : <SignIn />)}
+      {!isPending && (session ? <AppTabs /> : <SignIn onAuthed={refetch} />)}
     </ThemeProvider>
   );
 }
