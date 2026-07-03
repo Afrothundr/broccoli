@@ -13,6 +13,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { InventoryItem, useInventory } from '@/hooks/use-inventory';
+import { useTheme } from '@/hooks/use-theme';
+import { estimateFreshness, Freshness } from '@/lib/freshness';
 
 // purchasedAt is typed Date but arrives as an ISO string over plain-JSON tRPC.
 function formatDate(value: Date | string | null): string | null {
@@ -22,30 +24,62 @@ function formatDate(value: Date | string | null): string | null {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-type Section = { key: string; title: string; data: InventoryItem[] };
+type Row = { item: InventoryItem; freshness: Freshness | null };
+type Section = { key: string; title: string; data: Row[] };
 
-// Items arrive newest-receipt-first; group consecutive rows by receipt so each
-// section reads "Whole Foods Market · Jun 28".
+// Urgent items ("use soon" or past their estimate) get lifted into a single
+// section on top, most urgent first; everything else stays grouped by receipt
+// ("Whole Foods Market · Jun 28"), newest receipt first.
 function toSections(items: InventoryItem[]): Section[] {
-  const sections: Section[] = [];
-  for (const item of items) {
+  const rows: Row[] = items.map((item) => ({ item, freshness: estimateFreshness(item) }));
+
+  const urgent = rows
+    .filter((r) => r.freshness !== null && r.freshness.level !== 'good')
+    .sort((a, b) => a.freshness!.daysLeft - b.freshness!.daysLeft);
+  const urgentIds = new Set(urgent.map((r) => r.item.id));
+
+  const sections: Section[] = urgent.length
+    ? [{ key: 'use-first', title: 'Use first (estimated)', data: urgent }]
+    : [];
+
+  for (const row of rows) {
+    if (urgentIds.has(row.item.id)) continue;
     const last = sections[sections.length - 1];
-    if (last?.key === item.receiptId) {
-      last.data.push(item);
+    if (last?.key === row.item.receiptId) {
+      last.data.push(row);
       continue;
     }
-    const date = formatDate(item.receipt.purchasedAt);
-    const store = item.receipt.storeName ?? 'Receipt';
+    const date = formatDate(row.item.receipt.purchasedAt);
+    const store = row.item.receipt.storeName ?? 'Receipt';
     sections.push({
-      key: item.receiptId,
+      key: row.item.receiptId,
       title: date ? `${store} · ${date}` : store,
-      data: [item],
+      data: [row],
     });
   }
   return sections;
 }
 
-function ItemRow({ item }: { item: InventoryItem }) {
+function FreshnessChip({ freshness }: { freshness: Freshness }) {
+  const theme = useTheme();
+  const color =
+    freshness.level === 'bad'
+      ? theme.statusBad
+      : freshness.level === 'warn'
+        ? theme.statusWarn
+        : theme.statusGood;
+
+  return (
+    // 8-digit hex: chip background is the status color at ~10% opacity.
+    <ThemedView style={[styles.chip, { backgroundColor: `${color}1A` }]}>
+      <ThemedText type="small" style={{ color }}>
+        {freshness.chip}
+      </ThemedText>
+    </ThemedView>
+  );
+}
+
+function ItemRow({ item, freshness }: Row) {
   const [expanded, setExpanded] = useState(false);
   const quantity = item.quantity > 1 || item.unit ? `${item.quantity} ${item.unit}`.trim() : null;
 
@@ -56,12 +90,18 @@ function ItemRow({ item }: { item: InventoryItem }) {
           <ThemedText type="small" style={styles.rowName} numberOfLines={expanded ? undefined : 1}>
             {item.name}
           </ThemedText>
+          {freshness?.chip != null && <FreshnessChip freshness={freshness} />}
           <ThemedText type="small" themeColor="textSecondary">
             {item.price != null ? `$${item.price.toFixed(2)}` : ''}
           </ThemedText>
         </ThemedView>
         {expanded && (
           <ThemedView type="backgroundElement" style={styles.rowDetail}>
+            {freshness && (
+              <ThemedText type="small" themeColor="textSecondary">
+                {freshness.detail}
+              </ThemedText>
+            )}
             {item.category && (
               <ThemedText type="small" themeColor="textSecondary">
                 {item.category}
@@ -112,7 +152,7 @@ export default function InventoryScreen() {
         ) : (
           <SectionList
             sections={toSections(items)}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(row) => row.item.id}
             style={styles.list}
             contentContainerStyle={styles.listContent}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
@@ -123,7 +163,7 @@ export default function InventoryScreen() {
                 </ThemedText>
               </ThemedView>
             )}
-            renderItem={({ item }) => <ItemRow item={item} />}
+            renderItem={({ item: row }) => <ItemRow {...row} />}
             stickySectionHeadersEnabled={false}
           />
         )}
@@ -180,6 +220,11 @@ const styles = StyleSheet.create({
   },
   rowName: {
     flex: 1,
+  },
+  chip: {
+    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.half,
   },
   rowDetail: {
     gap: Spacing.half,
