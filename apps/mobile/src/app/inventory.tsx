@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CheckInDeck } from '@/components/check-in-deck';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -124,11 +125,38 @@ function ItemRow({ item, freshness }: Row) {
 
 export default function InventoryScreen() {
   const { items, error, refreshing, refresh } = useInventory();
+  const [checkingIn, setCheckingIn] = useState(false);
+
+  // The daily check-in takes over the screen (same pattern as capture →
+  // review); closing it refetches so resolved items drop out of the list.
+  if (checkingIn && items && items.length > 0) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <CheckInDeck
+            items={items}
+            onClose={() => {
+              setCheckingIn(false);
+              refresh();
+            }}
+          />
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedText type="subtitle">Your groceries</ThemedText>
+
+        {items !== null && items.length > 0 && (
+          <Pressable onPress={() => setCheckingIn(true)}>
+            <ThemedView type="backgroundSelected" style={styles.checkInButton}>
+              <ThemedText type="smallBold">Daily check-in</ThemedText>
+            </ThemedView>
+          </Pressable>
+        )}
 
         {error && (
           <ThemedText type="small" style={styles.error}>
@@ -206,6 +234,11 @@ const styles = StyleSheet.create({
   sectionHeader: {
     paddingTop: Spacing.three,
     paddingBottom: Spacing.one,
+  },
+  checkInButton: {
+    alignItems: 'center',
+    paddingVertical: Spacing.three,
+    borderRadius: Spacing.four,
   },
   row: {
     borderRadius: Spacing.two,
