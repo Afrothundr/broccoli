@@ -104,22 +104,29 @@ model Receipt {
 // A single line item from a receipt. `category` holds the snapped ItemType name
 // (the parser maps to the catalog); the explicit ItemType relation + expiration
 // fields arrive in Phase 3.
+//
+// Lifecycle (Phase 2): items start ACTIVE (they're your inventory once the
+// receipt is SAVED) and get resolved to EATEN or TOSSED by the daily check-in
+// swipe. Those outcomes are the waste metric's raw data (PRD §1). Phase 3 adds
+// scheduler-driven expiry transitions.
 model Item {
-  id        String   @id @default(cuid())
-  receiptId String
-  userId    String
-  name      String
-  price     Float? // line price (spend tracking, PRD §4)
-  quantity  Int      @default(1)
-  unit      String   @default("")
-  category  String? // snapped ItemType name, or null/Unknown
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  receipt   Receipt  @relation(fields: [receiptId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String     @id @default(cuid())
+  receiptId  String
+  userId     String
+  name       String
+  price      Float? // line price (spend tracking, PRD §4)
+  quantity   Int        @default(1)
+  unit       String     @default("")
+  category   String? // snapped ItemType name, or null/Unknown
+  status     ItemStatus @default(ACTIVE)
+  resolvedAt DateTime? // when the user swiped it eaten/tossed; null while ACTIVE
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  receipt    Receipt    @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([receiptId])
-  @@index([userId])
+  @@index([userId, status]) // inventory + check-in deck query by owner and status
   @@map("item")
 }
 
@@ -144,4 +151,12 @@ enum ReceiptStatus {
   READY
   SAVED
   ERROR
+}
+
+// Item lifecycle. EATEN and TOSSED come from the daily check-in; Phase 3 adds
+// an EXPIRED transition driven by the scheduler.
+enum ItemStatus {
+  ACTIVE
+  EATEN
+  TOSSED
 }
