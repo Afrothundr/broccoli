@@ -15,7 +15,8 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { InventoryItem, useInventory } from '@/hooks/use-inventory';
 import { useTheme } from '@/hooks/use-theme';
-import { estimateFreshness, Freshness } from '@/lib/freshness';
+import { estimateFreshness, Freshness, storageLabel } from '@/lib/freshness';
+import { trpc } from '@/lib/trpc';
 
 // purchasedAt is typed Date but arrives as an ISO string over plain-JSON tRPC.
 function formatDate(value: Date | string | null): string | null {
@@ -80,9 +81,60 @@ function FreshnessChip({ freshness }: { freshness: Freshness }) {
   );
 }
 
-function ItemRow({ item, freshness }: Row) {
+const LOCATIONS = ['PANTRY', 'FRIDGE', 'FREEZER'] as const;
+const ADJUSTMENTS: { label: string; days: number }[] = [
+  { label: '−1d', days: -1 },
+  { label: '+1d', days: 1 },
+  { label: '+3d', days: 3 },
+  { label: '+1w', days: 7 },
+];
+
+function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }) {
+  const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [rowError, setRowError] = useState<string | null>(null);
   const quantity = item.quantity > 1 || item.unit ? `${item.quantity} ${item.unit}`.trim() : null;
+
+  // Nudge the expiration date ("fine until Friday"): USER-sourced, relative to
+  // the current estimate (or today when the item has none).
+  const adjustBy = async (days: number) => {
+    if (busy) return;
+    setBusy(true);
+    setRowError(null);
+    const base = item.expiresAt ? new Date(item.expiresAt) : new Date();
+    const expiresAt = new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
+    try {
+      await trpc.item.adjustExpiration.mutate({ id: item.id, expiresAt });
+      onChanged();
+    } catch {
+      setRowError("Couldn't save the new date. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // "I froze that" — recomputes the estimate for the new location server-side.
+  const setLocation = async (storageLocation: (typeof LOCATIONS)[number]) => {
+    if (busy || item.storageLocation === storageLocation) return;
+    setBusy(true);
+    setRowError(null);
+    try {
+      await trpc.item.setStorageLocation.mutate({ id: item.id, storageLocation });
+      onChanged();
+    } catch {
+      setRowError("Couldn't change the location. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const expiresLine = [
+    item.expiresAt ? `Expires ${formatDate(item.expiresAt)}` : null,
+    storageLabel(item.storageLocation),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <Pressable onPress={() => setExpanded((v) => !v)}>
@@ -101,6 +153,52 @@ function ItemRow({ item, freshness }: Row) {
             {freshness && (
               <ThemedText type="small" themeColor="textSecondary">
                 {freshness.detail}
+              </ThemedText>
+            )}
+            {expiresLine.length > 0 && (
+              <ThemedText type="small" themeColor="textSecondary">
+                {expiresLine}
+              </ThemedText>
+            )}
+
+            <ThemedView type="backgroundElement" style={styles.controlRow}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Adjust date
+              </ThemedText>
+              {ADJUSTMENTS.map(({ label, days }) => (
+                <Pressable key={label} onPress={() => adjustBy(days)} disabled={busy}>
+                  <ThemedView type="backgroundSelected" style={styles.controlChip}>
+                    <ThemedText type="small">{label}</ThemedText>
+                  </ThemedView>
+                </Pressable>
+              ))}
+            </ThemedView>
+
+            <ThemedView type="backgroundElement" style={styles.controlRow}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Location
+              </ThemedText>
+              {LOCATIONS.map((location) => {
+                const selected = item.storageLocation === location;
+                return (
+                  <Pressable key={location} onPress={() => setLocation(location)} disabled={busy}>
+                    <ThemedView
+                      type={selected ? 'backgroundSelected' : 'backgroundElement'}
+                      style={[styles.controlChip, !selected && styles.controlChipGhost]}>
+                      <ThemedText
+                        type="small"
+                        themeColor={selected ? 'text' : 'textSecondary'}>
+                        {storageLabel(location)}
+                      </ThemedText>
+                    </ThemedView>
+                  </Pressable>
+                );
+              })}
+            </ThemedView>
+
+            {rowError && (
+              <ThemedText type="small" style={{ color: theme.statusBad }}>
+                {rowError}
               </ThemedText>
             )}
             {item.category && (
@@ -124,7 +222,7 @@ function ItemRow({ item, freshness }: Row) {
 }
 
 export default function InventoryScreen() {
-  const { items, error, refreshing, refresh } = useInventory();
+  const { items, error, refreshing, refresh, reload } = useInventory();
   const [checkingIn, setCheckingIn] = useState(false);
 
   // The daily check-in takes over the screen (same pattern as capture →
@@ -191,7 +289,7 @@ export default function InventoryScreen() {
                 </ThemedText>
               </ThemedView>
             )}
-            renderItem={({ item: row }) => <ItemRow {...row} />}
+            renderItem={({ item: row }) => <ItemRow {...row} onChanged={() => void reload()} />}
             stickySectionHeadersEnabled={false}
           />
         )}
@@ -260,8 +358,22 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.half,
   },
   rowDetail: {
-    gap: Spacing.half,
+    gap: Spacing.two,
     paddingBottom: Spacing.one,
+  },
+  controlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    flexWrap: 'wrap',
+  },
+  controlChip: {
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.half,
+  },
+  controlChipGhost: {
+    opacity: 0.7,
   },
   error: {
     color: '#e5484d',

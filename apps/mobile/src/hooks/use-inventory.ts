@@ -47,5 +47,7 @@ export function useInventory() {
     void load();
   }, [load]);
 
-  return { items, error, refreshing, refresh };
+  // `reload` refetches without the pull-to-refresh spinner — for after a row
+  // mutation (adjust date, change location) where the list should just settle.
+  return { items, error, refreshing, refresh, reload: load };
 }
