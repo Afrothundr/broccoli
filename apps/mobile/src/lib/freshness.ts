@@ -8,8 +8,8 @@ export type Freshness = {
   daysLeft: number; // negative = past the estimated window
   level: 'good' | 'warn' | 'bad';
   chip: string | null; // short label for the list row; null = not worth a chip
-  detail: string; // sentence for the expanded row, names the source
-  sourceLabel: string; // "FoodKeeper" | "AI estimate" | "set by you"
+  detail: string; // sentence for the expanded row, names the source when notable
+  sourceLabel: string | null; // "set by you" | "AI estimate"; null = system estimate
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -19,8 +19,11 @@ const WARN_DAYS = 2;
 // noise, not signal) — keep the detail but skip the chip.
 const CHIP_MAX_DAYS = 30;
 
+// Only sources worth calling out get a label. The system's own estimate
+// (currently the curated FOODKEEPER catalog) is presented generically — the
+// phrase "typical shelf life" is the reason; the dataset name stays in the
+// database for auditing, not in the UI.
 const SOURCE_LABELS: Record<string, string> = {
-  FOODKEEPER: 'FoodKeeper',
   LLM: 'AI estimate',
   USER: 'set by you',
 };
@@ -35,8 +38,9 @@ export function estimateFreshness(item: InventoryItem, now = Date.now()): Freshn
   if (expiresAtMs === null) return null;
 
   const sourceLabel = item.expiresAt
-    ? (SOURCE_LABELS[item.expirationSource ?? ''] ?? 'estimate')
-    : 'FoodKeeper';
+    ? (SOURCE_LABELS[item.expirationSource ?? ''] ?? null)
+    : null;
+  const suffix = sourceLabel ? ` (${sourceLabel})` : '';
   const daysLeft = Math.ceil((expiresAtMs - now) / DAY_MS);
 
   // The scheduler said so — stronger than our arithmetic.
@@ -45,7 +49,7 @@ export function estimateFreshness(item: InventoryItem, now = Date.now()): Freshn
       daysLeft: Math.min(daysLeft, -1),
       level: 'bad',
       chip: 'expired',
-      detail: `Past its expiration (${sourceLabel}) — check before using, then swipe it.`,
+      detail: `Past its expiration${suffix} — check before using, then swipe it.`,
       sourceLabel,
     };
   }
@@ -55,7 +59,7 @@ export function estimateFreshness(item: InventoryItem, now = Date.now()): Freshn
       daysLeft,
       level: 'bad',
       chip: 'check it',
-      detail: `Past its estimated shelf life (${sourceLabel}) — check before using.`,
+      detail: `Past its typical shelf life${suffix} — check before using.`,
       sourceLabel,
     };
   }
@@ -64,7 +68,7 @@ export function estimateFreshness(item: InventoryItem, now = Date.now()): Freshn
       daysLeft,
       level: 'warn',
       chip: 'use soon',
-      detail: `About ${Math.max(daysLeft, 1)} ${daysLeft === 1 ? 'day' : 'days'} left (${sourceLabel}).`,
+      detail: `About ${Math.max(daysLeft, 1)} ${daysLeft === 1 ? 'day' : 'days'} left${suffix}.`,
       sourceLabel,
     };
   }
@@ -72,7 +76,7 @@ export function estimateFreshness(item: InventoryItem, now = Date.now()): Freshn
     daysLeft,
     level: 'good',
     chip: daysLeft <= CHIP_MAX_DAYS ? `~${daysLeft}d` : null,
-    detail: `About ${daysLeft} days left (${sourceLabel}).`,
+    detail: `About ${daysLeft} days left${suffix}.`,
     sourceLabel,
   };
 }
