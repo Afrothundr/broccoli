@@ -33,12 +33,13 @@ type SwipeRecord = { item: InventoryItem; outcome: Outcome };
 const SWIPE_THRESHOLD = 110;
 
 // Most urgent first — same freshness estimate the inventory list uses. Items
-// without an estimate go last.
+// the scheduler already marked EXPIRED lead outright (they're the ones the
+// check-in exists to settle); items without an estimate go last.
 function orderDeck(items: InventoryItem[]): InventoryItem[] {
   const rank = (item: InventoryItem) => {
     const f = estimateFreshness(item);
-    if (!f) return Number.MAX_SAFE_INTEGER;
-    return f.daysLeft;
+    const base = f ? f.daysLeft : Number.MAX_SAFE_INTEGER;
+    return item.status === 'EXPIRED' ? base - 1_000_000 : base;
   };
   return [...items].sort((a, b) => rank(a) - rank(b));
 }
@@ -207,6 +208,11 @@ export function CheckInDeck({
                     </ThemedText>
                   </Animated.View>
 
+                  {top.status === 'EXPIRED' && (
+                    <ThemedText type="smallBold" style={{ color: theme.statusBad }}>
+                      EXPIRED — did you eat it or toss it?
+                    </ThemedText>
+                  )}
                   <ThemedText type="default" style={styles.cardName}>
                     {top.name}
                   </ThemedText>
