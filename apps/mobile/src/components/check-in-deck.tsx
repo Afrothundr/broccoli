@@ -12,6 +12,7 @@ import Animated, {
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
 import { Spacing } from '@/constants/theme';
 import { InventoryItem } from '@/hooks/use-inventory';
 import { useTheme } from '@/hooks/use-theme';
@@ -276,11 +277,7 @@ export function CheckInDeck({
           <ThemedText type="small" themeColor="textSecondary">
             {eaten} eaten · {tossed} tossed{kept > 0 ? ` · ${kept} still in your kitchen` : ''}
           </ThemedText>
-          <Pressable onPress={onClose} style={styles.doneButton}>
-            <ThemedView type="backgroundSelected" style={styles.action}>
-              <ThemedText type="smallBold">Done</ThemedText>
-            </ThemedView>
-          </Pressable>
+          <Button title="Done" onPress={onClose} style={styles.doneButton} />
         </ThemedView>
       )}
 
