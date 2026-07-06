@@ -6,6 +6,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/geist';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -13,6 +14,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { SignIn } from '@/components/sign-in';
 import { authClient } from '@/lib/auth-client';
+import { registerForNudges } from '@/lib/push';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -35,6 +37,13 @@ export default function TabLayout() {
     Geist_700Bold,
   });
   const fontsReady = fontsLoaded || fontError != null;
+
+  // Register the device for push nudges once per signed-in user (Phase 4).
+  // Fire-and-forget: registerForNudges no-ops gracefully on any failure.
+  const userId = session?.user.id;
+  useEffect(() => {
+    if (userId) void registerForNudges();
+  }, [userId]);
 
   return (
     // Gesture root is required once, above any Gesture.* usage (check-in deck).
