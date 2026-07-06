@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet } from 'react-native';
@@ -121,9 +122,7 @@ export default function HomeScreen() {
               accessibilityRole="button"
               accessibilityLabel="Settings"
               style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedText type="subtitle" themeColor="textSecondary">
-                ⚙
-              </ThemedText>
+              <Feather name="settings" size={24} color={theme.textSecondary} />
             </Pressable>
           </ThemedView>
 

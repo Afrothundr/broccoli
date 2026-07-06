@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
@@ -108,8 +109,9 @@ export default function CaptureScreen() {
         <ThemedView style={styles.heroSection}>
           {saved ? (
             <>
+              <Feather name="check-circle" size={44} color={theme.statusGood} />
               <ThemedText type="subtitle" style={styles.title}>
-                Saved ✓
+                Saved
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.title}>
                 {saved.items.length} {saved.items.length === 1 ? 'item' : 'items'}

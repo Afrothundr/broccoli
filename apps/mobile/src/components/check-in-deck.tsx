@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -5,6 +6,7 @@ import Animated, {
   interpolate,
   runOnJS,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withSpring,
   withTiming,
@@ -54,6 +56,7 @@ export function CheckInDeck({
 }) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
+  const reduceMotion = useReducedMotion();
 
   const initialDeck = useMemo(() => orderDeck(items), [items]);
   const [deck, setDeck] = useState(initialDeck);
@@ -105,6 +108,10 @@ export function CheckInDeck({
   // Fly the card off-screen, then commit. Shared by the swipe gesture and the
   // tap-target fallback buttons: right = eaten, left = tossed, down = kept.
   const flyOut = (outcome: Outcome) => {
+    if (reduceMotion) {
+      commit(outcome);
+      return;
+    }
     if (outcome === 'KEPT') {
       translateY.value = withTiming(width * 1.2, { duration: 180 }, () =>
         runOnJS(commit)('KEPT')
@@ -172,9 +179,7 @@ export function CheckInDeck({
           accessibilityRole="button"
           accessibilityLabel="Close check-in"
           style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedText type="smallBold" themeColor="textSecondary">
-            ✕
-          </ThemedText>
+          <Feather name="x" size={22} color={theme.textSecondary} />
         </Pressable>
       </ThemedView>
 
@@ -257,8 +262,9 @@ export function CheckInDeck({
               accessibilityLabel={`Tossed ${top.name}`}
               style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
               <ThemedView type="backgroundElement" style={styles.action}>
+                <Feather name="trash-2" size={16} color={theme.statusBad} />
                 <ThemedText type="smallBold" style={{ color: theme.statusBad }}>
-                  ✗ Tossed
+                  Tossed
                 </ThemedText>
               </ThemedView>
             </Pressable>
@@ -279,8 +285,9 @@ export function CheckInDeck({
               accessibilityLabel={`Ate ${top.name}`}
               style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
               <ThemedView type="backgroundElement" style={styles.action}>
+                <Feather name="check" size={16} color={theme.statusGood} />
                 <ThemedText type="smallBold" style={{ color: theme.statusGood }}>
-                  ✓ Ate it
+                  Ate it
                 </ThemedText>
               </ThemedView>
             </Pressable>
@@ -388,7 +395,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   action: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
     paddingVertical: Spacing.three,
     borderRadius: Spacing.four,
   },

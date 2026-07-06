@@ -1,15 +1,18 @@
+import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { NudgeSettings } from '@/components/nudge-settings';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { authClient } from '@/lib/auth-client';
 
 // Settings, opened from the gear on Home (same take-over pattern as
 // capture → review). Nudge preferences and account actions live here so the
 // dashboard stays about the numbers.
 export function SettingsPanel({ onClose }: { onClose: () => void }) {
+  const theme = useTheme();
   const { data: session, refetch } = authClient.useSession();
 
   return (
@@ -22,9 +25,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           accessibilityRole="button"
           accessibilityLabel="Close settings"
           style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedText type="smallBold" themeColor="textSecondary">
-            ✕
-          </ThemedText>
+          <Feather name="x" size={22} color={theme.textSecondary} />
         </Pressable>
       </ThemedView>
 

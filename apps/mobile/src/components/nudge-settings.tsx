@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import type { inferRouterOutputs } from '@trpc/server';
 import type { AppRouter } from 'broccoli-api/router';
 import { useEffect, useState } from 'react';
@@ -28,6 +29,7 @@ const stepperHitSlop = {
 };
 
 function HourStepper({ value, onChange }: { value: number; onChange: (next: number) => void }) {
+  const theme = useTheme();
   return (
     <ThemedView type="backgroundElement" style={styles.stepper}>
       <Pressable
@@ -36,9 +38,7 @@ function HourStepper({ value, onChange }: { value: number; onChange: (next: numb
         accessibilityRole="button"
         accessibilityLabel="One hour earlier"
         style={({ pressed }) => pressed && styles.pressed}>
-        <ThemedText type="smallBold" themeColor="textSecondary">
-          −
-        </ThemedText>
+        <Feather name="minus" size={16} color={theme.textSecondary} />
       </Pressable>
       <ThemedText type="small" style={styles.stepperValue}>
         {hour12(value)}
@@ -49,9 +49,7 @@ function HourStepper({ value, onChange }: { value: number; onChange: (next: numb
         accessibilityRole="button"
         accessibilityLabel="One hour later"
         style={({ pressed }) => pressed && styles.pressed}>
-        <ThemedText type="smallBold" themeColor="textSecondary">
-          +
-        </ThemedText>
+        <Feather name="plus" size={16} color={theme.textSecondary} />
       </Pressable>
     </ThemedView>
   );

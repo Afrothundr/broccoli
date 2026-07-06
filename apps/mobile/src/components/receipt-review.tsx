@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 
@@ -136,9 +137,7 @@ export function ReceiptReview({
                 accessibilityRole="button"
                 accessibilityLabel={item.name ? `Remove ${item.name}` : 'Remove item'}
                 style={({ pressed }) => pressed && styles.pressed}>
-                <ThemedText type="smallBold" themeColor="textSecondary">
-                  ✕
-                </ThemedText>
+                <Feather name="x" size={18} color={theme.textSecondary} />
               </Pressable>
             </ThemedView>
             {item.category && (
@@ -154,7 +153,10 @@ export function ReceiptReview({
           hitSlop={Spacing.two}
           accessibilityRole="button"
           style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedText type="linkPrimary">+ Add an item</ThemedText>
+          <ThemedView style={styles.addRow}>
+            <Feather name="plus" size={16} color={theme.primary} />
+            <ThemedText type="linkPrimary">Add an item</ThemedText>
+          </ThemedView>
         </Pressable>
       </ScrollView>
 
@@ -192,6 +194,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
+  },
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
   },
   nameInput: {
     flex: 1,
