@@ -6,6 +6,8 @@ import {
 } from "./trpc";
 import { receiptRouter } from "./receipt";
 import { itemRouter } from "./item";
+import { pushRouter } from "./push";
+import { sendNudges } from "./nudges";
 import { prisma } from "./db";
 
 export const appRouter = router({
@@ -24,6 +26,9 @@ export const appRouter = router({
   // Inventory & daily check-in: list current items, swipe eaten/tossed, undo.
   item: itemRouter,
 
+  // Push registration + nudge preferences (Phase 4).
+  push: pushRouter,
+
   // Internal namespace — called by broccoli-scheduler over tRPC with the
   // service token, so broccoli-api stays the single DB writer (PRD §4).
   internal: router({
@@ -39,6 +44,10 @@ export const appRouter = router({
       });
       return { expired: count };
     }),
+
+    // Scheduler tick: send the day's grouped nudges to whoever is eligible
+    // right now (see nudges.ts for the quiet-hours/once-a-day rules).
+    sendNudges: internalProcedure.mutation(() => sendNudges()),
   }),
 });
 
