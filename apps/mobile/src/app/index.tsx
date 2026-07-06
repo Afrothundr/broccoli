@@ -1,107 +1,109 @@
-import * as Device from 'expo-device';
-import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet } from 'react-native';
+import { Link } from 'expo-router';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
 import { NudgeSettings } from '@/components/nudge-settings';
+import { SpendChart } from '@/components/spend-chart';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { API_URL, getHealth } from '@/lib/api';
+import { useStats } from '@/hooks/use-stats';
+import { useTheme } from '@/hooks/use-theme';
 import { authClient } from '@/lib/auth-client';
 
-type ApiStatus = 'checking' | 'connected' | 'unreachable';
+// Home = the spend & waste dashboard (PRD §7 Phase 5): what you spend, what
+// you waste, and the trend — the financial hook that brings people back,
+// backed by the waste data the check-in collects (§1 north star).
 
-function useApiHealth(): ApiStatus {
-  const [status, setStatus] = useState<ApiStatus>('checking');
-  useEffect(() => {
-    let active = true;
-    getHealth()
-      .then(() => active && setStatus('connected'))
-      .catch(() => active && setStatus('unreachable'));
-    return () => {
-      active = false;
-    };
-  }, []);
-  return status;
+function money(n: number): string {
+  return `$${n.toFixed(2)}`;
 }
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <ThemedView type="backgroundElement" style={styles.tile}>
+      <ThemedText type="small" themeColor="textSecondary">
+        {label}
+      </ThemedText>
+      <ThemedText type="subtitle" style={styles.tileValue}>
+        {value}
+      </ThemedText>
+      {sub && (
+        <ThemedText type="small" themeColor="textSecondary">
+          {sub}
+        </ThemedText>
+      )}
+    </ThemedView>
   );
 }
 
 export default function HomeScreen() {
-  const apiStatus = useApiHealth();
-  // refetch: on Expo the useSession atom doesn't refresh after signOut, so we
-  // nudge it explicitly or the app would stay on the tabs with a dead session.
-  const { data: session, refetch } = authClient.useSession();
-  const apiHint =
-    apiStatus === 'checking'
-      ? 'checking…'
-      : apiStatus === 'connected'
-        ? '✅ connected'
-        : '⚠️ unreachable';
+  const theme = useTheme();
+  const { stats, error } = useStats();
+  const { refetch } = authClient.useSession();
+
+  const hasData = stats !== null && stats.receiptCount > 0;
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Broccoli
-          </ThemedText>
-        </ThemedView>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <ThemedText type="subtitle">Your food money</ThemedText>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="broccoli-api"
-            hint={<ThemedText type="small">{apiHint}</ThemedText>}
-          />
-          <HintRow title="API URL" hint={<ThemedText type="code">{API_URL}</ThemedText>} />
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          {session && (
-            <HintRow
-              title="Signed in"
-              hint={<ThemedText type="small">{session.user.email}</ThemedText>}
-            />
+          {error && (
+            <ThemedText type="small" style={[styles.error, { color: theme.destructive }]}>
+              {error}
+            </ThemedText>
           )}
-        </ThemedView>
 
-        {session && <NudgeSettings />}
+          {stats === null && !error ? (
+            <ThemedView style={styles.empty}>
+              <ActivityIndicator />
+            </ThemedView>
+          ) : hasData ? (
+            <>
+              <ThemedView style={styles.tiles}>
+                <StatTile
+                  label="Spent"
+                  value={money(stats.totalSpend)}
+                  sub={`${money(stats.averageReceipt)} avg · ${stats.receiptCount} ${
+                    stats.receiptCount === 1 ? 'trip' : 'trips'
+                  }`}
+                />
+                <StatTile
+                  label="Lost to waste"
+                  value={money(stats.wastedValue)}
+                  sub={
+                    stats.wasteRatePct != null
+                      ? `${stats.wasteRatePct.toFixed(0)}% of what you bought`
+                      : `${stats.counts.tossed + stats.counts.expired} ${
+                          stats.counts.tossed + stats.counts.expired === 1 ? 'item' : 'items'
+                        }`
+                  }
+                />
+              </ThemedView>
 
-        {session && (
+              <SpendChart weekly={stats.weekly} />
+            </>
+          ) : (
+            <ThemedView type="backgroundElement" style={styles.empty}>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
+                Your spend and waste numbers will show up here once you save a receipt.
+              </ThemedText>
+              <Link href="/capture">
+                <ThemedText type="linkPrimary">Snap your first receipt</ThemedText>
+              </Link>
+            </ThemedView>
+          )}
+
+          <NudgeSettings />
+
           <Pressable onPress={() => authClient.signOut().then(() => refetch())}>
-            <ThemedText type="linkPrimary">Sign out</ThemedText>
+            <ThemedText type="linkPrimary" style={styles.signOut}>
+              Sign out
+            </ThemedText>
           </Pressable>
-        )}
-
-        {Platform.OS === 'web' && <WebBadge />}
+        </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -110,35 +112,48 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     flexDirection: 'row',
+    justifyContent: 'center',
   },
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.four,
-    alignItems: 'center',
+    paddingTop: Spacing.four,
+    maxWidth: MaxContentWidth,
+    width: '100%',
+  },
+  scroll: {
     gap: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  tiles: {
+    flexDirection: 'row',
+    gap: Spacing.three,
+  },
+  tile: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    borderRadius: Spacing.four,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    gap: Spacing.half,
   },
-  title: {
+  tileValue: {
+    fontSize: 26,
+    lineHeight: 32,
+  },
+  empty: {
+    borderRadius: Spacing.four,
+    padding: Spacing.four,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  emptyText: {
     textAlign: 'center',
   },
-  code: {
-    textTransform: 'uppercase',
+  error: {
+    textAlign: 'center',
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  signOut: {
+    textAlign: 'center',
   },
 });
