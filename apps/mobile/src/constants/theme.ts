@@ -7,28 +7,38 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+// Ported from broccoli-dashboard's design tokens (src/styles/globals.css):
+// zinc-scale neutrals with the brand green as primary. The dashboard defines
+// these in oklch; values here are their hex equivalents.
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-    // Freshness-estimate chips (Inventory). Brand-palette pass comes with the
-    // styling epic (broccoli-mobile-3nl).
-    statusGood: '#2E7D32',
+    text: '#09090B', // foreground (zinc-950)
+    background: '#FFFFFF',
+    backgroundElement: '#F4F4F5', // secondary/muted (zinc-100)
+    backgroundSelected: '#E4E4E7', // zinc-200
+    textSecondary: '#71717A', // muted-foreground (zinc-500)
+    primary: '#4A7A34', // brand green
+    primaryForeground: '#F3F0FA',
+    border: '#E4E4E7',
+    destructive: '#DC2626',
+    // Freshness chips: good = brand green, so "fresh" reads as broccoli.
+    statusGood: '#4A7A34',
     statusWarn: '#B26A00',
-    statusBad: '#C62828',
+    statusBad: '#DC2626',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
-    statusGood: '#7CC47F',
+    text: '#FAFAFA',
+    background: '#09090B',
+    backgroundElement: '#18181B', // card (zinc-900)
+    backgroundSelected: '#27272A', // secondary (zinc-800)
+    textSecondary: '#A1A1AA', // zinc-400
+    primary: '#5E9943', // brand green, dark variant
+    primaryForeground: '#F3F0FA',
+    border: '#3F3F46',
+    destructive: '#F87171',
+    statusGood: '#5E9943',
     statusWarn: '#E0A83E',
-    statusBad: '#E5484D',
+    statusBad: '#F87171',
   },
 } as const;
 

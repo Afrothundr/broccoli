@@ -1,9 +1,12 @@
+import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { authClient } from '@/lib/auth-client';
@@ -40,37 +43,31 @@ export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
     onAuthed?.();
   }
 
-  const inputStyle = [
-    styles.input,
-    { color: theme.text, backgroundColor: theme.backgroundElement },
-  ];
-
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title" style={styles.title}>
-          Broccoli
-        </ThemedText>
+        <Image
+          source={require('@/assets/images/brand/logo.png')}
+          style={styles.logo}
+          contentFit="contain"
+          accessibilityLabel="Broccoli"
+        />
         <ThemedText type="small" themeColor="textSecondary" style={styles.subtitle}>
           {mode === 'sign-in' ? 'Sign in to your account' : 'Create your account'}
         </ThemedText>
 
         <ThemedView style={styles.form}>
           {mode === 'sign-up' && (
-            <TextInput
-              style={inputStyle}
+            <Input
               placeholder="Name"
-              placeholderTextColor={theme.textSecondary}
               autoCapitalize="words"
               autoComplete="name"
               value={name}
               onChangeText={setName}
             />
           )}
-          <TextInput
-            style={inputStyle}
+          <Input
             placeholder="Email"
-            placeholderTextColor={theme.textSecondary}
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
@@ -78,10 +75,8 @@ export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
             value={email}
             onChangeText={setEmail}
           />
-          <TextInput
-            style={inputStyle}
+          <Input
             placeholder="Password"
-            placeholderTextColor={theme.textSecondary}
             autoCapitalize="none"
             autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
             secureTextEntry
@@ -90,19 +85,16 @@ export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
           />
 
           {error && (
-            <ThemedText type="small" style={styles.error}>
+            <ThemedText type="small" style={[styles.error, { color: theme.destructive }]}>
               {error}
             </ThemedText>
           )}
 
-          <Pressable
-            style={[styles.button, { backgroundColor: theme.text }, submitting && styles.disabled]}
-            disabled={submitting}
-            onPress={submit}>
-            <ThemedText type="smallBold" themeColor="background">
-              {submitting ? 'Please wait…' : mode === 'sign-in' ? 'Sign in' : 'Create account'}
-            </ThemedText>
-          </Pressable>
+          <Button
+            title={mode === 'sign-in' ? 'Sign in' : 'Create account'}
+            loading={submitting}
+            onPress={submit}
+          />
 
           <Pressable
             onPress={() => {
@@ -134,8 +126,10 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     maxWidth: MaxContentWidth,
   },
-  title: {
-    textAlign: 'center',
+  logo: {
+    alignSelf: 'center',
+    width: 240,
+    height: 54,
   },
   subtitle: {
     textAlign: 'center',
@@ -144,22 +138,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     alignSelf: 'stretch',
   },
-  input: {
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
-    fontSize: 16,
-  },
-  button: {
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-  },
-  disabled: {
-    opacity: 0.5,
-  },
   error: {
-    color: '#e5484d',
     textAlign: 'center',
   },
   toggle: {

@@ -8,13 +8,30 @@ export type ThemedTextProps = TextProps & {
   themeColor?: ThemeColor;
 };
 
+// Geist (the dashboard's typeface) ships as one file per weight, so the
+// family is chosen by the type's weight. Loaded in the root layout; RN falls
+// back to the system font if a family isn't registered yet.
+const GeistByType: Record<NonNullable<ThemedTextProps['type']>, string | undefined> = {
+  default: 'Geist_500Medium',
+  small: 'Geist_500Medium',
+  smallBold: 'Geist_700Bold',
+  title: 'Geist_600SemiBold',
+  subtitle: 'Geist_600SemiBold',
+  link: 'Geist_400Regular',
+  linkPrimary: 'Geist_600SemiBold',
+  code: undefined, // stays monospace
+};
+
 export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
   const theme = useTheme();
+  // Links default to the brand primary; anything else to the text color.
+  const defaultColor = type === 'linkPrimary' ? 'primary' : 'text';
+  const fontFamily = GeistByType[type];
 
   return (
     <Text
       style={[
-        { color: theme[themeColor ?? 'text'] },
+        { color: theme[themeColor ?? defaultColor] },
         type === 'default' && styles.default,
         type === 'title' && styles.title,
         type === 'small' && styles.small,
@@ -23,6 +40,7 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
         type === 'link' && styles.link,
         type === 'linkPrimary' && styles.linkPrimary,
         type === 'code' && styles.code,
+        fontFamily ? { fontFamily } : undefined,
         style,
       ]}
       {...rest}
@@ -63,7 +81,7 @@ const styles = StyleSheet.create({
   linkPrimary: {
     lineHeight: 30,
     fontSize: 14,
-    color: '#3c87f7',
+    fontWeight: 600,
   },
   code: {
     fontFamily: Fonts.mono,

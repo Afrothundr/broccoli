@@ -7,8 +7,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ReceiptReview } from '@/components/receipt-review';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { ParsedReceipt, useReceiptParse } from '@/hooks/use-receipt-parse';
+import { useTheme } from '@/hooks/use-theme';
 import { useUploadThing } from '@/lib/uploadthing';
 
 // A receipt as it exists right after upload: stored on UploadThing, not yet
@@ -19,6 +21,7 @@ type UploadedReceipt = {
 };
 
 export default function CaptureScreen() {
+  const theme = useTheme();
   const [uploaded, setUploaded] = useState<UploadedReceipt | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [saved, setSaved] = useState<ParsedReceipt | null>(null);
@@ -138,22 +141,17 @@ export default function CaptureScreen() {
         </ThemedView>
 
         {error && (
-          <ThemedText type="small" style={styles.error}>
+          <ThemedText type="small" style={[styles.error, { color: theme.destructive }]}>
             {error}
           </ThemedText>
         )}
 
-        <Pressable onPress={() => capture('camera')} disabled={busy} style={styles.stretch}>
-          <ThemedView type="backgroundSelected" style={styles.primaryButton}>
-            {busy ? (
-              <ActivityIndicator />
-            ) : (
-              <ThemedText type="smallBold">
-                {saved !== null || uploaded !== null ? 'Snap another receipt' : 'Open camera'}
-              </ThemedText>
-            )}
-          </ThemedView>
-        </Pressable>
+        <Button
+          title={saved !== null || uploaded !== null ? 'Snap another receipt' : 'Open camera'}
+          loading={busy}
+          onPress={() => capture('camera')}
+          style={styles.stretch}
+        />
 
         <Pressable onPress={() => capture('library')} disabled={busy}>
           <ThemedText type="linkPrimary">Choose from library</ThemedText>
@@ -203,15 +201,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   error: {
-    color: '#D93025',
     textAlign: 'center',
   },
   stretch: {
     alignSelf: 'stretch',
-  },
-  primaryButton: {
-    alignItems: 'center',
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.four,
   },
 });

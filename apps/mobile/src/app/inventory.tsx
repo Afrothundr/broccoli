@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CheckInDeck } from '@/components/check-in-deck';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { InventoryItem, useInventory } from '@/hooks/use-inventory';
 import { useTheme } from '@/hooks/use-theme';
@@ -222,6 +223,7 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
 }
 
 export default function InventoryScreen() {
+  const theme = useTheme();
   const { items, error, refreshing, refresh, reload } = useInventory();
   const [checkingIn, setCheckingIn] = useState(false);
 
@@ -249,15 +251,11 @@ export default function InventoryScreen() {
         <ThemedText type="subtitle">Your groceries</ThemedText>
 
         {items !== null && items.length > 0 && (
-          <Pressable onPress={() => setCheckingIn(true)}>
-            <ThemedView type="backgroundSelected" style={styles.checkInButton}>
-              <ThemedText type="smallBold">Daily check-in</ThemedText>
-            </ThemedView>
-          </Pressable>
+          <Button title="Daily check-in" onPress={() => setCheckingIn(true)} />
         )}
 
         {error && (
-          <ThemedText type="small" style={styles.error}>
+          <ThemedText type="small" style={[styles.error, { color: theme.destructive }]}>
             {error}
           </ThemedText>
         )}
@@ -333,11 +331,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingBottom: Spacing.one,
   },
-  checkInButton: {
-    alignItems: 'center',
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.four,
-  },
   row: {
     borderRadius: Spacing.two,
     paddingHorizontal: Spacing.three,
@@ -376,7 +369,6 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   error: {
-    color: '#e5484d',
     textAlign: 'center',
   },
 });

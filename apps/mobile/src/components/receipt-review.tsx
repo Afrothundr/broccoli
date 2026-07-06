@@ -1,16 +1,10 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { ParsedReceipt } from '@/hooks/use-receipt-parse';
 import { useTheme } from '@/hooks/use-theme';
@@ -104,8 +98,6 @@ export function ReceiptReview({
     }
   };
 
-  const inputStyle = [styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }];
-
   return (
     <KeyboardAvoidingView
       style={styles.flex}
@@ -119,31 +111,23 @@ export function ReceiptReview({
           Fix anything the scan got wrong — tap a name or price to edit.
         </ThemedText>
 
-        <TextInput
-          style={inputStyle}
-          value={storeName}
-          onChangeText={setStoreName}
-          placeholder="Store"
-          placeholderTextColor={theme.textSecondary}
-        />
+        <Input value={storeName} onChangeText={setStoreName} placeholder="Store" />
 
         {items.map((item) => (
           <ThemedView key={item.localKey} style={styles.itemRow}>
             <ThemedView style={styles.itemFields}>
-              <TextInput
-                style={[...inputStyle, styles.nameInput]}
+              <Input
+                style={styles.nameInput}
                 value={item.name}
                 onChangeText={(name) => edit(item.localKey, { name })}
                 placeholder="Item name"
-                placeholderTextColor={theme.textSecondary}
                 autoCapitalize="words"
               />
-              <TextInput
-                style={[...inputStyle, styles.priceInput]}
+              <Input
+                style={styles.priceInput}
                 value={item.price}
                 onChangeText={(price) => edit(item.localKey, { price })}
                 placeholder="0.00"
-                placeholderTextColor={theme.textSecondary}
                 keyboardType="decimal-pad"
               />
               <Pressable onPress={() => remove(item.localKey)} hitSlop={Spacing.two}>
@@ -167,7 +151,7 @@ export function ReceiptReview({
 
       <ThemedView style={styles.footer}>
         {error && (
-          <ThemedText type="small" style={styles.error}>
+          <ThemedText type="small" style={[styles.error, { color: theme.destructive }]}>
             {error}
           </ThemedText>
         )}
@@ -177,11 +161,7 @@ export function ReceiptReview({
           </ThemedText>
           <ThemedText type="smallBold">{total != null ? `$${total.toFixed(2)}` : '—'}</ThemedText>
         </ThemedView>
-        <Pressable onPress={save} disabled={saving}>
-          <ThemedView type="backgroundSelected" style={styles.saveButton}>
-            {saving ? <ActivityIndicator /> : <ThemedText type="smallBold">Save items</ThemedText>}
-          </ThemedView>
-        </Pressable>
+        <Button title="Save items" loading={saving} onPress={save} />
       </ThemedView>
     </KeyboardAvoidingView>
   );
@@ -195,12 +175,6 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
-  },
-  input: {
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 14,
   },
   itemRow: {
     gap: Spacing.one,
@@ -228,12 +202,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   error: {
-    color: '#D93025',
     textAlign: 'center',
-  },
-  saveButton: {
-    alignItems: 'center',
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.four,
   },
 });
