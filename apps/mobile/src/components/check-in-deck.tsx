@@ -191,9 +191,21 @@ export function CheckInDeck({
 
       {top ? (
         <>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.progress}>
-            {records.length + 1} of {total} · ate it → right · tossed → left · still have it →
-            down
+          <ThemedView style={styles.progressRow}>
+            <ThemedView type="backgroundSelected" style={styles.progressTrack}>
+              <ThemedView
+                style={[
+                  styles.progressFill,
+                  { width: `${(records.length / total) * 100}%`, backgroundColor: theme.primary },
+                ]}
+              />
+            </ThemedView>
+            <ThemedText type="small" themeColor="textSecondary">
+              {records.length + 1} of {total}
+            </ThemedText>
+          </ThemedView>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
+            Swipe the card, or tap a button below.
           </ThemedText>
 
           <ThemedView style={styles.deckArea}>
@@ -339,7 +351,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  progress: {
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 4,
+    borderRadius: 2,
+  },
+  hint: {
     textAlign: 'center',
   },
   deckArea: {

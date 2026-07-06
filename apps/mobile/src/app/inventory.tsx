@@ -130,9 +130,19 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
     }
   };
 
-  const expiresLine = [
-    item.expiresAt ? `Expires ${formatDate(item.expiresAt)}` : null,
+  // Two-line hierarchy: the name leads at full size; everything else is one
+  // quiet meta line. Detail trivia collapses the same way when expanded.
+  const metaLine = [
+    item.price != null ? `$${item.price.toFixed(2)}` : null,
     storageLabel(item.storageLocation),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const expiresOn = item.expiresAt ? formatDate(item.expiresAt) : null;
+  const triviaLine = [
+    item.category,
+    quantity,
+    `Added ${formatDate(item.createdAt) ?? 'recently'}`,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -146,24 +156,28 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
       style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView type="backgroundElement" style={styles.row}>
         <ThemedView type="backgroundElement" style={styles.rowMain}>
-          <ThemedText type="small" style={styles.rowName} numberOfLines={expanded ? undefined : 1}>
+          <ThemedText style={styles.rowName} numberOfLines={expanded ? undefined : 1}>
             {item.name}
           </ThemedText>
           {freshness?.chip != null && <FreshnessChip freshness={freshness} />}
-          <ThemedText type="small" themeColor="textSecondary">
-            {item.price != null ? `$${item.price.toFixed(2)}` : ''}
-          </ThemedText>
         </ThemedView>
+        {metaLine.length > 0 && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {metaLine}
+          </ThemedText>
+        )}
         {expanded && (
-          <ThemedView type="backgroundElement" style={styles.rowDetail}>
+          <ThemedView
+            type="backgroundElement"
+            style={[styles.rowDetail, { borderTopColor: theme.border }]}>
             {freshness && (
               <ThemedText type="small" themeColor="textSecondary">
                 {freshness.detail}
               </ThemedText>
             )}
-            {expiresLine.length > 0 && (
+            {expiresOn && (
               <ThemedText type="small" themeColor="textSecondary">
-                {expiresLine}
+                Expires {expiresOn}
               </ThemedText>
             )}
 
@@ -227,18 +241,8 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
                 {rowError}
               </ThemedText>
             )}
-            {item.category && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {item.category}
-              </ThemedText>
-            )}
-            {quantity && (
-              <ThemedText type="small" themeColor="textSecondary">
-                Quantity: {quantity}
-              </ThemedText>
-            )}
             <ThemedText type="small" themeColor="textSecondary">
-              Added {formatDate(item.createdAt) ?? 'recently'}
+              {triviaLine}
             </ThemedText>
           </ThemedView>
         )}
@@ -359,8 +363,8 @@ const styles = StyleSheet.create({
   row: {
     borderRadius: Spacing.two,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    gap: Spacing.one,
+    paddingVertical: Spacing.two + Spacing.one,
+    gap: Spacing.half,
   },
   rowMain: {
     flexDirection: 'row',
@@ -377,7 +381,10 @@ const styles = StyleSheet.create({
   },
   rowDetail: {
     gap: Spacing.two,
+    marginTop: Spacing.one,
+    paddingTop: Spacing.two,
     paddingBottom: Spacing.one,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   controlRow: {
     flexDirection: 'row',
