@@ -138,7 +138,12 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
     .join(' · ');
 
   return (
-    <Pressable onPress={() => setExpanded((v) => !v)}>
+    <Pressable
+      onPress={() => setExpanded((v) => !v)}
+      accessibilityRole="button"
+      accessibilityState={{ expanded }}
+      accessibilityHint={expanded ? 'Collapses item details' : 'Shows item details and controls'}
+      style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView type="backgroundElement" style={styles.row}>
         <ThemedView type="backgroundElement" style={styles.rowMain}>
           <ThemedText type="small" style={styles.rowName} numberOfLines={expanded ? undefined : 1}>
@@ -167,7 +172,19 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
                 Adjust date
               </ThemedText>
               {ADJUSTMENTS.map(({ label, days }) => (
-                <Pressable key={label} onPress={() => adjustBy(days)} disabled={busy}>
+                <Pressable
+                  key={label}
+                  onPress={() => adjustBy(days)}
+                  disabled={busy}
+                  hitSlop={Spacing.two}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    days > 0
+                      ? `Extend expiration by ${days} ${days === 1 ? 'day' : 'days'}`
+                      : 'Move expiration up by 1 day'
+                  }
+                  accessibilityState={{ disabled: busy }}
+                  style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
                   <ThemedView type="backgroundSelected" style={styles.controlChip}>
                     <ThemedText type="small">{label}</ThemedText>
                   </ThemedView>
@@ -182,7 +199,15 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
               {LOCATIONS.map((location) => {
                 const selected = item.storageLocation === location;
                 return (
-                  <Pressable key={location} onPress={() => setLocation(location)} disabled={busy}>
+                  <Pressable
+                    key={location}
+                    onPress={() => setLocation(location)}
+                    disabled={busy}
+                    hitSlop={Spacing.two}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Move to ${location.toLowerCase()}`}
+                    accessibilityState={{ disabled: busy, selected }}
+                    style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
                     <ThemedView
                       type={selected ? 'backgroundSelected' : 'backgroundElement'}
                       style={[styles.controlChip, !selected && styles.controlChipGhost]}>
@@ -363,12 +388,18 @@ const styles = StyleSheet.create({
   controlChip: {
     borderRadius: Spacing.two,
     paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
+    paddingVertical: Spacing.one,
   },
   controlChipGhost: {
     opacity: 0.7,
   },
   error: {
     textAlign: 'center',
+  },
+  pressed: {
+    opacity: 0.6,
+  },
+  dim: {
+    opacity: 0.5,
   },
 });

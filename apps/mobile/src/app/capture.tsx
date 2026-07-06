@@ -153,7 +153,13 @@ export default function CaptureScreen() {
           style={styles.stretch}
         />
 
-        <Pressable onPress={() => capture('library')} disabled={busy}>
+        <Pressable
+          onPress={() => capture('library')}
+          disabled={busy}
+          hitSlop={Spacing.two}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: busy }}
+          style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
           <ThemedText type="linkPrimary">Choose from library</ThemedText>
         </Pressable>
       </SafeAreaView>
@@ -205,5 +211,11 @@ const styles = StyleSheet.create({
   },
   stretch: {
     alignSelf: 'stretch',
+  },
+  pressed: {
+    opacity: 0.6,
+  },
+  dim: {
+    opacity: 0.5,
   },
 });

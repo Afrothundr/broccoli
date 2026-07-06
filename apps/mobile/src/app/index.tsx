@@ -115,7 +115,12 @@ export default function HomeScreen() {
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <ThemedView style={styles.headerRow}>
             <ThemedText type="subtitle">Your food money</ThemedText>
-            <Pressable onPress={() => setSettingsOpen(true)} hitSlop={Spacing.three}>
+            <Pressable
+              onPress={() => setSettingsOpen(true)}
+              hitSlop={Spacing.three}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+              style={({ pressed }) => pressed && styles.pressed}>
               <ThemedText type="subtitle" themeColor="textSecondary">
                 ⚙
               </ThemedText>
@@ -285,5 +290,8 @@ const styles = StyleSheet.create({
   },
   error: {
     textAlign: 'center',
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });

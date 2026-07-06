@@ -130,7 +130,12 @@ export function ReceiptReview({
                 placeholder="0.00"
                 keyboardType="decimal-pad"
               />
-              <Pressable onPress={() => remove(item.localKey)} hitSlop={Spacing.two}>
+              <Pressable
+                onPress={() => remove(item.localKey)}
+                hitSlop={Spacing.three}
+                accessibilityRole="button"
+                accessibilityLabel={item.name ? `Remove ${item.name}` : 'Remove item'}
+                style={({ pressed }) => pressed && styles.pressed}>
                 <ThemedText type="smallBold" themeColor="textSecondary">
                   ✕
                 </ThemedText>
@@ -144,7 +149,11 @@ export function ReceiptReview({
           </ThemedView>
         ))}
 
-        <Pressable onPress={add}>
+        <Pressable
+          onPress={add}
+          hitSlop={Spacing.two}
+          accessibilityRole="button"
+          style={({ pressed }) => pressed && styles.pressed}>
           <ThemedText type="linkPrimary">+ Add an item</ThemedText>
         </Pressable>
       </ScrollView>
@@ -203,5 +212,8 @@ const styles = StyleSheet.create({
   },
   error: {
     textAlign: 'center',
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });

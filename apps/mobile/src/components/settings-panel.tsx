@@ -16,7 +16,12 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
         <ThemedText type="subtitle">Settings</ThemedText>
-        <Pressable onPress={onClose} hitSlop={Spacing.three}>
+        <Pressable
+          onPress={onClose}
+          hitSlop={Spacing.three}
+          accessibilityRole="button"
+          accessibilityLabel="Close settings"
+          style={({ pressed }) => pressed && styles.pressed}>
           <ThemedText type="smallBold" themeColor="textSecondary">
             ✕
           </ThemedText>
@@ -34,7 +39,11 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
             <ThemedText type="small">{session.user.email}</ThemedText>
           </ThemedView>
         )}
-        <Pressable onPress={() => authClient.signOut().then(() => refetch())}>
+        <Pressable
+          onPress={() => authClient.signOut().then(() => refetch())}
+          hitSlop={Spacing.two}
+          accessibilityRole="button"
+          style={({ pressed }) => pressed && styles.pressed}>
           <ThemedText type="linkPrimary">Sign out</ThemedText>
         </Pressable>
       </ThemedView>
@@ -63,5 +72,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: Spacing.two,
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });

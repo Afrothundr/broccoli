@@ -66,7 +66,13 @@ export function UsageChart({ weekly }: { weekly: Week[] }) {
 
       <ThemedView type="backgroundElement" style={styles.plot}>
         {weekly.map((week, index) => (
-          <Pressable key={week.weekStart} onPress={() => setSelected(index)} style={styles.group}>
+          <Pressable
+            key={week.weekStart}
+            onPress={() => setSelected(index)}
+            accessibilityRole="button"
+            accessibilityLabel={`Week of ${weekLabel(week.weekStart)}: ${money(week.eaten)} used, ${money(week.wasted)} wasted`}
+            accessibilityState={{ selected: index === selected }}
+            style={styles.group}>
             <ThemedView type="backgroundElement" style={styles.bars}>
               <ThemedView
                 style={[styles.bar, { height: barHeight(week.eaten), backgroundColor: colors.used }]}

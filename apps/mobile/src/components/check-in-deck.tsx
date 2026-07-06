@@ -166,7 +166,12 @@ export function CheckInDeck({
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
         <ThemedText type="subtitle">Daily check-in</ThemedText>
-        <Pressable onPress={onClose} hitSlop={Spacing.three}>
+        <Pressable
+          onPress={onClose}
+          hitSlop={Spacing.three}
+          accessibilityRole="button"
+          accessibilityLabel="Close check-in"
+          style={({ pressed }) => pressed && styles.pressed}>
           <ThemedText type="smallBold" themeColor="textSecondary">
             ✕
           </ThemedText>
@@ -246,21 +251,33 @@ export function CheckInDeck({
           </ThemedView>
 
           <ThemedView style={styles.actions}>
-            <Pressable onPress={() => flyOut('TOSSED')} style={styles.actionButton}>
+            <Pressable
+              onPress={() => flyOut('TOSSED')}
+              accessibilityRole="button"
+              accessibilityLabel={`Tossed ${top.name}`}
+              style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
               <ThemedView type="backgroundElement" style={styles.action}>
                 <ThemedText type="smallBold" style={{ color: theme.statusBad }}>
                   ✗ Tossed
                 </ThemedText>
               </ThemedView>
             </Pressable>
-            <Pressable onPress={() => flyOut('KEPT')} style={styles.actionButton}>
+            <Pressable
+              onPress={() => flyOut('KEPT')}
+              accessibilityRole="button"
+              accessibilityLabel={`Still have ${top.name}`}
+              style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
               <ThemedView type="backgroundElement" style={styles.action}>
                 <ThemedText type="smallBold" themeColor="textSecondary">
                   Still have it
                 </ThemedText>
               </ThemedView>
             </Pressable>
-            <Pressable onPress={() => flyOut('EATEN')} style={styles.actionButton}>
+            <Pressable
+              onPress={() => flyOut('EATEN')}
+              accessibilityRole="button"
+              accessibilityLabel={`Ate ${top.name}`}
+              style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
               <ThemedView type="backgroundElement" style={styles.action}>
                 <ThemedText type="smallBold" style={{ color: theme.statusGood }}>
                   ✓ Ate it
@@ -291,7 +308,12 @@ export function CheckInDeck({
                 ? 'tossed'
                 : 'still have it'}
           </ThemedText>
-          <Pressable onPress={undo} hitSlop={Spacing.two}>
+          <Pressable
+            onPress={undo}
+            hitSlop={Spacing.three}
+            accessibilityRole="button"
+            accessibilityLabel={`Undo ${last.item.name}`}
+            style={({ pressed }) => pressed && styles.pressed}>
             <ThemedText type="linkPrimary">Undo</ThemedText>
           </Pressable>
         </ThemedView>
@@ -396,5 +418,8 @@ const styles = StyleSheet.create({
   },
   error: {
     textAlign: 'center',
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });

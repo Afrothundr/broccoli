@@ -18,10 +18,24 @@ function hour12(h: number): string {
   return `${display} ${period}`;
 }
 
+// Vertical hitSlop brings the +/− targets up to comfortable size; horizontal
+// stays small so the two targets never overlap across the stepper's 8px gaps.
+const stepperHitSlop = {
+  top: Spacing.three,
+  bottom: Spacing.three,
+  left: Spacing.one,
+  right: Spacing.one,
+};
+
 function HourStepper({ value, onChange }: { value: number; onChange: (next: number) => void }) {
   return (
     <ThemedView type="backgroundElement" style={styles.stepper}>
-      <Pressable onPress={() => onChange((value + 23) % 24)} hitSlop={Spacing.two}>
+      <Pressable
+        onPress={() => onChange((value + 23) % 24)}
+        hitSlop={stepperHitSlop}
+        accessibilityRole="button"
+        accessibilityLabel="One hour earlier"
+        style={({ pressed }) => pressed && styles.pressed}>
         <ThemedText type="smallBold" themeColor="textSecondary">
           −
         </ThemedText>
@@ -29,7 +43,12 @@ function HourStepper({ value, onChange }: { value: number; onChange: (next: numb
       <ThemedText type="small" style={styles.stepperValue}>
         {hour12(value)}
       </ThemedText>
-      <Pressable onPress={() => onChange((value + 1) % 24)} hitSlop={Spacing.two}>
+      <Pressable
+        onPress={() => onChange((value + 1) % 24)}
+        hitSlop={stepperHitSlop}
+        accessibilityRole="button"
+        accessibilityLabel="One hour later"
+        style={({ pressed }) => pressed && styles.pressed}>
         <ThemedText type="smallBold" themeColor="textSecondary">
           +
         </ThemedText>
@@ -81,6 +100,7 @@ export function NudgeSettings() {
           value={settings.nudgesEnabled}
           onValueChange={(nudgesEnabled) => update({ nudgesEnabled })}
           trackColor={{ true: theme.primary }}
+          accessibilityLabel="Nudges"
         />
       </ThemedView>
       {settings.nudgesEnabled && (
@@ -139,5 +159,8 @@ const styles = StyleSheet.create({
   stepperValue: {
     minWidth: 44,
     textAlign: 'center',
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });
