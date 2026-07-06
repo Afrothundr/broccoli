@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { router, protectedProcedure } from "./trpc";
 import { prisma } from "./db";
 import { requestOcr, type OcrData } from "./model";
+import { backfillExpirations } from "./shelf-life-llm";
 
 // What get/confirm hand back to the app. Annotating the resolvers with this
 // flat alias keeps the router's inferred output shallow — without it, clients
@@ -226,6 +227,11 @@ export const receiptRouter = router({
           },
         }),
       ]);
+
+      // Items the catalog couldn't estimate get an LLM fallback, marked as
+      // such (PRD Pillar 3). Fire-and-forget: saving never waits on it, and
+      // it handles its own errors.
+      void backfillExpirations(input.id, purchasedAt);
 
       return prisma.receipt.findFirstOrThrow({
         where: { id: input.id },
