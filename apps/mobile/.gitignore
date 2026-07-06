@@ -47,3 +47,6 @@ example
 *.db
 .beads-credential-key
 .env
+
+# Firebase config — stored as an EAS secret file (GOOGLE_SERVICES_JSON), not committed
+google-services.json
