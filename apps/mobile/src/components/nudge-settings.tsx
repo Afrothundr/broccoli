@@ -11,6 +11,13 @@ import { trpc } from '@/lib/trpc';
 
 type Settings = inferRouterOutputs<AppRouter>['push']['getSettings'];
 
+// 21 → "9 PM", 0 → "12 AM", 12 → "12 PM".
+function hour12(h: number): string {
+  const period = h < 12 ? 'AM' : 'PM';
+  const display = h % 12 === 0 ? 12 : h % 12;
+  return `${display} ${period}`;
+}
+
 function HourStepper({ value, onChange }: { value: number; onChange: (next: number) => void }) {
   return (
     <ThemedView type="backgroundElement" style={styles.stepper}>
@@ -19,7 +26,9 @@ function HourStepper({ value, onChange }: { value: number; onChange: (next: numb
           −
         </ThemedText>
       </Pressable>
-      <ThemedText type="small">{`${String(value).padStart(2, '0')}:00`}</ThemedText>
+      <ThemedText type="small" style={styles.stepperValue}>
+        {hour12(value)}
+      </ThemedText>
       <Pressable onPress={() => onChange((value + 1) % 24)} hitSlop={Spacing.two}>
         <ThemedText type="smallBold" themeColor="textSecondary">
           +
@@ -126,5 +135,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
     paddingHorizontal: Spacing.two,
+  },
+  stepperValue: {
+    minWidth: 44,
+    textAlign: 'center',
   },
 });

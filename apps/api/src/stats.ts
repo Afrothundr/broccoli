@@ -13,6 +13,13 @@ import { prisma } from "./db";
 export type WeeklyStat = {
   weekStart: string; // ISO date (Monday) of the week bucket
   spend: number;
+  eaten: number; // value used (resolved EATEN) that week
+  wasted: number;
+};
+
+export type CategoryStat = {
+  category: string; // broad catalog group (itemType.category), or "Other"
+  spend: number;
   wasted: number;
 };
 
@@ -27,6 +34,7 @@ export type StatsOverview = {
   wasteCountPct: number | null; // by item count
   counts: { eaten: number; tossed: number; expired: number; active: number };
   weekly: WeeklyStat[]; // oldest → newest, last 8 weeks
+  categories: CategoryStat[]; // top groups by spend, descending
 };
 
 const WEEKS = 8;
@@ -55,6 +63,8 @@ export const statsRouter = router({
           resolvedAt: true,
           expiresAt: true,
           createdAt: true,
+          category: true,
+          itemType: { select: { category: true } },
         },
       }),
     ]);
@@ -80,7 +90,7 @@ export const statsRouter = router({
     const weekly = new Map<string, WeeklyStat>();
     for (let i = 0; i < WEEKS; i++) {
       const key = weekStart(new Date(Date.now() - (WEEKS - 1 - i) * WEEK_MS));
-      weekly.set(key, { weekStart: key, spend: 0, wasted: 0 });
+      weekly.set(key, { weekStart: key, spend: 0, eaten: 0, wasted: 0 });
     }
     for (const receipt of receipts) {
       const key = weekStart(receipt.purchasedAt ?? receipt.createdAt);
@@ -88,6 +98,11 @@ export const statsRouter = router({
       if (bucket && key >= cutoff) bucket.spend += receipt.total ?? 0;
     }
     for (const item of items) {
+      if (item.status === "EATEN" && item.resolvedAt) {
+        const key = weekStart(item.resolvedAt);
+        const bucket = weekly.get(key);
+        if (bucket && key >= cutoff) bucket.eaten += item.price ?? 0;
+      }
       const wastedAt =
         item.status === "TOSSED"
           ? (item.resolvedAt ?? item.createdAt)
@@ -99,6 +114,23 @@ export const statsRouter = router({
       const bucket = weekly.get(key);
       if (bucket && key >= cutoff) bucket.wasted += item.price ?? 0;
     }
+
+    // Category rollup: broad catalog group when the item is linked, else the
+    // snapped name, else Other. Top groups by spend.
+    const byCategory = new Map<string, CategoryStat>();
+    for (const item of items) {
+      const key = item.itemType?.category ?? item.category ?? "Other";
+      const entry = byCategory.get(key) ?? { category: key, spend: 0, wasted: 0 };
+      entry.spend += item.price ?? 0;
+      if (item.status === "TOSSED" || item.status === "EXPIRED") {
+        entry.wasted += item.price ?? 0;
+      }
+      byCategory.set(key, entry);
+    }
+    const categories = [...byCategory.values()]
+      .filter((c) => c.spend > 0)
+      .sort((a, b) => b.spend - a.spend)
+      .slice(0, 5);
 
     return {
       totalSpend,
@@ -116,6 +148,7 @@ export const statsRouter = router({
         active: count("ACTIVE"),
       },
       weekly: [...weekly.values()],
+      categories,
     };
   }),
 });

@@ -6,17 +6,19 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import type { StatsOverview } from '@/hooks/use-stats';
 
-// Weekly spend vs wasted, paired bars, one shared $ axis. Series colors were
-// chosen with the dataviz palette validator (CVD-checked per theme):
-//   spend  — brand green (#4A7A34 light / #5E9943 dark)
+// Weekly value USED vs wasted — the positive framing: most weeks the green
+// "you ate what you bought" bar should dominate. Paired bars, one shared $
+// axis. Series colors were chosen with the dataviz palette validator
+// (CVD-checked per theme):
+//   used   — brand green (#4A7A34 light / #5E9943 dark)
 //   wasted — #DC2626 in BOTH themes (the dark-theme destructive #F87171 fails
 //            the mark lightness band; #DC2626 passes both, deutan ΔE 16.9 dark)
 // Light-mode CVD sits in the floor band (11.7), so identity never rides on
-// color alone: fixed pair order (spend left), 2px gaps, a legend, and
+// color alone: fixed pair order (used left), 2px gaps, a legend, and
 // tap-to-read exact values.
 const SERIES = {
-  light: { spend: '#4A7A34', wasted: '#DC2626' },
-  dark: { spend: '#5E9943', wasted: '#DC2626' },
+  light: { used: '#4A7A34', wasted: '#DC2626' },
+  dark: { used: '#5E9943', wasted: '#DC2626' },
 };
 
 const CHART_HEIGHT = 120;
@@ -32,17 +34,17 @@ function weekLabel(iso: string): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
-export function SpendChart({ weekly }: { weekly: Week[] }) {
+export function UsageChart({ weekly }: { weekly: Week[] }) {
   const scheme = useColorScheme();
   const colors = SERIES[scheme === 'dark' ? 'dark' : 'light'];
   // Start on the latest week that has anything to say.
   const lastActive = weekly.reduce(
-    (best, w, i) => (w.spend > 0 || w.wasted > 0 ? i : best),
+    (best, w, i) => (w.eaten > 0 || w.wasted > 0 ? i : best),
     weekly.length - 1
   );
   const [selected, setSelected] = useState(lastActive);
 
-  const max = Math.max(...weekly.map((w) => Math.max(w.spend, w.wasted)), 1);
+  const max = Math.max(...weekly.map((w) => Math.max(w.eaten, w.wasted)), 1);
   const barHeight = (value: number) =>
     value > 0 ? Math.max((value / max) * CHART_HEIGHT, 3) : 0;
 
@@ -52,9 +54,9 @@ export function SpendChart({ weekly }: { weekly: Week[] }) {
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
       <ThemedView type="backgroundElement" style={styles.legend}>
-        <ThemedView style={[styles.legendDot, { backgroundColor: colors.spend }]} />
+        <ThemedView style={[styles.legendDot, { backgroundColor: colors.used }]} />
         <ThemedText type="small" themeColor="textSecondary">
-          Spent
+          Used
         </ThemedText>
         <ThemedView style={[styles.legendDot, { backgroundColor: colors.wasted }]} />
         <ThemedText type="small" themeColor="textSecondary">
@@ -67,7 +69,7 @@ export function SpendChart({ weekly }: { weekly: Week[] }) {
           <Pressable key={week.weekStart} onPress={() => setSelected(index)} style={styles.group}>
             <ThemedView type="backgroundElement" style={styles.bars}>
               <ThemedView
-                style={[styles.bar, { height: barHeight(week.spend), backgroundColor: colors.spend }]}
+                style={[styles.bar, { height: barHeight(week.eaten), backgroundColor: colors.used }]}
               />
               <ThemedView
                 style={[styles.bar, { height: barHeight(week.wasted), backgroundColor: colors.wasted }]}
@@ -92,7 +94,7 @@ export function SpendChart({ weekly }: { weekly: Week[] }) {
 
       <ThemedText type="small" themeColor="textSecondary" style={styles.caption}>
         {hasAny
-          ? `Week of ${weekLabel(current.weekStart)} — ${money(current.spend)} spent · ${money(current.wasted)} wasted`
+          ? `Week of ${weekLabel(current.weekStart)} — ${money(current.eaten)} used · ${money(current.wasted)} wasted`
           : 'No activity in the last 8 weeks yet.'}
       </ThemedText>
     </ThemedView>
