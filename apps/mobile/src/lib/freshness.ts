@@ -49,7 +49,7 @@ export function estimateFreshness(item: InventoryItem, now = Date.now()): Freshn
       daysLeft: Math.min(daysLeft, -1),
       level: 'bad',
       chip: 'expired',
-      detail: `Past its expiration${suffix} — check before using, then swipe it.`,
+      detail: `Past its expiration${suffix} — check it before using.`,
       sourceLabel,
     };
   }
@@ -59,7 +59,7 @@ export function estimateFreshness(item: InventoryItem, now = Date.now()): Freshn
       daysLeft,
       level: 'bad',
       chip: 'check it',
-      detail: `Past its typical shelf life${suffix} — check before using.`,
+      detail: `Past its typical shelf life${suffix} — check it before using.`,
       sourceLabel,
     };
   }

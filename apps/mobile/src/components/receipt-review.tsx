@@ -172,7 +172,7 @@ export function ReceiptReview({
           </ThemedText>
           <ThemedText type="smallBold">{total != null ? `$${total.toFixed(2)}` : '—'}</ThemedText>
         </ThemedView>
-        <Button title="Save items" loading={saving} onPress={save} />
+        <Button title="Add to kitchen" loading={saving} onPress={save} />
       </ThemedView>
     </KeyboardAvoidingView>
   );

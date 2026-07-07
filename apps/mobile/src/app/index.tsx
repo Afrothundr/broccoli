@@ -150,7 +150,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <ThemedView style={styles.headerRow}>
-            <ThemedText type="subtitle">Kitchen breakdown</ThemedText>
+            <ThemedText type="subtitle">Your savings</ThemedText>
             <Pressable
               onPress={() => setSettingsOpen(true)}
               hitSlop={Spacing.three}
@@ -219,10 +219,10 @@ export default function HomeScreen() {
                     your kitchen
                   </ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
-                    A quick check-in keeps your savings up-to-date.
+                    A quick check-in keeps your savings up to date.
                   </ThemedText>
                   <Button
-                    title="Update your inventory"
+                    title="Check in on your kitchen"
                     onPress={() => router.push('/inventory')}
                   />
                 </ThemedView>

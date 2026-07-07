@@ -115,7 +115,7 @@ export default function CaptureScreen() {
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.title}>
                 {saved.items.length} {saved.items.length === 1 ? 'item' : 'items'}
-                {saved.storeName ? ` from ${saved.storeName}` : ''} added to your groceries.
+                {saved.storeName ? ` from ${saved.storeName}` : ''} added to your kitchen.
               </ThemedText>
             </>
           ) : uploaded ? (
@@ -136,7 +136,7 @@ export default function CaptureScreen() {
                 Snap a receipt
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.title}>
-                Point, shoot, done — Broccoli turns it into your grocery list.
+                Point, shoot, done — everything you bought lands in your kitchen.
               </ThemedText>
             </>
           )}
@@ -162,7 +162,7 @@ export default function CaptureScreen() {
           accessibilityRole="button"
           accessibilityState={{ disabled: busy }}
           style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
-          <ThemedText type="linkPrimary">Choose from library</ThemedText>
+          <ThemedText type="linkPrimary">Choose from your photos</ThemedText>
         </Pressable>
       </SafeAreaView>
     </ThemedView>
