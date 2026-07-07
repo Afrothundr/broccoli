@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
@@ -108,12 +109,13 @@ export default function CaptureScreen() {
         <ThemedView style={styles.heroSection}>
           {saved ? (
             <>
+              <Feather name="check-circle" size={44} color={theme.statusGood} />
               <ThemedText type="subtitle" style={styles.title}>
-                Saved ✓
+                Saved
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.title}>
                 {saved.items.length} {saved.items.length === 1 ? 'item' : 'items'}
-                {saved.storeName ? ` from ${saved.storeName}` : ''} added to your groceries.
+                {saved.storeName ? ` from ${saved.storeName}` : ''} added to your kitchen.
               </ThemedText>
             </>
           ) : uploaded ? (
@@ -134,7 +136,7 @@ export default function CaptureScreen() {
                 Snap a receipt
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.title}>
-                Point, shoot, done — Broccoli turns it into your grocery list.
+                Point, shoot, done — everything you bought lands in your kitchen.
               </ThemedText>
             </>
           )}
@@ -153,8 +155,14 @@ export default function CaptureScreen() {
           style={styles.stretch}
         />
 
-        <Pressable onPress={() => capture('library')} disabled={busy}>
-          <ThemedText type="linkPrimary">Choose from library</ThemedText>
+        <Pressable
+          onPress={() => capture('library')}
+          disabled={busy}
+          hitSlop={Spacing.two}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: busy }}
+          style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
+          <ThemedText type="linkPrimary">Choose from your photos</ThemedText>
         </Pressable>
       </SafeAreaView>
     </ThemedView>
@@ -205,5 +213,11 @@ const styles = StyleSheet.create({
   },
   stretch: {
     alignSelf: 'stretch',
+  },
+  pressed: {
+    opacity: 0.6,
+  },
+  dim: {
+    opacity: 0.5,
   },
 });

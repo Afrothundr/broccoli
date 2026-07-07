@@ -7,6 +7,7 @@ import {
 import { receiptRouter } from "./receipt";
 import { itemRouter } from "./item";
 import { pushRouter } from "./push";
+import { statsRouter } from "./stats";
 import { sendNudges } from "./nudges";
 import { prisma } from "./db";
 
@@ -28,6 +29,9 @@ export const appRouter = router({
 
   // Push registration + nudge preferences (Phase 4).
   push: pushRouter,
+
+  // Spend & waste dashboard (Phase 5).
+  stats: statsRouter,
 
   // Internal namespace — called by broccoli-scheduler over tRPC with the
   // service token, so broccoli-api stays the single DB writer (PRD §4).

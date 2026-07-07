@@ -29,7 +29,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="inventory">
-        <NativeTabs.Trigger.Label>Inventory</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Kitchen</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/inventory.png')}
           renderingMode="template"

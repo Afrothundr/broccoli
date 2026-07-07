@@ -6,6 +6,7 @@
     "@better-auth/expo": "^1.6.22",
     "@expo-google-fonts/geist": "^0.4.2",
     "@expo/ui": "~56.0.18",
+    "@expo/vector-icons": "^15.1.1",
     "@trpc/client": "^11.18.0",
     "@uploadthing/expo": "^7.2.6",
     "better-auth": "^1.6.22",

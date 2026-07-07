@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -5,6 +6,7 @@ import Animated, {
   interpolate,
   runOnJS,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withSpring,
   withTiming,
@@ -54,6 +56,7 @@ export function CheckInDeck({
 }) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
+  const reduceMotion = useReducedMotion();
 
   const initialDeck = useMemo(() => orderDeck(items), [items]);
   const [deck, setDeck] = useState(initialDeck);
@@ -105,6 +108,10 @@ export function CheckInDeck({
   // Fly the card off-screen, then commit. Shared by the swipe gesture and the
   // tap-target fallback buttons: right = eaten, left = tossed, down = kept.
   const flyOut = (outcome: Outcome) => {
+    if (reduceMotion) {
+      commit(outcome);
+      return;
+    }
     if (outcome === 'KEPT') {
       translateY.value = withTiming(width * 1.2, { duration: 180 }, () =>
         runOnJS(commit)('KEPT')
@@ -166,10 +173,13 @@ export function CheckInDeck({
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
         <ThemedText type="subtitle">Daily check-in</ThemedText>
-        <Pressable onPress={onClose} hitSlop={Spacing.three}>
-          <ThemedText type="smallBold" themeColor="textSecondary">
-            ✕
-          </ThemedText>
+        <Pressable
+          onPress={onClose}
+          hitSlop={Spacing.three}
+          accessibilityRole="button"
+          accessibilityLabel="Close check-in"
+          style={({ pressed }) => pressed && styles.pressed}>
+          <Feather name="x" size={22} color={theme.textSecondary} />
         </Pressable>
       </ThemedView>
 
@@ -181,9 +191,22 @@ export function CheckInDeck({
 
       {top ? (
         <>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.progress}>
-            {records.length + 1} of {total} · ate it → right · tossed → left · still have it →
-            down
+          <ThemedView style={styles.progressRow}>
+            <ThemedView type="backgroundSelected" style={styles.progressTrack}>
+              <ThemedView
+                style={[
+                  styles.progressFill,
+                  { width: `${(records.length / total) * 100}%`, backgroundColor: theme.primary },
+                ]}
+              />
+            </ThemedView>
+            <ThemedText type="small" themeColor="textSecondary">
+              {records.length + 1} of {total}
+            </ThemedText>
+          </ThemedView>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
+            Swipe right if you ate it, left if you tossed it, down if it&apos;s
+            still around — or tap a button.
           </ThemedText>
 
           <ThemedView style={styles.deckArea}>
@@ -246,24 +269,38 @@ export function CheckInDeck({
           </ThemedView>
 
           <ThemedView style={styles.actions}>
-            <Pressable onPress={() => flyOut('TOSSED')} style={styles.actionButton}>
+            <Pressable
+              onPress={() => flyOut('TOSSED')}
+              accessibilityRole="button"
+              accessibilityLabel={`Tossed ${top.name}`}
+              style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
               <ThemedView type="backgroundElement" style={styles.action}>
+                <Feather name="trash-2" size={16} color={theme.statusBad} />
                 <ThemedText type="smallBold" style={{ color: theme.statusBad }}>
-                  ✗ Tossed
+                  Tossed
                 </ThemedText>
               </ThemedView>
             </Pressable>
-            <Pressable onPress={() => flyOut('KEPT')} style={styles.actionButton}>
+            <Pressable
+              onPress={() => flyOut('KEPT')}
+              accessibilityRole="button"
+              accessibilityLabel={`Still have ${top.name}`}
+              style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
               <ThemedView type="backgroundElement" style={styles.action}>
                 <ThemedText type="smallBold" themeColor="textSecondary">
                   Still have it
                 </ThemedText>
               </ThemedView>
             </Pressable>
-            <Pressable onPress={() => flyOut('EATEN')} style={styles.actionButton}>
+            <Pressable
+              onPress={() => flyOut('EATEN')}
+              accessibilityRole="button"
+              accessibilityLabel={`Ate ${top.name}`}
+              style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
               <ThemedView type="backgroundElement" style={styles.action}>
+                <Feather name="check" size={16} color={theme.statusGood} />
                 <ThemedText type="smallBold" style={{ color: theme.statusGood }}>
-                  ✓ Ate it
+                  Ate it
                 </ThemedText>
               </ThemedView>
             </Pressable>
@@ -272,7 +309,7 @@ export function CheckInDeck({
       ) : (
         <ThemedView style={styles.doneArea}>
           <ThemedText type="subtitle" style={styles.doneTitle}>
-            Check-in complete
+            All caught up
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {eaten} eaten · {tossed} tossed{kept > 0 ? ` · ${kept} still in your kitchen` : ''}
@@ -291,7 +328,12 @@ export function CheckInDeck({
                 ? 'tossed'
                 : 'still have it'}
           </ThemedText>
-          <Pressable onPress={undo} hitSlop={Spacing.two}>
+          <Pressable
+            onPress={undo}
+            hitSlop={Spacing.three}
+            accessibilityRole="button"
+            accessibilityLabel={`Undo ${last.item.name}`}
+            style={({ pressed }) => pressed && styles.pressed}>
             <ThemedText type="linkPrimary">Undo</ThemedText>
           </Pressable>
         </ThemedView>
@@ -310,7 +352,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  progress: {
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 4,
+    borderRadius: 2,
+  },
+  hint: {
     textAlign: 'center',
   },
   deckArea: {
@@ -366,7 +423,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   action: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
     paddingVertical: Spacing.three,
     borderRadius: Spacing.four,
   },
@@ -396,5 +456,8 @@ const styles = StyleSheet.create({
   },
   error: {
     textAlign: 'center',
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });

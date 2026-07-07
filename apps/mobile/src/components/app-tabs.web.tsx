@@ -28,7 +28,7 @@ export default function AppTabs() {
             <TabButton>Capture</TabButton>
           </TabTrigger>
           <TabTrigger name="inventory" href="/inventory" asChild>
-            <TabButton>Inventory</TabButton>
+            <TabButton>Kitchen</TabButton>
           </TabTrigger>
         </CustomTabList>
       </TabList>
