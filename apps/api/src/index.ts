@@ -25,6 +25,13 @@ app.all("/trpc/*", (c) =>
     req: c.req.raw,
     router: appRouter,
     createContext,
+    // Stacks are stripped from responses (trpc.ts errorFormatter); unexpected
+    // errors land here so the details still show up in server logs.
+    onError({ error, path }) {
+      if (error.code === "INTERNAL_SERVER_ERROR") {
+        console.error(`tRPC ${path ?? "<no-path>"} failed:`, error.cause ?? error);
+      }
+    },
   })
 );
 
