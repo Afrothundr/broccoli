@@ -64,14 +64,23 @@ function nudgedToday(prefs: Prefs, now: Date): boolean {
   return localDay(prefs.timezone, prefs.lastNudgeAt) === localDay(prefs.timezone, now);
 }
 
-// "Bananas, Eggs and 3 more need attention — eat these first."
+// Title: "Eat these soon: Bananas, Eggs"
+// Body: "Bananas, Eggs and 3 more are nearing their expiration — use them
+// first so nothing goes to waste."
+// Same voice as the app (PR #25): named items over counts, kitchen framing,
+// and the "so nothing goes to waste" line the empty state uses.
 function composeNudge(names: string[]): { title: string; body: string } {
   const count = names.length;
-  const lead = names.slice(0, 2).join(", ");
   const rest = count - Math.min(count, 2);
+  // "and" between exactly two names — receipt names often carry commas
+  // ("Eggs, dozen"), and a comma join reads like three items.
+  const lead = names.slice(0, 2).join(rest > 0 ? ", " : " and ");
+  const one = count === 1;
   return {
-    title: count === 1 ? "1 item needs attention" : `${count} items need attention`,
-    body: `${lead}${rest > 0 ? ` and ${rest} more` : ""} — eat these first before they go to waste.`,
+    title: `Eat ${one ? "this" : "these"} soon: ${lead}`,
+    body: `${lead}${rest > 0 ? ` and ${rest} more` : ""} ${one ? "is" : "are"} nearing ${
+      one ? "its" : "their"
+    } expiration — use ${one ? "it" : "them"} first so nothing goes to waste.`,
   };
 }
 
