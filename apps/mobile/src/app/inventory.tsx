@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -131,21 +132,23 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
   };
 
   // Two-line hierarchy: the name leads at full size; everything else is one
-  // quiet meta line. Detail trivia collapses the same way when expanded.
+  // quiet meta line. The expanded card is icon-led — no text labels.
   const metaLine = [
     item.price != null ? `$${item.price.toFixed(2)}` : null,
+    quantity,
     storageLabel(item.storageLocation),
   ]
     .filter(Boolean)
     .join(' · ');
   const expiresOn = item.expiresAt ? formatDate(item.expiresAt) : null;
-  const triviaLine = [
-    item.category,
-    quantity,
-    `Added ${formatDate(item.createdAt) ?? 'recently'}`,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const freshnessColor =
+    freshness == null
+      ? theme.textSecondary
+      : freshness.level === 'bad'
+        ? theme.statusBad
+        : freshness.level === 'warn'
+          ? theme.statusWarn
+          : theme.statusGood;
 
   return (
     <Pressable
@@ -171,20 +174,21 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
             type="backgroundElement"
             style={[styles.rowDetail, { borderTopColor: theme.border }]}>
             {freshness && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {freshness.detail}
-              </ThemedText>
-            )}
-            {expiresOn && (
-              <ThemedText type="small" themeColor="textSecondary">
-                Expires {expiresOn}
-              </ThemedText>
+              <ThemedView type="backgroundElement" style={styles.detailRow}>
+                <Feather name="clock" size={14} color={freshnessColor} style={styles.rowIcon} />
+                <ThemedText type="small" themeColor="textSecondary" style={styles.detailText}>
+                  {freshness.detail}
+                </ThemedText>
+              </ThemedView>
             )}
 
             <ThemedView type="backgroundElement" style={styles.controlRow}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Adjust date
-              </ThemedText>
+              <Feather name="calendar" size={14} color={theme.textSecondary} />
+              {expiresOn && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {expiresOn}
+                </ThemedText>
+              )}
               {ADJUSTMENTS.map(({ label, days }) => (
                 <Pressable
                   key={label}
@@ -207,9 +211,7 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
             </ThemedView>
 
             <ThemedView type="backgroundElement" style={styles.controlRow}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Location
-              </ThemedText>
+              <Feather name="map-pin" size={14} color={theme.textSecondary} />
               {LOCATIONS.map((location) => {
                 const selected = item.storageLocation === location;
                 return (
@@ -241,9 +243,6 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
                 {rowError}
               </ThemedText>
             )}
-            <ThemedText type="small" themeColor="textSecondary">
-              {triviaLine}
-            </ThemedText>
           </ThemedView>
         )}
       </ThemedView>
@@ -385,6 +384,17 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
     paddingBottom: Spacing.one,
     borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    alignItems: 'flex-start',
+  },
+  rowIcon: {
+    marginTop: 3, // optically centers the 14px icon on the first 20px text line
+  },
+  detailText: {
+    flex: 1,
   },
   controlRow: {
     flexDirection: 'row',
