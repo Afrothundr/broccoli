@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { Link } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -294,12 +294,22 @@ export default function InventoryScreen() {
           </ThemedView>
         ) : items.length === 0 ? (
           <ThemedView style={styles.center}>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
-              Nothing here yet.
+            <ThemedView
+              style={[styles.emptyIcon, { backgroundColor: `${theme.primary}1A` }]}>
+              <Feather name="shopping-bag" size={28} color={theme.primary} />
+            </ThemedView>
+            <ThemedText type="smallBold" style={styles.emptyTitle}>
+              No groceries yet
             </ThemedText>
-            <Link href="/capture">
-              <ThemedText type="linkPrimary">Snap a receipt to get started</ThemedText>
-            </Link>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
+              Snap a receipt and everything you bought lands here, with freshness
+              estimates so nothing gets forgotten.
+            </ThemedText>
+            <Button
+              title="Snap a receipt"
+              onPress={() => router.push('/capture')}
+              style={styles.emptyButton}
+            />
           </ThemedView>
         ) : (
           <SectionList
@@ -343,10 +353,26 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.two,
+    gap: Spacing.three,
+    padding: Spacing.four,
   },
   centerText: {
     textAlign: 'center',
+  },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+  },
+  emptyButton: {
+    alignSelf: 'stretch',
+    marginTop: Spacing.two,
   },
   list: {
     alignSelf: 'stretch',

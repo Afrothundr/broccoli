@@ -1,7 +1,12 @@
 import { Feather } from '@expo/vector-icons';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsPanel } from '@/components/settings-panel';
@@ -10,7 +15,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
 import { UsageChart } from '@/components/usage-chart';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { StatsOverview, useStats } from '@/hooks/use-stats';
+import { type StatsOverview, useStats } from '@/hooks/use-stats';
 import { useTheme } from '@/hooks/use-theme';
 
 // Home = the savings dashboard (PRD §7 Phase 5, reframed per feedback):
@@ -28,13 +33,23 @@ function money(n: number): string {
 
 function SavingsHero({ stats }: { stats: StatsOverview }) {
   const theme = useTheme();
-  const actualRate = stats.totalSpend > 0 ? stats.wastedValue / stats.totalSpend : 0;
-  const saved = Math.max(stats.totalSpend * BASELINE_WASTE_RATE - stats.wastedValue, 0);
+  const actualRate =
+    stats.totalSpend > 0 ? stats.wastedValue / stats.totalSpend : 0;
+  const saved = Math.max(
+    stats.totalSpend * BASELINE_WASTE_RATE - stats.wastedValue,
+    0,
+  );
   const reductionPct =
-    stats.totalSpend > 0 ? ((BASELINE_WASTE_RATE - actualRate) / BASELINE_WASTE_RATE) * 100 : 0;
+    stats.totalSpend > 0
+      ? ((BASELINE_WASTE_RATE - actualRate) / BASELINE_WASTE_RATE) * 100
+      : 0;
 
   const badgeColor =
-    reductionPct > 25 ? theme.statusGood : reductionPct > -25 ? theme.statusWarn : theme.destructive;
+    reductionPct > 25
+      ? theme.statusGood
+      : reductionPct > -25
+        ? theme.statusWarn
+        : theme.destructive;
   const badgeText =
     reductionPct >= 0
       ? `${Math.round(reductionPct)}% less waste than average`
@@ -48,7 +63,9 @@ function SavingsHero({ stats }: { stats: StatsOverview }) {
       <ThemedText type="subtitle" style={styles.heroValue}>
         {money(saved)}
       </ThemedText>
-      <ThemedView style={[styles.badge, { backgroundColor: `${badgeColor}1A` }]}>
+      <ThemedView
+        style={[styles.badge, { backgroundColor: `${badgeColor}1A` }]}
+      >
         <ThemedText type="small" style={{ color: badgeColor }}>
           {badgeText}
         </ThemedText>
@@ -60,7 +77,11 @@ function SavingsHero({ stats }: { stats: StatsOverview }) {
   );
 }
 
-function CategoryInsights({ categories }: { categories: StatsOverview['categories'] }) {
+function CategoryInsights({
+  categories,
+}: {
+  categories: StatsOverview['categories'];
+}) {
   const theme = useTheme();
   const max = Math.max(...categories.map((c) => c.spend), 1);
 
@@ -68,9 +89,17 @@ function CategoryInsights({ categories }: { categories: StatsOverview['categorie
     <ThemedView type="backgroundElement" style={styles.card}>
       <ThemedText type="smallBold">Where your money goes</ThemedText>
       {categories.map((c) => (
-        <ThemedView key={c.category} type="backgroundElement" style={styles.categoryRow}>
+        <ThemedView
+          key={c.category}
+          type="backgroundElement"
+          style={styles.categoryRow}
+        >
           <ThemedView type="backgroundElement" style={styles.categoryHeader}>
-            <ThemedText type="small" style={styles.categoryName} numberOfLines={1}>
+            <ThemedText
+              type="small"
+              style={styles.categoryName}
+              numberOfLines={1}
+            >
               {c.category}
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
@@ -82,7 +111,10 @@ function CategoryInsights({ categories }: { categories: StatsOverview['categorie
             <ThemedView
               style={[
                 styles.categoryBar,
-                { width: `${(c.spend / max) * 100}%`, backgroundColor: theme.primary },
+                {
+                  width: `${(c.spend / max) * 100}%`,
+                  backgroundColor: theme.primary,
+                },
               ]}
             />
           </ThemedView>
@@ -113,21 +145,28 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
           <ThemedView style={styles.headerRow}>
-            <ThemedText type="subtitle">Your food money</ThemedText>
+            <ThemedText type="subtitle">Kitchen breakdown</ThemedText>
             <Pressable
               onPress={() => setSettingsOpen(true)}
               hitSlop={Spacing.three}
               accessibilityRole="button"
               accessibilityLabel="Settings"
-              style={({ pressed }) => pressed && styles.pressed}>
+              style={({ pressed }) => pressed && styles.pressed}
+            >
               <Feather name="settings" size={24} color={theme.textSecondary} />
             </Pressable>
           </ThemedView>
 
           {error && (
-            <ThemedText type="small" style={[styles.error, { color: theme.destructive }]}>
+            <ThemedText
+              type="small"
+              style={[styles.error, { color: theme.destructive }]}
+            >
               {error}
             </ThemedText>
           )}
@@ -161,35 +200,60 @@ export default function HomeScreen() {
                     {money(stats.eatenValue)}
                   </ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
-                    {stats.counts.eaten} {stats.counts.eaten === 1 ? 'item' : 'items'} eaten
+                    {stats.counts.eaten}{' '}
+                    {stats.counts.eaten === 1 ? 'item' : 'items'} eaten
                   </ThemedText>
                 </ThemedView>
               </ThemedView>
 
               <UsageChart weekly={stats.weekly} />
 
-              {stats.categories.length > 0 && <CategoryInsights categories={stats.categories} />}
+              {stats.categories.length > 0 && (
+                <CategoryInsights categories={stats.categories} />
+              )}
 
               {kitchenCount > 0 && (
                 <ThemedView type="backgroundElement" style={styles.card}>
                   <ThemedText type="smallBold">
-                    {kitchenCount} {kitchenCount === 1 ? 'item' : 'items'} in your kitchen
+                    {kitchenCount} {kitchenCount === 1 ? 'item' : 'items'} in
+                    your kitchen
                   </ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
-                    A quick check-in keeps your savings number honest.
+                    A quick check-in keeps your savings up-to-date.
                   </ThemedText>
-                  <Button title="Update your inventory" onPress={() => router.push('/inventory')} />
+                  <Button
+                    title="Update your inventory"
+                    onPress={() => router.push('/inventory')}
+                  />
                 </ThemedView>
               )}
             </>
           ) : (
-            <ThemedView type="backgroundElement" style={styles.empty}>
-              <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
-                Your savings will show up here once you save a receipt.
+            <ThemedView style={styles.emptyState}>
+              <ThemedView
+                style={[
+                  styles.emptyIcon,
+                  { backgroundColor: `${theme.primary}1A` },
+                ]}
+              >
+                <Feather name="camera" size={28} color={theme.primary} />
+              </ThemedView>
+              <ThemedText type="smallBold" style={styles.emptyTitle}>
+                Snap your first receipt
               </ThemedText>
-              <Link href="/capture">
-                <ThemedText type="linkPrimary">Snap your first receipt</ThemedText>
-              </Link>
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                style={styles.emptyText}
+              >
+                Broccoli turns receipts into a kitchen inventory, nudges you
+                before food expires, and shows you the money you keep.
+              </ThemedText>
+              <Button
+                title="Snap a receipt"
+                onPress={() => router.push('/capture')}
+                style={styles.emptyButton}
+              />
             </ThemedView>
           )}
         </ScrollView>
@@ -215,6 +279,7 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.three,
   },
   scroll: {
+    flexGrow: 1,
     gap: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
   },
@@ -283,6 +348,28 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     alignItems: 'center',
     gap: Spacing.two,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.four,
+    gap: Spacing.three,
+  },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+  },
+  emptyButton: {
+    alignSelf: 'stretch',
+    marginTop: Spacing.two,
   },
   emptyText: {
     textAlign: 'center',
