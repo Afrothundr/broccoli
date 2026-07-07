@@ -97,6 +97,9 @@ export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
           />
 
           <Pressable
+            hitSlop={Spacing.two}
+            accessibilityRole="button"
+            style={({ pressed }) => pressed && styles.pressed}
             onPress={() => {
               setError(null);
               setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in');
@@ -143,5 +146,8 @@ const styles = StyleSheet.create({
   },
   toggle: {
     textAlign: 'center',
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });

@@ -1,107 +1,262 @@
-import * as Device from 'expo-device';
-import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { NudgeSettings } from '@/components/nudge-settings';
+import { SettingsPanel } from '@/components/settings-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
+import { Button } from '@/components/ui/button';
+import { UsageChart } from '@/components/usage-chart';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { API_URL, getHealth } from '@/lib/api';
-import { authClient } from '@/lib/auth-client';
+import { type StatsOverview, useStats } from '@/hooks/use-stats';
+import { useTheme } from '@/hooks/use-theme';
 
-type ApiStatus = 'checking' | 'connected' | 'unreachable';
+// Home = the savings dashboard (PRD §7 Phase 5, reframed per feedback):
+// leads with how much the user has SAVED against the ~1/3 of groceries the
+// average household wastes (same math as the legacy dashboard's
+// TotalSavings), then where the money goes, then a nudge back to the
+// check-in. The waste number still exists — as the reason the savings
+// number is real — but the tone is "look what you kept."
 
-function useApiHealth(): ApiStatus {
-  const [status, setStatus] = useState<ApiStatus>('checking');
-  useEffect(() => {
-    let active = true;
-    getHealth()
-      .then(() => active && setStatus('connected'))
-      .catch(() => active && setStatus('unreachable'));
-    return () => {
-      active = false;
-    };
-  }, []);
-  return status;
+const BASELINE_WASTE_RATE = 1 / 3;
+
+function money(n: number): string {
+  return `$${n.toFixed(2)}`;
 }
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+function SavingsHero({ stats }: { stats: StatsOverview }) {
+  const theme = useTheme();
+  const actualRate =
+    stats.totalSpend > 0 ? stats.wastedValue / stats.totalSpend : 0;
+  const saved = Math.max(
+    stats.totalSpend * BASELINE_WASTE_RATE - stats.wastedValue,
+    0,
+  );
+  const reductionPct =
+    stats.totalSpend > 0
+      ? ((BASELINE_WASTE_RATE - actualRate) / BASELINE_WASTE_RATE) * 100
+      : 0;
+
+  const badgeColor =
+    reductionPct > 25
+      ? theme.statusGood
+      : reductionPct > -25
+        ? theme.statusWarn
+        : theme.destructive;
+  const badgeText =
+    reductionPct >= 0
+      ? `${Math.round(reductionPct)}% less waste than average`
+      : `${Math.round(-reductionPct)}% more waste than average`;
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <ThemedView type="backgroundElement" style={styles.hero}>
+      <ThemedText type="small" themeColor="textSecondary">
+        Saved so far
+      </ThemedText>
+      <ThemedText type="subtitle" style={styles.heroValue}>
+        {money(saved)}
+      </ThemedText>
+      <ThemedView
+        style={[styles.badge, { backgroundColor: `${badgeColor}1A` }]}
+      >
+        <ThemedText type="small" style={{ color: badgeColor }}>
+          {badgeText}
+        </ThemedText>
+      </ThemedView>
+      <ThemedText type="small" themeColor="textSecondary">
+        The average household wastes a third of the groceries it buys.
+      </ThemedText>
+    </ThemedView>
+  );
+}
+
+function CategoryInsights({
+  categories,
+}: {
+  categories: StatsOverview['categories'];
+}) {
+  const theme = useTheme();
+  const max = Math.max(...categories.map((c) => c.spend), 1);
+
+  return (
+    <ThemedView type="backgroundElement" style={styles.card}>
+      <ThemedText type="smallBold">Where your money goes</ThemedText>
+      {categories.map((c) => (
+        <ThemedView
+          key={c.category}
+          type="backgroundElement"
+          style={styles.categoryRow}
+        >
+          <ThemedView type="backgroundElement" style={styles.categoryHeader}>
+            <ThemedText
+              type="small"
+              style={styles.categoryName}
+              numberOfLines={1}
+            >
+              {c.category}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {money(c.spend)}
+              {c.wasted > 0 ? ` · ${money(c.wasted)} wasted` : ''}
+            </ThemedText>
+          </ThemedView>
+          <ThemedView style={styles.categoryTrack} type="backgroundSelected">
+            <ThemedView
+              style={[
+                styles.categoryBar,
+                {
+                  width: `${(c.spend / max) * 100}%`,
+                  backgroundColor: theme.primary,
+                },
+              ]}
+            />
+          </ThemedView>
+        </ThemedView>
+      ))}
+    </ThemedView>
   );
 }
 
 export default function HomeScreen() {
-  const apiStatus = useApiHealth();
-  // refetch: on Expo the useSession atom doesn't refresh after signOut, so we
-  // nudge it explicitly or the app would stay on the tabs with a dead session.
-  const { data: session, refetch } = authClient.useSession();
-  const apiHint =
-    apiStatus === 'checking'
-      ? 'checking…'
-      : apiStatus === 'connected'
-        ? '✅ connected'
-        : '⚠️ unreachable';
+  const theme = useTheme();
+  const { stats, error } = useStats();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const hasData = stats !== null && stats.receiptCount > 0;
+  const kitchenCount = stats ? stats.counts.active + stats.counts.expired : 0;
+
+  if (settingsOpen) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={[styles.safeArea, styles.settingsSafeArea]}>
+          <SettingsPanel onClose={() => setSettingsOpen(false)} />
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Broccoli
-          </ThemedText>
-        </ThemedView>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
+          <ThemedView style={styles.headerRow}>
+            <ThemedText type="subtitle">Kitchen breakdown</ThemedText>
+            <Pressable
+              onPress={() => setSettingsOpen(true)}
+              hitSlop={Spacing.three}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+              style={({ pressed }) => pressed && styles.pressed}
+            >
+              <Feather name="settings" size={24} color={theme.textSecondary} />
+            </Pressable>
+          </ThemedView>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="broccoli-api"
-            hint={<ThemedText type="small">{apiHint}</ThemedText>}
-          />
-          <HintRow title="API URL" hint={<ThemedText type="code">{API_URL}</ThemedText>} />
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          {session && (
-            <HintRow
-              title="Signed in"
-              hint={<ThemedText type="small">{session.user.email}</ThemedText>}
-            />
+          {error && (
+            <ThemedText
+              type="small"
+              style={[styles.error, { color: theme.destructive }]}
+            >
+              {error}
+            </ThemedText>
           )}
-        </ThemedView>
 
-        {session && <NudgeSettings />}
+          {stats === null && !error ? (
+            <ThemedView style={styles.empty}>
+              <ActivityIndicator />
+            </ThemedView>
+          ) : hasData ? (
+            <>
+              <SavingsHero stats={stats} />
 
-        {session && (
-          <Pressable onPress={() => authClient.signOut().then(() => refetch())}>
-            <ThemedText type="linkPrimary">Sign out</ThemedText>
-          </Pressable>
-        )}
+              <ThemedView style={styles.tiles}>
+                <ThemedView type="backgroundElement" style={styles.tile}>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Spent
+                  </ThemedText>
+                  <ThemedText type="smallBold" style={styles.tileValue}>
+                    {money(stats.totalSpend)}
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {money(stats.averageReceipt)} avg · {stats.receiptCount}{' '}
+                    {stats.receiptCount === 1 ? 'trip' : 'trips'}
+                  </ThemedText>
+                </ThemedView>
+                <ThemedView type="backgroundElement" style={styles.tile}>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Put to use
+                  </ThemedText>
+                  <ThemedText type="smallBold" style={styles.tileValue}>
+                    {money(stats.eatenValue)}
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {stats.counts.eaten}{' '}
+                    {stats.counts.eaten === 1 ? 'item' : 'items'} eaten
+                  </ThemedText>
+                </ThemedView>
+              </ThemedView>
 
-        {Platform.OS === 'web' && <WebBadge />}
+              <UsageChart weekly={stats.weekly} />
+
+              {stats.categories.length > 0 && (
+                <CategoryInsights categories={stats.categories} />
+              )}
+
+              {kitchenCount > 0 && (
+                <ThemedView type="backgroundElement" style={styles.card}>
+                  <ThemedText type="smallBold">
+                    {kitchenCount} {kitchenCount === 1 ? 'item' : 'items'} in
+                    your kitchen
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    A quick check-in keeps your savings up-to-date.
+                  </ThemedText>
+                  <Button
+                    title="Update your inventory"
+                    onPress={() => router.push('/inventory')}
+                  />
+                </ThemedView>
+              )}
+            </>
+          ) : (
+            <ThemedView style={styles.emptyState}>
+              <ThemedView
+                style={[
+                  styles.emptyIcon,
+                  { backgroundColor: `${theme.primary}1A` },
+                ]}
+              >
+                <Feather name="camera" size={28} color={theme.primary} />
+              </ThemedView>
+              <ThemedText type="smallBold" style={styles.emptyTitle}>
+                Snap your first receipt
+              </ThemedText>
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                style={styles.emptyText}
+              >
+                Broccoli turns receipts into a kitchen inventory, nudges you
+                before food expires, and shows you the money you keep.
+              </ThemedText>
+              <Button
+                title="Snap a receipt"
+                onPress={() => router.push('/capture')}
+                style={styles.emptyButton}
+              />
+            </ThemedView>
+          )}
+        </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -110,35 +265,119 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     flexDirection: 'row',
+    justifyContent: 'center',
   },
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.four,
-    alignItems: 'center',
+    paddingTop: Spacing.four,
+    maxWidth: MaxContentWidth,
+    width: '100%',
+  },
+  settingsSafeArea: {
+    paddingBottom: BottomTabInset + Spacing.three,
+  },
+  scroll: {
+    flexGrow: 1,
     gap: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
   },
-  heroSection: {
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  hero: {
+    borderRadius: Spacing.four,
+    padding: Spacing.four,
+    gap: Spacing.two,
+    alignItems: 'center',
+  },
+  heroValue: {
+    fontSize: 40,
+    lineHeight: 48,
+  },
+  badge: {
+    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+  },
+  tiles: {
+    flexDirection: 'row',
+    gap: Spacing.three,
+  },
+  tile: {
+    flex: 1,
+    borderRadius: Spacing.four,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    gap: Spacing.half,
+  },
+  tileValue: {
+    fontSize: 22,
+    lineHeight: 28,
+  },
+  card: {
+    borderRadius: Spacing.four,
+    padding: Spacing.three,
+    gap: Spacing.three,
+  },
+  categoryRow: {
+    gap: Spacing.one,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  categoryName: {
+    flexShrink: 1,
+  },
+  categoryTrack: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  categoryBar: {
+    height: 8,
+    borderRadius: 4,
+  },
+  empty: {
+    borderRadius: Spacing.four,
+    padding: Spacing.four,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  emptyState: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    padding: Spacing.four,
+    gap: Spacing.three,
   },
-  title: {
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+  },
+  emptyButton: {
+    alignSelf: 'stretch',
+    marginTop: Spacing.two,
+  },
+  emptyText: {
     textAlign: 'center',
   },
-  code: {
-    textTransform: 'uppercase',
+  error: {
+    textAlign: 'center',
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  pressed: {
+    opacity: 0.6,
   },
 });

@@ -1,4 +1,5 @@
-import { Link } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -130,44 +131,78 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
     }
   };
 
-  const expiresLine = [
-    item.expiresAt ? `Expires ${formatDate(item.expiresAt)}` : null,
+  // Two-line hierarchy: the name leads at full size; everything else is one
+  // quiet meta line. The expanded card is icon-led — no text labels.
+  const metaLine = [
+    item.price != null ? `$${item.price.toFixed(2)}` : null,
+    quantity,
     storageLabel(item.storageLocation),
   ]
     .filter(Boolean)
     .join(' · ');
+  const expiresOn = item.expiresAt ? formatDate(item.expiresAt) : null;
+  const freshnessColor =
+    freshness == null
+      ? theme.textSecondary
+      : freshness.level === 'bad'
+        ? theme.statusBad
+        : freshness.level === 'warn'
+          ? theme.statusWarn
+          : theme.statusGood;
 
   return (
-    <Pressable onPress={() => setExpanded((v) => !v)}>
+    <Pressable
+      onPress={() => setExpanded((v) => !v)}
+      accessibilityRole="button"
+      accessibilityState={{ expanded }}
+      accessibilityHint={expanded ? 'Collapses item details' : 'Shows item details and controls'}
+      style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView type="backgroundElement" style={styles.row}>
         <ThemedView type="backgroundElement" style={styles.rowMain}>
-          <ThemedText type="small" style={styles.rowName} numberOfLines={expanded ? undefined : 1}>
+          <ThemedText style={styles.rowName} numberOfLines={expanded ? undefined : 1}>
             {item.name}
           </ThemedText>
           {freshness?.chip != null && <FreshnessChip freshness={freshness} />}
-          <ThemedText type="small" themeColor="textSecondary">
-            {item.price != null ? `$${item.price.toFixed(2)}` : ''}
-          </ThemedText>
         </ThemedView>
+        {metaLine.length > 0 && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {metaLine}
+          </ThemedText>
+        )}
         {expanded && (
-          <ThemedView type="backgroundElement" style={styles.rowDetail}>
+          <ThemedView
+            type="backgroundElement"
+            style={[styles.rowDetail, { borderTopColor: theme.border }]}>
             {freshness && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {freshness.detail}
-              </ThemedText>
-            )}
-            {expiresLine.length > 0 && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {expiresLine}
-              </ThemedText>
+              <ThemedView type="backgroundElement" style={styles.detailRow}>
+                <Feather name="clock" size={14} color={freshnessColor} style={styles.rowIcon} />
+                <ThemedText type="small" themeColor="textSecondary" style={styles.detailText}>
+                  {freshness.detail}
+                </ThemedText>
+              </ThemedView>
             )}
 
             <ThemedView type="backgroundElement" style={styles.controlRow}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Adjust date
-              </ThemedText>
+              <Feather name="calendar" size={14} color={theme.textSecondary} />
+              {expiresOn && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {expiresOn}
+                </ThemedText>
+              )}
               {ADJUSTMENTS.map(({ label, days }) => (
-                <Pressable key={label} onPress={() => adjustBy(days)} disabled={busy}>
+                <Pressable
+                  key={label}
+                  onPress={() => adjustBy(days)}
+                  disabled={busy}
+                  hitSlop={Spacing.two}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    days > 0
+                      ? `Extend expiration by ${days} ${days === 1 ? 'day' : 'days'}`
+                      : 'Move expiration up by 1 day'
+                  }
+                  accessibilityState={{ disabled: busy }}
+                  style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
                   <ThemedView type="backgroundSelected" style={styles.controlChip}>
                     <ThemedText type="small">{label}</ThemedText>
                   </ThemedView>
@@ -176,13 +211,19 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
             </ThemedView>
 
             <ThemedView type="backgroundElement" style={styles.controlRow}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Location
-              </ThemedText>
+              <Feather name="map-pin" size={14} color={theme.textSecondary} />
               {LOCATIONS.map((location) => {
                 const selected = item.storageLocation === location;
                 return (
-                  <Pressable key={location} onPress={() => setLocation(location)} disabled={busy}>
+                  <Pressable
+                    key={location}
+                    onPress={() => setLocation(location)}
+                    disabled={busy}
+                    hitSlop={Spacing.two}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Move to ${location.toLowerCase()}`}
+                    accessibilityState={{ disabled: busy, selected }}
+                    style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
                     <ThemedView
                       type={selected ? 'backgroundSelected' : 'backgroundElement'}
                       style={[styles.controlChip, !selected && styles.controlChipGhost]}>
@@ -202,19 +243,6 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
                 {rowError}
               </ThemedText>
             )}
-            {item.category && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {item.category}
-              </ThemedText>
-            )}
-            {quantity && (
-              <ThemedText type="small" themeColor="textSecondary">
-                Quantity: {quantity}
-              </ThemedText>
-            )}
-            <ThemedText type="small" themeColor="textSecondary">
-              Added {formatDate(item.createdAt) ?? 'recently'}
-            </ThemedText>
           </ThemedView>
         )}
       </ThemedView>
@@ -266,12 +294,22 @@ export default function InventoryScreen() {
           </ThemedView>
         ) : items.length === 0 ? (
           <ThemedView style={styles.center}>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
-              Nothing here yet.
+            <ThemedView
+              style={[styles.emptyIcon, { backgroundColor: `${theme.primary}1A` }]}>
+              <Feather name="shopping-bag" size={28} color={theme.primary} />
+            </ThemedView>
+            <ThemedText type="smallBold" style={styles.emptyTitle}>
+              No groceries yet
             </ThemedText>
-            <Link href="/capture">
-              <ThemedText type="linkPrimary">Snap a receipt to get started</ThemedText>
-            </Link>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
+              Snap a receipt and everything you bought lands here, with freshness
+              estimates so nothing gets forgotten.
+            </ThemedText>
+            <Button
+              title="Snap a receipt"
+              onPress={() => router.push('/capture')}
+              style={styles.emptyButton}
+            />
           </ThemedView>
         ) : (
           <SectionList
@@ -315,10 +353,26 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.two,
+    gap: Spacing.three,
+    padding: Spacing.four,
   },
   centerText: {
     textAlign: 'center',
+  },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+  },
+  emptyButton: {
+    alignSelf: 'stretch',
+    marginTop: Spacing.two,
   },
   list: {
     alignSelf: 'stretch',
@@ -334,8 +388,8 @@ const styles = StyleSheet.create({
   row: {
     borderRadius: Spacing.two,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    gap: Spacing.one,
+    paddingVertical: Spacing.two + Spacing.one,
+    gap: Spacing.half,
   },
   rowMain: {
     flexDirection: 'row',
@@ -352,7 +406,21 @@ const styles = StyleSheet.create({
   },
   rowDetail: {
     gap: Spacing.two,
+    marginTop: Spacing.one,
+    paddingTop: Spacing.two,
     paddingBottom: Spacing.one,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    alignItems: 'flex-start',
+  },
+  rowIcon: {
+    marginTop: 3, // optically centers the 14px icon on the first 20px text line
+  },
+  detailText: {
+    flex: 1,
   },
   controlRow: {
     flexDirection: 'row',
@@ -363,12 +431,18 @@ const styles = StyleSheet.create({
   controlChip: {
     borderRadius: Spacing.two,
     paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
+    paddingVertical: Spacing.one,
   },
   controlChipGhost: {
     opacity: 0.7,
   },
   error: {
     textAlign: 'center',
+  },
+  pressed: {
+    opacity: 0.6,
+  },
+  dim: {
+    opacity: 0.5,
   },
 });

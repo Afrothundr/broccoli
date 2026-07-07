@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 
@@ -130,10 +131,13 @@ export function ReceiptReview({
                 placeholder="0.00"
                 keyboardType="decimal-pad"
               />
-              <Pressable onPress={() => remove(item.localKey)} hitSlop={Spacing.two}>
-                <ThemedText type="smallBold" themeColor="textSecondary">
-                  ✕
-                </ThemedText>
+              <Pressable
+                onPress={() => remove(item.localKey)}
+                hitSlop={Spacing.three}
+                accessibilityRole="button"
+                accessibilityLabel={item.name ? `Remove ${item.name}` : 'Remove item'}
+                style={({ pressed }) => pressed && styles.pressed}>
+                <Feather name="x" size={18} color={theme.textSecondary} />
               </Pressable>
             </ThemedView>
             {item.category && (
@@ -144,8 +148,15 @@ export function ReceiptReview({
           </ThemedView>
         ))}
 
-        <Pressable onPress={add}>
-          <ThemedText type="linkPrimary">+ Add an item</ThemedText>
+        <Pressable
+          onPress={add}
+          hitSlop={Spacing.two}
+          accessibilityRole="button"
+          style={({ pressed }) => pressed && styles.pressed}>
+          <ThemedView style={styles.addRow}>
+            <Feather name="plus" size={16} color={theme.primary} />
+            <ThemedText type="linkPrimary">Add an item</ThemedText>
+          </ThemedView>
         </Pressable>
       </ScrollView>
 
@@ -184,6 +195,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
   },
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
   nameInput: {
     flex: 1,
   },
@@ -203,5 +219,8 @@ const styles = StyleSheet.create({
   },
   error: {
     textAlign: 'center',
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });
