@@ -35,7 +35,7 @@ export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
         : await authClient.signUp.email({ email, password, name });
     setSubmitting(false);
     if (result.error) {
-      setError(result.error.message ?? 'Something went wrong.');
+      setError(result.error.message ?? 'Something went wrong. Please try again.');
       return;
     }
     // No navigation here: the layout swaps to the app once its session
@@ -53,7 +53,7 @@ export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
           accessibilityLabel="Broccoli"
         />
         <ThemedText type="small" themeColor="textSecondary" style={styles.subtitle}>
-          {mode === 'sign-in' ? 'Sign in to your account' : 'Create your account'}
+          {mode === 'sign-in' ? 'Welcome back' : 'Create your account'}
         </ThemedText>
 
         <ThemedView style={styles.form}>

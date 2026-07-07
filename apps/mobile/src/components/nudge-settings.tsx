@@ -93,7 +93,12 @@ export function NudgeSettings() {
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
       <ThemedView type="backgroundElement" style={styles.row}>
-        <ThemedText type="smallBold">Nudges</ThemedText>
+        <ThemedView type="backgroundElement" style={styles.labelColumn}>
+          <ThemedText type="smallBold">Nudges</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            A heads-up before food expires.
+          </ThemedText>
+        </ThemedView>
         <Switch
           value={settings.nudgesEnabled}
           onValueChange={(nudgesEnabled) => update({ nudgesEnabled })}
@@ -142,6 +147,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  labelColumn: {
+    flexShrink: 1,
+    gap: Spacing.half,
   },
   quietControls: {
     flexDirection: 'row',

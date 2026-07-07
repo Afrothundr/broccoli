@@ -43,7 +43,7 @@ function toSections(items: InventoryItem[]): Section[] {
   const urgentIds = new Set(urgent.map((r) => r.item.id));
 
   const sections: Section[] = urgent.length
-    ? [{ key: 'use-first', title: 'Use first (estimated)', data: urgent }]
+    ? [{ key: 'use-first', title: 'Use these first', data: urgent }]
     : [];
 
   for (const row of rows) {
@@ -276,7 +276,7 @@ export default function InventoryScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="subtitle">Your groceries</ThemedText>
+        <ThemedText type="subtitle">Your kitchen</ThemedText>
 
         {items !== null && items.length > 0 && (
           <Button title="Daily check-in" onPress={() => setCheckingIn(true)} />
@@ -299,11 +299,11 @@ export default function InventoryScreen() {
               <Feather name="shopping-bag" size={28} color={theme.primary} />
             </ThemedView>
             <ThemedText type="smallBold" style={styles.emptyTitle}>
-              No groceries yet
+              Your kitchen is empty
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
               Snap a receipt and everything you bought lands here, with freshness
-              estimates so nothing gets forgotten.
+              estimates so nothing goes to waste.
             </ThemedText>
             <Button
               title="Snap a receipt"

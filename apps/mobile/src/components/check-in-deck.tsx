@@ -205,7 +205,8 @@ export function CheckInDeck({
             </ThemedText>
           </ThemedView>
           <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
-            Swipe the card, or tap a button below.
+            Swipe right if you ate it, left if you tossed it, down if it&apos;s
+            still around — or tap a button.
           </ThemedText>
 
           <ThemedView style={styles.deckArea}>
@@ -308,7 +309,7 @@ export function CheckInDeck({
       ) : (
         <ThemedView style={styles.doneArea}>
           <ThemedText type="subtitle" style={styles.doneTitle}>
-            Check-in complete
+            All caught up
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {eaten} eaten · {tossed} tossed{kept > 0 ? ` · ${kept} still in your kitchen` : ''}
