@@ -1,0 +1,7 @@
+# Beads JSONL exports are passive snapshots of each package's Dolt DB (see
+# apps/*/AGENTS.md). Union-merge them instead of conflicting: interactions is
+# an append-only log where union is exactly right; issues can briefly hold two
+# lines for the same id after a merge (both sides changed its status), which
+# is fine — the next `bd export` rewrites the file from the DB, and any import
+# resolves duplicate ids to the newest updated_at.
+apps/*/.beads/*.jsonl merge=union
