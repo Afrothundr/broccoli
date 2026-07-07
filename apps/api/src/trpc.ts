@@ -16,7 +16,19 @@ export async function createContext({ req }: FetchCreateContextFnOptions) {
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
 
-const t = initTRPC.context<Context>().create();
+// Error responses cross the trust boundary: no stack traces on the wire (they
+// belong in server logs — see onError in index.ts), and unexpected errors get
+// a generic message so Prisma/driver details never reach the client. Expected
+// errors (UNAUTHORIZED, BAD_REQUEST, zod issues) keep their message — the app
+// relies on those.
+const t = initTRPC.context<Context>().create({
+  errorFormatter({ shape, error }) {
+    const { stack: _stack, ...data } = shape.data;
+    const message =
+      error.code === "INTERNAL_SERVER_ERROR" ? "Internal server error" : shape.message;
+    return { ...shape, message, data };
+  },
+});
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
