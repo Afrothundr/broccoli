@@ -3,6 +3,21 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { expo } from "@better-auth/expo";
 import { prisma } from "./db";
 
+// Google OAuth is env-gated: a deploy without credentials simply doesn't
+// offer the provider (sign-in attempts get a clean "provider not found")
+// instead of a half-configured flow that fails mid-consent. Credentials come
+// from a "Web application" OAuth client in Google Cloud Console with
+// <BETTER_AUTH_URL>/api/auth/callback/google as an authorized redirect URI.
+const googleOAuth =
+  process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ? {
+        google: {
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        },
+      }
+    : undefined;
+
 // better-auth, adapted for the mobile app (long-lived sessions). The mobile
 // client talks to /api/auth/* on this service.
 export const auth = betterAuth({
@@ -10,6 +25,16 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: { enabled: true },
+  socialProviders: googleOAuth,
+  // A Google sign-in whose (verified) email matches an existing
+  // email/password user attaches to that user instead of minting a duplicate
+  // account with a second copy of their kitchen.
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["google"],
+    },
+  },
   // Long-lived sessions: mobile users shouldn't be forced to re-auth often.
   // Each request within updateAge slides the 30-day window forward, so an
   // actively-used app effectively stays signed in.
