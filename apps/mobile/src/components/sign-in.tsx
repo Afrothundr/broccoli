@@ -55,7 +55,14 @@ export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
       // Resolves with {error} for API failures, but THROWS for client-side
       // ones (browser dismissed mid-consent, no browser available) — without
       // the try/finally a throw would leave the spinner running forever.
-      const result = await authClient.signIn.social({ provider: 'google', callbackURL: '/' });
+      // errorCallbackURL: OAuth failures deep-link back into the app (the
+      // plugin converts '/' to the broccolimobile:// scheme) instead of
+      // stranding the user on an api error page in the browser.
+      const result = await authClient.signIn.social({
+        provider: 'google',
+        callbackURL: '/',
+        errorCallbackURL: '/',
+      });
       if (result.error) {
         setError(result.error.message ?? 'Something went wrong. Please try again.');
         return;

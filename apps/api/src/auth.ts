@@ -33,6 +33,14 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
       trustedProviders: ["google"],
+      // Local accounts can't verify their email (no verification flow yet),
+      // and better-auth's default refuses to link onto an unverified local
+      // account — every Google sign-in for an existing user died with
+      // account_not_linked. Relaxing this accepts a known trade-off: someone
+      // who pre-registers a password account with your email would be linked
+      // to your later Google sign-in. Fine for the closed alpha; restore the
+      // default when email verification ships (bd broccoli-api tracker).
+      requireLocalEmailVerified: false,
     },
   },
   // Long-lived sessions: mobile users shouldn't be forced to re-auth often.
