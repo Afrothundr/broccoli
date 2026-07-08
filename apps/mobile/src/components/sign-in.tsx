@@ -51,13 +51,21 @@ export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
   async function signInWithGoogle() {
     setError(null);
     setGoogleSubmitting(true);
-    const result = await authClient.signIn.social({ provider: 'google', callbackURL: '/' });
-    setGoogleSubmitting(false);
-    if (result.error) {
-      setError(result.error.message ?? 'Something went wrong. Please try again.');
-      return;
+    try {
+      // Resolves with {error} for API failures, but THROWS for client-side
+      // ones (browser dismissed mid-consent, no browser available) — without
+      // the try/finally a throw would leave the spinner running forever.
+      const result = await authClient.signIn.social({ provider: 'google', callbackURL: '/' });
+      if (result.error) {
+        setError(result.error.message ?? 'Something went wrong. Please try again.');
+        return;
+      }
+      onAuthed?.();
+    } catch {
+      setError("Google sign-in didn't finish. Try again.");
+    } finally {
+      setGoogleSubmitting(false);
     }
-    onAuthed?.();
   }
 
   return (
