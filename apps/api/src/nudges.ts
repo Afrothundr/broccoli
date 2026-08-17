@@ -9,6 +9,11 @@ import { prisma } from "./db";
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 const AT_RISK_HOURS = 48;
+// The planning horizon (beta feedback): 48h alone meant the only push a user
+// ever saw was "this is about to die" — the app never taught what was AT RISK
+// while there was still time to plan a meal around it. When nothing is urgent,
+// the daily nudge looks a week out instead of staying silent.
+const WEEK_AHEAD_HOURS = 7 * 24;
 const CHUNK_SIZE = 100;
 
 const DEFAULTS = {
@@ -84,6 +89,22 @@ function composeNudge(names: string[]): { title: string; body: string } {
   };
 }
 
+// The planning tier — nothing is urgent, but the week ahead has expirations.
+// Softer verb on purpose: "plan around" invites a check-in where "eat these
+// soon" demands action. Same named-items-over-counts voice.
+function composeWeekAheadNudge(names: string[]): { title: string; body: string } {
+  const count = names.length;
+  const rest = count - Math.min(count, 2);
+  const lead = names.slice(0, 2).join(rest > 0 ? ", " : " and ");
+  const one = count === 1;
+  return {
+    title: `This week in your kitchen: ${lead}`,
+    body: `${lead}${rest > 0 ? ` and ${rest} more` : ""} ${
+      one ? "expires" : "expire"
+    } this week — a meal planned now keeps ${one ? "it" : "them"} out of the trash.`,
+  };
+}
+
 async function sendToExpo(messages: PushMessage[]): Promise<ExpoTicket[]> {
   const tickets: ExpoTicket[] = [];
   for (let i = 0; i < messages.length; i += CHUNK_SIZE) {
@@ -119,7 +140,7 @@ export async function sendNudges(now = new Date()) {
     if (inQuietHours(prefs, now)) continue;
     if (nudgedToday(prefs, now)) continue;
 
-    // What to eat first: already expired, or inside the at-risk window.
+    // Tier 1 — what to eat first: already expired, or inside the at-risk window.
     const atRisk = await prisma.item.findMany({
       where: {
         userId: user.id,
@@ -135,11 +156,36 @@ export async function sendNudges(now = new Date()) {
       orderBy: { expiresAt: "asc" },
       select: { name: true },
     });
-    if (!atRisk.length) continue;
 
-    const { title, body } = composeNudge(atRisk.map((i) => i.name));
+    // Tier 2 — nothing urgent: teach the week ahead instead of staying
+    // silent. Strictly beyond the at-risk window so the two tiers never
+    // describe the same item two days in a row with different verbs.
+    let composed: { title: string; body: string } | null = null;
+    if (atRisk.length) {
+      composed = composeNudge(atRisk.map((i) => i.name));
+    } else {
+      const weekAhead = await prisma.item.findMany({
+        where: {
+          userId: user.id,
+          receipt: { status: "SAVED" },
+          status: "ACTIVE",
+          expiresAt: {
+            gt: new Date(now.getTime() + AT_RISK_HOURS * 3_600_000),
+            lte: new Date(now.getTime() + WEEK_AHEAD_HOURS * 3_600_000),
+          },
+        },
+        orderBy: { expiresAt: "asc" },
+        select: { name: true },
+      });
+      if (weekAhead.length) {
+        composed = composeWeekAheadNudge(weekAhead.map((i) => i.name));
+      }
+    }
+    // A kitchen with nothing expiring for a week earns silence, not a push.
+    if (!composed) continue;
+
     for (const { token } of user.pushTokens) {
-      messages.push({ to: token, title, body, sound: "default" });
+      messages.push({ to: token, title: composed.title, body: composed.body, sound: "default" });
     }
     nudgedUserIds.push(user.id);
   }
