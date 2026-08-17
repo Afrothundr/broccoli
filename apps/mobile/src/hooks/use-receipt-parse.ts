@@ -89,5 +89,13 @@ export function useReceiptParse() {
     setState({ status: 'idle' });
   }, []);
 
-  return { state, start, reset };
+  // Adopt an already-parsed receipt (the capture screen's resume card) —
+  // no create, no polling, straight to review. Bumps `run` so any stale
+  // poll loop can't overwrite the adopted state.
+  const resume = useCallback((receipt: ParsedReceipt) => {
+    run.current++;
+    setState({ status: 'ready', receipt });
+  }, []);
+
+  return { state, start, reset, resume };
 }

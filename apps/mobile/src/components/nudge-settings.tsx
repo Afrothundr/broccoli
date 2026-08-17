@@ -12,11 +12,19 @@ import { trpc } from '@/lib/trpc';
 
 type Settings = inferRouterOutputs<AppRouter>['push']['getSettings'];
 
-// 21 → "9 PM", 0 → "12 AM", 12 → "12 PM".
-function hour12(h: number): string {
-  const period = h < 12 ? 'AM' : 'PM';
-  const display = h % 12 === 0 ? 12 : h % 12;
-  return `${display} ${period}`;
+// 21 → "9 PM" (or "21:00" where the locale prefers 24-hour time).
+function formatHour(h: number): string {
+  return new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: 'numeric' });
+}
+
+// A quiet window that starts and ends at the same hour is degenerate — the
+// api treats it as "no quiet hours", which silently contradicts what the UI
+// shows. Stepping onto the other endpoint hops one further in the same
+// direction instead of landing on it.
+function skipCollision(next: number, current: number, other: number): number {
+  if (next !== other) return next;
+  const direction = (next - current + 24) % 24 === 1 ? 1 : -1;
+  return (next + direction + 24) % 24;
 }
 
 // Vertical hitSlop brings the +/− targets up to comfortable size; horizontal
@@ -41,7 +49,7 @@ function HourStepper({ value, onChange }: { value: number; onChange: (next: numb
         <Feather name="minus" size={16} color={theme.textSecondary} />
       </Pressable>
       <ThemedText type="small" style={styles.stepperValue}>
-        {hour12(value)}
+        {formatHour(value)}
       </ThemedText>
       <Pressable
         onPress={() => onChange((value + 1) % 24)}
@@ -107,27 +115,36 @@ export function NudgeSettings() {
         />
       </ThemedView>
       {settings.nudgesEnabled && (
-        <ThemedView type="backgroundElement" style={styles.row}>
-          <ThemedText type="small" themeColor="textSecondary">
-            Quiet hours
-          </ThemedText>
-          <ThemedView type="backgroundElement" style={styles.quietControls}>
-            <HourStepper
-              value={settings.quietHoursStart}
-              onChange={(quietHoursStart) => update({ quietHoursStart })}
-            />
+        <ThemedView type="backgroundElement" style={styles.quietSection}>
+          <ThemedView type="backgroundElement" style={styles.row}>
             <ThemedText type="small" themeColor="textSecondary">
-              to
+              Quiet hours
             </ThemedText>
-            <HourStepper
-              value={settings.quietHoursEnd}
-              onChange={(quietHoursEnd) => update({ quietHoursEnd })}
-            />
+            <ThemedView type="backgroundElement" style={styles.quietControls}>
+              <HourStepper
+                value={settings.quietHoursStart}
+                onChange={(next) =>
+                  update({ quietHoursStart: skipCollision(next, settings.quietHoursStart, settings.quietHoursEnd) })
+                }
+              />
+              <ThemedText type="small" themeColor="textSecondary">
+                to
+              </ThemedText>
+              <HourStepper
+                value={settings.quietHoursEnd}
+                onChange={(next) =>
+                  update({ quietHoursEnd: skipCollision(next, settings.quietHoursEnd, settings.quietHoursStart) })
+                }
+              />
+            </ThemedView>
           </ThemedView>
+          <ThemedText type="small" themeColor="textSecondary">
+            Nudges hold during these hours and arrive after they end.
+          </ThemedText>
         </ThemedView>
       )}
       {error && (
-        <ThemedText type="small" style={{ color: theme.destructive }}>
+        <ThemedText type="small" accessibilityRole="alert" style={{ color: theme.destructive }}>
           {error}
         </ThemedText>
       )}
@@ -151,6 +168,9 @@ const styles = StyleSheet.create({
   labelColumn: {
     flexShrink: 1,
     gap: Spacing.half,
+  },
+  quietSection: {
+    gap: Spacing.two,
   },
   quietControls: {
     flexDirection: 'row',

@@ -121,6 +121,25 @@ export const receiptRouter = router({
       return { receiptId: receipt.id };
     }),
 
+  // The newest parsed-but-unconfirmed receipt, if any. Powers the capture
+  // screen's resume card: a user interrupted between parse and "Add to
+  // kitchen" used to lose the whole receipt from the UI even though it sat
+  // READY server-side. Only READY qualifies — PROCESSING receipts are still
+  // owned by an active poll loop, and ERROR ones have nothing to resume.
+  // Explicit return type keeps the inferred output on the flat
+  // ReceiptWithItems alias, and the empty-object input mirrors the shape of
+  // every other route — mobile's TS 6 trips TS2589 re-deriving the proxy type
+  // for an input-less (or z.void) query, so this stays a z.object like `get`.
+  latestUnconfirmed: protectedProcedure
+    .input(z.object({}))
+    .query(async ({ ctx }): Promise<ReceiptWithItems | null> => {
+      return prisma.receipt.findFirst({
+        where: { userId: ctx.user.id, status: "READY" },
+        include: { items: { orderBy: { createdAt: "asc" } } },
+        orderBy: { createdAt: "desc" },
+      });
+    }),
+
   // Poll a receipt's status + items. Scoped to the caller so one user can't
   // read another's receipts.
   get: protectedProcedure

@@ -6,12 +6,17 @@ import { useTheme } from '@/hooks/use-theme';
 
 // The app's one text field, shadcn-inspired (styling epic 3nl.4): bordered,
 // quiet background, themed placeholder. Replaces the per-screen input styles.
-export function Input({ style, onFocus, onBlur, ...rest }: TextInputProps) {
+//
+// The placeholder doubles as the accessibility label by default: a placeholder
+// disappears once the field is filled, so without this a screen reader hears
+// an unnamed text field everywhere a visual label was skipped.
+export function Input({ style, onFocus, onBlur, accessibilityLabel, ...rest }: TextInputProps) {
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
 
   return (
     <TextInput
+      accessibilityLabel={accessibilityLabel ?? rest.placeholder}
       placeholderTextColor={theme.textSecondary}
       onFocus={(e) => {
         setFocused(true);
