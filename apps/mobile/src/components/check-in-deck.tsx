@@ -77,6 +77,14 @@ export function CheckInDeck({
   const eaten = records.filter((r) => r.outcome === 'EATEN').length;
   const tossed = records.filter((r) => r.outcome === 'TOSSED').length;
   const kept = records.filter((r) => r.outcome === 'KEPT').length;
+  // The end-state payoff: what this session kept out of the trash. Eaten and
+  // still-have items both count — the money only leaves when something is
+  // tossed. Null when no swiped item carried a price.
+  const keptValue = records.reduce(
+    (sum: number | null, r) =>
+      r.outcome !== 'TOSSED' && r.item.price != null ? (sum ?? 0) + r.item.price : sum,
+    null as number | null
+  );
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -193,7 +201,10 @@ export function CheckInDeck({
       </ThemedView>
 
       {error && (
-        <ThemedText type="small" style={[styles.error, { color: theme.statusBad }]}>
+        <ThemedText
+          type="small"
+          accessibilityRole="alert"
+          style={[styles.error, { color: theme.statusBad }]}>
           {error}
         </ThemedText>
       )}
@@ -224,7 +235,22 @@ export function CheckInDeck({
             )}
             <GestureDetector gesture={pan}>
               <Animated.View key={top.id} style={[styles.cardWrap, cardStyle]}>
-                <ThemedView type="backgroundElement" style={styles.card}>
+                {/* One VoiceOver stop per card: name, state, freshness, price
+                    in a single summary instead of four separate swipes. The
+                    action buttons below remain the accessible way to commit. */}
+                <ThemedView
+                  type="backgroundElement"
+                  style={styles.card}
+                  accessible
+                  accessibilityLabel={[
+                    top.name,
+                    top.status === 'EXPIRED' ? 'expired' : null,
+                    freshness?.detail ?? null,
+                    formatPurchased(top.receipt.purchasedAt),
+                    top.price != null ? `$${top.price.toFixed(2)}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}>
                   <Animated.View style={[styles.overlay, styles.overlayLeft, ateOverlayStyle]}>
                     <ThemedText type="smallBold" style={{ color: theme.statusGood }}>
                       ATE IT
@@ -322,14 +348,27 @@ export function CheckInDeck({
           <ThemedText type="subtitle" style={styles.doneTitle}>
             All caught up
           </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {eaten} eaten · {tossed} tossed{kept > 0 ? ` · ${kept} still in your kitchen` : ''}
+          {/* Peak-end: close on what the session kept in play, not a tally of
+              failures. Tosses read as the thing the nudges exist to shrink. */}
+          {keptValue != null && keptValue > 0 && (
+            <ThemedText type="smallBold" style={{ color: theme.primary }}>
+              ${keptValue.toFixed(2)} kept in play
+            </ThemedText>
+          )}
+          <ThemedText type="small" themeColor="textSecondary" style={styles.doneSummary}>
+            {eaten} eaten{kept > 0 ? ` · ${kept} still in your kitchen` : ''}
+            {tossed > 0
+              ? ` · ${tossed} tossed — the nudges are here to catch the next ones sooner`
+              : ''}
           </ThemedText>
           <Button title="Done" onPress={onClose} style={styles.doneButton} />
         </ThemedView>
       )}
 
-      {last && top && (
+      {/* The undo bar outlives the deck on purpose: the last swipe is the one
+          most likely to be a slip (the deck vanishes mid-gesture), and it used
+          to be the only unrecoverable one. */}
+      {last && (
         <ThemedView type="backgroundElement" style={styles.undoBar}>
           <ThemedText type="small" themeColor="textSecondary" style={styles.undoText} numberOfLines={1}>
             {last.item.name} —{' '}
@@ -448,6 +487,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   doneTitle: {
+    textAlign: 'center',
+  },
+  doneSummary: {
     textAlign: 'center',
   },
   doneButton: {

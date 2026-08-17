@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useBackHandler } from '@/hooks/use-back-handler';
 import { InventoryItem, useInventory } from '@/hooks/use-inventory';
 import { useTheme } from '@/hooks/use-theme';
 import { estimateFreshness, Freshness, storageLabel } from '@/lib/freshness';
@@ -85,11 +86,13 @@ function FreshnessChip({ freshness }: { freshness: Freshness }) {
 }
 
 const LOCATIONS = ['PANTRY', 'FRIDGE', 'FREEZER'] as const;
+// Worded, not "−1d/+1w" shorthand — a first-timer shouldn't need a key to
+// read a date control. Three options, not four: the ±1 pair covers small
+// corrections and "+1 week" covers "I froze it / it keeps".
 const ADJUSTMENTS: { label: string; days: number }[] = [
-  { label: '−1d', days: -1 },
-  { label: '+1d', days: 1 },
-  { label: '+3d', days: 3 },
-  { label: '+1w', days: 7 },
+  { label: '− 1 day', days: -1 },
+  { label: '+ 1 day', days: 1 },
+  { label: '+ 1 week', days: 7 },
 ];
 
 function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }) {
@@ -151,14 +154,17 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
           ? theme.statusWarn
           : theme.statusGood;
 
+  // The toggle Pressable wraps only the header lines. It used to wrap the
+  // expanded controls too — a button role containing seven more buttons, which
+  // VoiceOver flattens into an unreachable subtree (the classic RN trap).
   return (
-    <Pressable
-      onPress={() => setExpanded((v) => !v)}
-      accessibilityRole="button"
-      accessibilityState={{ expanded }}
-      accessibilityHint={expanded ? 'Collapses item details' : 'Shows item details and controls'}
-      style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView type="backgroundElement" style={styles.row}>
+    <ThemedView type="backgroundElement" style={styles.row}>
+      <Pressable
+        onPress={() => setExpanded((v) => !v)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityHint={expanded ? 'Collapses item details' : 'Shows item details and controls'}
+        style={({ pressed }) => pressed && styles.pressed}>
         <ThemedView type="backgroundElement" style={styles.rowMain}>
           <ThemedText style={styles.rowName} numberOfLines={expanded ? undefined : 1}>
             {item.name}
@@ -170,10 +176,11 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
             {metaLine}
           </ThemedText>
         )}
-        {expanded && (
-          <ThemedView
-            type="backgroundElement"
-            style={[styles.rowDetail, { borderTopColor: theme.border }]}>
+      </Pressable>
+      {expanded && (
+        <ThemedView
+          type="backgroundElement"
+          style={[styles.rowDetail, { borderTopColor: theme.border }]}>
             {freshness && (
               <ThemedView type="backgroundElement" style={styles.detailRow}>
                 <Feather name="clock" size={14} color={freshnessColor} style={styles.rowIcon} />
@@ -240,14 +247,16 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
             </ThemedView>
 
             {rowError && (
-              <ThemedText type="small" style={{ color: theme.statusBad }}>
+              <ThemedText
+                type="small"
+                accessibilityRole="alert"
+                style={{ color: theme.statusBad }}>
                 {rowError}
               </ThemedText>
             )}
-          </ThemedView>
-        )}
-      </ThemedView>
-    </Pressable>
+        </ThemedView>
+      )}
+    </ThemedView>
   );
 }
 
@@ -256,19 +265,20 @@ export default function InventoryScreen() {
   const { items, error, refreshing, refresh, reload } = useInventory();
   const [checkingIn, setCheckingIn] = useState(false);
 
+  // Android hardware back dismisses the deck instead of exiting the app.
+  const closeCheckIn = useCallback(() => {
+    setCheckingIn(false);
+    refresh();
+  }, [refresh]);
+  useBackHandler(checkingIn, closeCheckIn);
+
   // The daily check-in takes over the screen (same pattern as capture →
   // review); closing it refetches so resolved items drop out of the list.
   if (checkingIn && items && items.length > 0) {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <CheckInDeck
-            items={items}
-            onClose={() => {
-              setCheckingIn(false);
-              refresh();
-            }}
-          />
+          <CheckInDeck items={items} onClose={closeCheckIn} />
         </SafeAreaView>
       </ThemedView>
     );
@@ -284,7 +294,10 @@ export default function InventoryScreen() {
         )}
 
         {error && (
-          <ThemedText type="small" style={[styles.error, { color: theme.destructive }]}>
+          <ThemedText
+            type="small"
+            accessibilityRole="alert"
+            style={[styles.error, { color: theme.destructive }]}>
             {error}
           </ThemedText>
         )}

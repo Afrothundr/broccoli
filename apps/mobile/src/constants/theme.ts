@@ -7,6 +7,11 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+// One red per scheme: destructive actions and spoiled food share it
+// deliberately — both mean "loss". Defined once so the tokens can't drift.
+const RED_LIGHT = '#DC2626';
+const RED_DARK = '#F87171';
+
 // Ported from broccoli-dashboard's design tokens (src/styles/globals.css):
 // zinc-scale neutrals with the brand green as primary. The dashboard defines
 // these in oklch; values here are their hex equivalents.
@@ -20,11 +25,11 @@ export const Colors = {
     primary: '#4A7A34', // brand green
     primaryForeground: '#F3F0FA',
     border: '#E4E4E7',
-    destructive: '#DC2626',
+    destructive: RED_LIGHT,
     // Freshness chips: good = brand green, so "fresh" reads as broccoli.
     statusGood: '#4A7A34',
     statusWarn: '#B26A00',
-    statusBad: '#DC2626',
+    statusBad: RED_LIGHT,
   },
   dark: {
     text: '#FAFAFA',
@@ -35,10 +40,10 @@ export const Colors = {
     primary: '#5E9943', // brand green, dark variant
     primaryForeground: '#F3F0FA',
     border: '#3F3F46',
-    destructive: '#F87171',
+    destructive: RED_DARK,
     statusGood: '#5E9943',
     statusWarn: '#E0A83E',
-    statusBad: '#F87171',
+    statusBad: RED_DARK,
   },
 } as const;
 

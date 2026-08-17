@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -15,6 +15,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
 import { UsageChart } from '@/components/usage-chart';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useBackHandler } from '@/hooks/use-back-handler';
 import { type StatsOverview, useStats } from '@/hooks/use-stats';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -31,6 +32,12 @@ function money(n: number): string {
   return `$${n.toFixed(2)}`;
 }
 
+// The hero is an estimate built on a 1/3 baseline — cents would be false
+// precision. Exact receipt-derived numbers (tiles, categories) keep cents.
+function moneyWhole(n: number): string {
+  return `$${Math.round(n)}`;
+}
+
 function SavingsHero({ stats }: { stats: StatsOverview }) {
   const theme = useTheme();
   const actualRate =
@@ -44,16 +51,15 @@ function SavingsHero({ stats }: { stats: StatsOverview }) {
       ? ((BASELINE_WASTE_RATE - actualRate) / BASELINE_WASTE_RATE) * 100
       : 0;
 
-  const badgeColor =
-    reductionPct > 25
-      ? theme.statusGood
-      : reductionPct > -25
-        ? theme.statusWarn
-        : theme.destructive;
+  // Savings framing (beta feedback): the first thing a struggling user sees
+  // every day must not be a red guilt banner. Doing better than average is
+  // green; doing worse is amber with the path forward — never destructive-red,
+  // which this screen reserves for errors.
+  const badgeColor = reductionPct >= 0 ? theme.statusGood : theme.statusWarn;
   const badgeText =
     reductionPct >= 0
       ? `${Math.round(reductionPct)}% less waste than average`
-      : `${Math.round(-reductionPct)}% more waste than average`;
+      : `${Math.round(-reductionPct)}% above average — check-ins close the gap`;
 
   return (
     <ThemedView type="backgroundElement" style={styles.hero}>
@@ -61,7 +67,7 @@ function SavingsHero({ stats }: { stats: StatsOverview }) {
         Saved so far
       </ThemedText>
       <ThemedText type="subtitle" style={styles.heroValue}>
-        {money(saved)}
+        {moneyWhole(saved)}
       </ThemedText>
       <ThemedView
         style={[styles.badge, { backgroundColor: `${badgeColor}1A` }]}
@@ -70,8 +76,9 @@ function SavingsHero({ stats }: { stats: StatsOverview }) {
           {badgeText}
         </ThemedText>
       </ThemedView>
-      <ThemedText type="small" themeColor="textSecondary">
-        The average household wastes a third of the groceries it buys.
+      <ThemedText type="small" themeColor="textSecondary" style={styles.heroCaption}>
+        The average household wastes a third of the groceries it buys — that
+        third is what these numbers measure you against.
       </ThemedText>
     </ThemedView>
   );
@@ -126,8 +133,12 @@ function CategoryInsights({
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const { stats, error } = useStats();
+  const { stats, error, retry } = useStats();
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Android hardware back dismisses settings instead of exiting the app.
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  useBackHandler(settingsOpen, closeSettings);
 
   const hasData = stats !== null && stats.receiptCount > 0;
   const kitchenCount = stats ? stats.counts.active + stats.counts.expired : 0;
@@ -136,7 +147,7 @@ export default function HomeScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={[styles.safeArea, styles.settingsSafeArea]}>
-          <SettingsPanel onClose={() => setSettingsOpen(false)} />
+          <SettingsPanel onClose={closeSettings} />
         </SafeAreaView>
       </ThemedView>
     );
@@ -163,12 +174,26 @@ export default function HomeScreen() {
           </ThemedView>
 
           {error && (
-            <ThemedText
-              type="small"
-              style={[styles.error, { color: theme.destructive }]}
-            >
-              {error}
-            </ThemedText>
+            <ThemedView style={styles.errorBlock}>
+              <ThemedText
+                type="small"
+                accessibilityRole="alert"
+                style={[styles.error, { color: theme.destructive }]}
+              >
+                {error}
+              </ThemedText>
+              <Pressable
+                onPress={retry}
+                hitSlop={Spacing.two}
+                accessibilityRole="button"
+                accessibilityLabel="Retry loading your stats"
+                style={({ pressed }) => pressed && styles.pressed}
+              >
+                <ThemedText type="linkPrimary" style={styles.error}>
+                  Try again
+                </ThemedText>
+              </Pressable>
+            </ThemedView>
           )}
 
           {stats === null && !error ? (
@@ -302,6 +327,12 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.one,
+  },
+  heroCaption: {
+    textAlign: 'center',
+  },
+  errorBlock: {
+    gap: Spacing.one,
   },
   tiles: {
     flexDirection: 'row',

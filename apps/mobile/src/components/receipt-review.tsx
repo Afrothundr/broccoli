@@ -52,11 +52,33 @@ export function ReceiptReview({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Last removed row, so a slip of the X isn't permanent. One level deep —
+  // removing another row replaces it — which covers the actual mistake
+  // (fat-fingering the X beside the price field) without a full undo stack.
+  const [lastRemoved, setLastRemoved] = useState<{ item: EditableItem; index: number } | null>(
+    null
+  );
 
   const edit = (localKey: string, patch: Partial<EditableItem>) =>
     setItems((prev) => prev.map((i) => (i.localKey === localKey ? { ...i, ...patch } : i)));
 
-  const remove = (localKey: string) => setItems((prev) => prev.filter((i) => i.localKey !== localKey));
+  const remove = (localKey: string) =>
+    setItems((prev) => {
+      const index = prev.findIndex((i) => i.localKey === localKey);
+      if (index === -1) return prev;
+      setLastRemoved({ item: prev[index], index });
+      return prev.filter((i) => i.localKey !== localKey);
+    });
+
+  const restoreRemoved = () => {
+    if (!lastRemoved) return;
+    setItems((prev) => {
+      const next = [...prev];
+      next.splice(Math.min(lastRemoved.index, next.length), 0, lastRemoved.item);
+      return next;
+    });
+    setLastRemoved(null);
+  };
 
   const add = () =>
     setItems((prev) => [
@@ -121,6 +143,7 @@ export function ReceiptReview({
                 value={item.name}
                 onChangeText={(name) => edit(item.localKey, { name })}
                 placeholder="Item name"
+                accessibilityLabel={item.name ? `Name for ${item.name}` : 'Item name'}
                 autoCapitalize="words"
               />
               <Input
@@ -128,6 +151,7 @@ export function ReceiptReview({
                 value={item.price}
                 onChangeText={(price) => edit(item.localKey, { price })}
                 placeholder="0.00"
+                accessibilityLabel={item.name ? `Price for ${item.name}` : 'Item price'}
                 keyboardType="decimal-pad"
               />
               <Pressable
@@ -147,6 +171,26 @@ export function ReceiptReview({
           </ThemedView>
         ))}
 
+        {lastRemoved && (
+          <ThemedView type="backgroundElement" style={styles.removedRow}>
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              style={styles.removedText}
+              numberOfLines={1}>
+              Removed {lastRemoved.item.name.trim() || 'item'}
+            </ThemedText>
+            <Pressable
+              onPress={restoreRemoved}
+              hitSlop={Spacing.three}
+              accessibilityRole="button"
+              accessibilityLabel={`Undo removing ${lastRemoved.item.name.trim() || 'item'}`}
+              style={({ pressed }) => pressed && styles.pressed}>
+              <ThemedText type="linkPrimary">Undo</ThemedText>
+            </Pressable>
+          </ThemedView>
+        )}
+
         <Pressable
           onPress={add}
           hitSlop={Spacing.two}
@@ -161,7 +205,10 @@ export function ReceiptReview({
 
       <ThemedView style={styles.footer}>
         {error && (
-          <ThemedText type="small" style={[styles.error, { color: theme.destructive }]}>
+          <ThemedText
+            type="small"
+            accessibilityRole="alert"
+            style={[styles.error, { color: theme.destructive }]}>
             {error}
           </ThemedText>
         )}
@@ -185,6 +232,18 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
+  },
+  removedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  removedText: {
+    flexShrink: 1,
   },
   itemRow: {
     gap: Spacing.one,
