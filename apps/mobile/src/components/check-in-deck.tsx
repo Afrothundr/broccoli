@@ -47,6 +47,15 @@ function orderDeck(items: InventoryItem[]): InventoryItem[] {
   return [...items].sort((a, b) => rank(a) - rank(b));
 }
 
+// purchasedAt is typed Date but arrives as an ISO string over plain-JSON tRPC
+// (same note as the inventory list's formatDate).
+function formatPurchased(value: Date | string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return `Bought ${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+}
+
 export function CheckInDeck({
   items,
   onClose,
@@ -259,8 +268,10 @@ export function CheckInDeck({
                       {freshness.detail}
                     </ThemedText>
                   )}
+                  {/* Store name hidden for now (beta feedback) — purchase date
+                      is what a keep-or-toss decision actually leans on. */}
                   <ThemedText type="small" themeColor="textSecondary">
-                    {top.receipt.storeName ?? 'Receipt'}
+                    {formatPurchased(top.receipt.purchasedAt) ?? 'Receipt'}
                     {top.price != null ? ` · $${top.price.toFixed(2)}` : ''}
                   </ThemedText>
                 </ThemedView>
