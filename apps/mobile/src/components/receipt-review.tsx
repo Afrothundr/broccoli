@@ -41,7 +41,6 @@ export function ReceiptReview({
   onSaved: (saved: ParsedReceipt) => void;
 }) {
   const theme = useTheme();
-  const [storeName, setStoreName] = useState(receipt.storeName ?? '');
   const [items, setItems] = useState<EditableItem[]>(() =>
     receipt.items.map((item) => ({
       localKey: item.id,
@@ -82,7 +81,9 @@ export function ReceiptReview({
     try {
       const saved = await trpc.receipt.confirm.mutate({
         id: receipt.id,
-        storeName: storeName.trim() || null,
+        // Store name is hidden from the UI for now (beta feedback) but the
+        // parsed value still saves — it may come back for analytics.
+        storeName: receipt.storeName ?? null,
         purchasedAt: receipt.purchasedAt ?? undefined,
         total,
         items: kept.map((i) => ({
@@ -111,8 +112,6 @@ export function ReceiptReview({
         <ThemedText type="small" themeColor="textSecondary">
           Fix anything the scan got wrong — tap a name or price to edit.
         </ThemedText>
-
-        <Input value={storeName} onChangeText={setStoreName} placeholder="Store" />
 
         {items.map((item) => (
           <ThemedView key={item.localKey} style={styles.itemRow}>

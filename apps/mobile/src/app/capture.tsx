@@ -154,8 +154,8 @@ export default function CaptureScreen() {
                 Saved
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.title}>
-                {saved.items.length} {saved.items.length === 1 ? 'item' : 'items'}
-                {saved.storeName ? ` from ${saved.storeName}` : ''} added to your kitchen.
+                {saved.items.length} {saved.items.length === 1 ? 'item' : 'items'} added to your
+                kitchen.
               </ThemedText>
             </>
           ) : uploaded ? (

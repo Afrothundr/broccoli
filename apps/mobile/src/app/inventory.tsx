@@ -53,11 +53,12 @@ function toSections(items: InventoryItem[]): Section[] {
       last.data.push(row);
       continue;
     }
+    // Store name hidden for now (beta feedback: noise, no decision value).
+    // Still parsed and stored — it may come back for analytics.
     const date = formatDate(row.item.receipt.purchasedAt);
-    const store = row.item.receipt.storeName ?? 'Receipt';
     sections.push({
       key: row.item.receiptId,
-      title: date ? `${store} · ${date}` : store,
+      title: date ? `Bought ${date}` : 'Receipt',
       data: [row],
     });
   }
