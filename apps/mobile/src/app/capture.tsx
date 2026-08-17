@@ -1,7 +1,8 @@
 import { Feather } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,10 +16,12 @@ import { useTheme } from '@/hooks/use-theme';
 import { useUploadThing } from '@/lib/uploadthing';
 
 // A receipt as it exists right after upload: stored on UploadThing, not yet
-// parsed. `url` + `key` are exactly what receipt.create wants.
+// parsed. `url` + `key` are exactly what receipt.create wants. `isPdf` only
+// drives the preview — a PDF url can't render through expo-image.
 type UploadedReceipt = {
   url: string;
   key: string;
+  isPdf: boolean;
 };
 
 export default function CaptureScreen() {
@@ -26,13 +29,16 @@ export default function CaptureScreen() {
   const [uploaded, setUploaded] = useState<UploadedReceipt | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [saved, setSaved] = useState<ParsedReceipt | null>(null);
+  // Whether the in-flight upload is a PDF. A ref, not state: it's read inside
+  // onClientUploadComplete, which closes over the render it was created in.
+  const pdfInFlight = useRef(false);
   const parse = useReceiptParse();
 
   const { startUpload, isUploading } = useUploadThing('receiptFile', {
     onClientUploadComplete: (files) => {
       const data = files[0]?.serverData;
       if (!data) return;
-      setUploaded({ url: data.url, key: data.key });
+      setUploaded({ url: data.url, key: data.key, isPdf: pdfInFlight.current });
       // The parse leg: receipt.create + poll receipt.get until READY/ERROR.
       void parse.start({ url: data.url, key: data.key });
     },
@@ -69,11 +75,45 @@ export default function CaptureScreen() {
     if (result.canceled) return;
 
     const asset = result.assets[0];
+    pdfInFlight.current = false;
     const file = {
       uri: asset.uri,
       name: asset.fileName ?? asset.uri.split('/').pop() ?? 'receipt.jpg',
       type: asset.mimeType ?? 'image/jpeg',
       size: asset.fileSize ?? 0,
+    };
+    try {
+      await startUpload([file as unknown as File]);
+    } catch {
+      setUploadError('Upload failed. Please try again.');
+    }
+  };
+
+  // Email receipts and multi-page scans arrive as PDFs. The whole backend
+  // already takes them — the UploadThing route accepts pdf (16MB) and
+  // broccoli-model rasterises the first 5 pages via PyMuPDF — this picker was
+  // the only thing in the way. The model reads by content-type, so the upload
+  // must go up as application/pdf.
+  const pickPdf = async () => {
+    setUploadError(null);
+    setUploaded(null);
+    setSaved(null);
+    parse.reset();
+
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'application/pdf',
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+    pdfInFlight.current = true;
+    const file = {
+      uri: asset.uri,
+      name: asset.name || 'receipt.pdf',
+      type: asset.mimeType ?? 'application/pdf',
+      size: asset.size ?? 0,
     };
     try {
       await startUpload([file as unknown as File]);
@@ -120,7 +160,16 @@ export default function CaptureScreen() {
             </>
           ) : uploaded ? (
             <>
-              <Image source={{ uri: uploaded.url }} style={styles.preview} contentFit="cover" />
+              {uploaded.isPdf ? (
+                <ThemedView style={[styles.preview, styles.pdfPreview, { borderColor: theme.border }]}>
+                  <Feather name="file-text" size={44} color={theme.textSecondary} />
+                  <ThemedText type="small" themeColor="textSecondary">
+                    PDF receipt
+                  </ThemedText>
+                </ThemedView>
+              ) : (
+                <Image source={{ uri: uploaded.url }} style={styles.preview} contentFit="cover" />
+              )}
               {parse.state.status === 'processing' && (
                 <ThemedView style={styles.statusRow}>
                   <ActivityIndicator size="small" />
@@ -164,6 +213,16 @@ export default function CaptureScreen() {
           style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
           <ThemedText type="linkPrimary">Choose from your photos</ThemedText>
         </Pressable>
+
+        <Pressable
+          onPress={pickPdf}
+          disabled={busy}
+          hitSlop={Spacing.two}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: busy }}
+          style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
+          <ThemedText type="linkPrimary">Upload a PDF receipt</ThemedText>
+        </Pressable>
       </SafeAreaView>
     </ThemedView>
   );
@@ -202,6 +261,12 @@ const styles = StyleSheet.create({
     width: 220,
     aspectRatio: 3 / 4,
     borderRadius: Spacing.three,
+  },
+  pdfPreview: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   statusRow: {
     flexDirection: 'row',
