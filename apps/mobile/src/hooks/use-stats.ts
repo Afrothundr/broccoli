@@ -36,5 +36,7 @@ export function useStats() {
     }, [load])
   );
 
-  return { stats, error };
+  // `retry` lets the Home error state offer a tap-to-reload without waiting
+  // for the next focus change.
+  return { stats, error, retry: load };
 }

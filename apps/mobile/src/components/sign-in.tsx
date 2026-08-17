@@ -13,6 +13,29 @@ import { authClient } from '@/lib/auth-client';
 
 type Mode = 'sign-in' | 'sign-up';
 
+// Server auth errors arrive as raw better-auth messages ("INVALID_EMAIL_OR_
+// PASSWORD" wording varies by version) — never show those verbatim. Map the
+// recognizable ones to plain language; anything unrecognized gets the generic
+// line rather than leaking implementation vocabulary at the front door.
+function friendlyAuthError(message: string | undefined, mode: Mode): string {
+  const raw = (message ?? '').toLowerCase();
+  if (raw.includes('invalid email or password') || raw.includes('invalid credential')) {
+    return "That email and password don't match. Try again, or create an account.";
+  }
+  if (raw.includes('already exist') || raw.includes('already registered')) {
+    return 'There’s already an account with that email — try signing in instead.';
+  }
+  if (raw.includes('password') && (raw.includes('short') || raw.includes('length'))) {
+    return 'Passwords need at least 8 characters.';
+  }
+  if (raw.includes('invalid email')) {
+    return 'That doesn’t look like an email address — check for typos.';
+  }
+  return mode === 'sign-in'
+    ? "Couldn't sign you in. Check your details and try again."
+    : "Couldn't create your account. Check your details and try again.";
+}
+
 // Email/password auth against broccoli-api's /api/auth/* routes. On success
 // the session lands in expo-secure-store via the expoClient plugin, and
 // `onAuthed` tells the root layout to refetch useSession() — on Expo the hook
@@ -36,7 +59,7 @@ export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
         : await authClient.signUp.email({ email, password, name });
     setSubmitting(false);
     if (result.error) {
-      setError(result.error.message ?? 'Something went wrong. Please try again.');
+      setError(friendlyAuthError(result.error.message, mode));
       return;
     }
     // No navigation here: the layout swaps to the app once its session
@@ -64,7 +87,7 @@ export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
         errorCallbackURL: '/',
       });
       if (result.error) {
-        setError(result.error.message ?? 'Something went wrong. Please try again.');
+        setError("Google sign-in didn't finish. Try again.");
         return;
       }
       onAuthed?.();
@@ -117,7 +140,10 @@ export function SignIn({ onAuthed }: { onAuthed?: () => void }) {
           />
 
           {error && (
-            <ThemedText type="small" style={[styles.error, { color: theme.destructive }]}>
+            <ThemedText
+              type="small"
+              accessibilityRole="alert"
+              style={[styles.error, { color: theme.destructive }]}>
               {error}
             </ThemedText>
           )}
