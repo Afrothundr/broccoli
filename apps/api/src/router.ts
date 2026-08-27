@@ -7,6 +7,7 @@ import {
 import { receiptRouter } from "./receipt";
 import { itemRouter } from "./item";
 import { pushRouter } from "./push";
+import { mealWindowsRouter, sendMealNudges } from "./meal-windows";
 import { statsRouter } from "./stats";
 import { sendNudges } from "./nudges";
 import { prisma } from "./db";
@@ -30,6 +31,9 @@ export const appRouter = router({
   // Push registration + nudge preferences (Phase 4).
   push: pushRouter,
 
+  // Meal-time prompts (Phase 4 / Pillar 4): settings rows per meal.
+  mealWindows: mealWindowsRouter,
+
   // Spend & waste dashboard (Phase 5).
   stats: statsRouter,
 
@@ -52,6 +56,11 @@ export const appRouter = router({
     // Scheduler tick: send the day's grouped nudges to whoever is eligible
     // right now (see nudges.ts for the quiet-hours/once-a-day rules).
     sendNudges: internalProcedure.mutation(() => sendNudges()),
+
+    // Meal-window tick (5-minute cron): fire meal prompts that came due.
+    // Idempotent per local day (MealWindow.lastSentAt), so repeated calls
+    // never double-send.
+    sendMealNudges: internalProcedure.mutation(() => sendMealNudges()),
   }),
 });
 
