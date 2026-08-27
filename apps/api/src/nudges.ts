@@ -8,13 +8,17 @@ import { prisma } from "./db";
 // the first eligible hour after their quiet window ends.
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
-const AT_RISK_HOURS = 48;
+export const AT_RISK_HOURS = 48;
 // The planning horizon (beta feedback): 48h alone meant the only push a user
 // ever saw was "this is about to die" — the app never taught what was AT RISK
 // while there was still time to plan a meal around it. When nothing is urgent,
 // the daily nudge looks a week out instead of staying silent.
-const WEEK_AHEAD_HOURS = 7 * 24;
+export const WEEK_AHEAD_HOURS = 7 * 24;
 const CHUNK_SIZE = 100;
+// Meal prompts (PRD Pillar 4): a risk nudge is suppressed when a meal window
+// is this close — the meal prompt will carry the same ranked content, and one
+// predictable nudge beats two.
+export const MEAL_SUPPRESS_MINUTES = 90;
 
 const DEFAULTS = {
   nudgesEnabled: true,
@@ -29,8 +33,8 @@ type Prefs = Pick<
   "nudgesEnabled" | "quietHoursStart" | "quietHoursEnd" | "timezone"
 > & { lastNudgeAt: Date | null };
 
-type PushMessage = { to: string; title: string; body: string; sound: "default" };
-type ExpoTicket = { status: "ok" | "error"; details?: { error?: string } };
+export type PushMessage = { to: string; title: string; body: string; sound: "default" };
+export type ExpoTicket = { status: "ok" | "error"; details?: { error?: string } };
 
 // Hour-of-day / calendar date in the user's timezone. Invalid timezone
 // strings fall back to UTC rather than breaking the whole sweep.
@@ -48,7 +52,37 @@ function localHour(timezone: string, now: Date): number {
   }
 }
 
-function localDay(timezone: string, at: Date): string {
+// Minutes past local midnight (0-1439), for meal-window matching.
+export function localMinuteOfDay(timezone: string, now: Date): number {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      hour12: false,
+      minute: "numeric",
+      timeZone: timezone,
+    }).format(now);
+    const [h, m] = parts.split(":").map(Number);
+    return (h % 24) * 60 + m;
+  } catch {
+    return now.getUTCHours() * 60 + now.getUTCMinutes();
+  }
+}
+
+// Local day-of-week as a MealWindow bit (0 = Sunday … 6 = Saturday).
+export function localDayBit(timezone: string, now: Date): number {
+  try {
+    const weekday = new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      timeZone: timezone,
+    }).format(now);
+    const order = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    return order.indexOf(weekday);
+  } catch {
+    return now.getUTCDay();
+  }
+}
+
+export function localDay(timezone: string, at: Date): string {
   try {
     return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(at);
   } catch {
@@ -74,7 +108,7 @@ function nudgedToday(prefs: Prefs, now: Date): boolean {
 // first so nothing goes to waste."
 // Same voice as the app (PR #25): named items over counts, kitchen framing,
 // and the "so nothing goes to waste" line the empty state uses.
-function composeNudge(names: string[]): { title: string; body: string } {
+export function composeNudge(names: string[]): { title: string; body: string } {
   const count = names.length;
   const rest = count - Math.min(count, 2);
   // "and" between exactly two names — receipt names often carry commas
@@ -92,7 +126,7 @@ function composeNudge(names: string[]): { title: string; body: string } {
 // The planning tier — nothing is urgent, but the week ahead has expirations.
 // Softer verb on purpose: "plan around" invites a check-in where "eat these
 // soon" demands action. Same named-items-over-counts voice.
-function composeWeekAheadNudge(names: string[]): { title: string; body: string } {
+export function composeWeekAheadNudge(names: string[]): { title: string; body: string } {
   const count = names.length;
   const rest = count - Math.min(count, 2);
   const lead = names.slice(0, 2).join(rest > 0 ? ", " : " and ");
@@ -105,7 +139,7 @@ function composeWeekAheadNudge(names: string[]): { title: string; body: string }
   };
 }
 
-async function sendToExpo(messages: PushMessage[]): Promise<ExpoTicket[]> {
+export async function sendToExpo(messages: PushMessage[]): Promise<ExpoTicket[]> {
   const tickets: ExpoTicket[] = [];
   for (let i = 0; i < messages.length; i += CHUNK_SIZE) {
     const chunk = messages.slice(i, i + CHUNK_SIZE);
@@ -139,6 +173,23 @@ export async function sendNudges(now = new Date()) {
     if (!prefs.nudgesEnabled) continue;
     if (inQuietHours(prefs, now)) continue;
     if (nudgedToday(prefs, now)) continue;
+
+    // Meal prompts (PRD Pillar 4): when a meal window is imminent, the meal
+    // prompt will carry the same ranked content — skip the risk nudge so the
+    // user gets one predictable nudge instead of two.
+    const mealWindows = await prisma.mealWindow.findMany({
+      where: { userId: user.id, enabled: true },
+      select: { minutes: true, daysMask: true },
+    });
+    const nowMin = localMinuteOfDay(prefs.timezone, now);
+    const todayBit = localDayBit(prefs.timezone, now);
+    const mealImminent = mealWindows.some(
+      (w) =>
+        (w.daysMask & (1 << todayBit)) !== 0 &&
+        (w.minutes - nowMin + 1440) % 1440 <= MEAL_SUPPRESS_MINUTES &&
+        (w.minutes - nowMin + 1440) % 1440 > 0
+    );
+    if (mealImminent) continue;
 
     // Tier 1 — what to eat first: already expired, or inside the at-risk window.
     const atRisk = await prisma.item.findMany({

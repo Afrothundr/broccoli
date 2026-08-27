@@ -31,6 +31,7 @@ model User {
 
   pushTokens           PushToken[]
   notificationSettings NotificationSettings?
+  mealWindows          MealWindow[]
 
   @@map("user")
 }
@@ -206,6 +207,34 @@ model NotificationSettings {
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_settings")
+}
+
+// Opt-in meal-time prompts (PRD Pillar 4): one row per user × meal. `minutes`
+// is minutes past local midnight in the NotificationSettings timezone;
+// `daysMask` is a 7-bit day-of-week mask (bit 0 = Sunday … bit 6 = Saturday).
+// `lastSentAt` is the idempotency guard — a meal fires at most once per local
+// day, so a missed or repeated tick self-heals without double-sending.
+model MealWindow {
+  id         String   @id @default(cuid())
+  userId     String
+  meal       MealName
+  enabled    Boolean  @default(false)
+  minutes    Int // 0-1439, minutes past local midnight
+  daysMask   Int      @default(127) // all seven days
+  lastSentAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, meal])
+  @@index([enabled])
+  @@map("meal_window")
+}
+
+enum MealName {
+  BREAKFAST
+  LUNCH
+  DINNER
 }
 
 enum ReceiptStatus {

@@ -50,3 +50,6 @@ example
 
 # Firebase config — stored as an EAS secret file (GOOGLE_SERVICES_JSON), not committed
 google-services.json
+
+# Firebase credentials (never commit)
+fcm-service-account.json

@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { NudgeSettings } from '@/components/nudge-settings';
+import { NudgeSettings, MealReminders } from '@/components/nudge-settings';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -30,6 +30,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
       </ThemedView>
 
       <NudgeSettings />
+      <MealReminders />
 
       <ThemedView type="backgroundElement" style={styles.card}>
         {session && (
