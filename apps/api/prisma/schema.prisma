@@ -122,6 +122,10 @@ model Item {
   quantity   Int        @default(1)
   unit       String     @default("")
   category   String? // snapped ItemType name, or null/Unknown
+  // The parser's self-assessed extraction confidence (0-1), from Gemini via
+  // broccoli-model. Null for hand-added items. Powers the review screen's
+  // low-confidence chip; kept after save for analytics.
+  confidence Float?
   status     ItemStatus @default(ACTIVE)
   resolvedAt DateTime? // when the user swiped it eaten/tossed; null while ACTIVE
 
