@@ -53,30 +53,37 @@ function SavingsHero({ stats }: { stats: StatsOverview }) {
 
   // Savings framing (beta feedback): the first thing a struggling user sees
   // every day must not be a red guilt banner. Doing better than average is
-  // green; doing worse is amber with the path forward — never destructive-red,
-  // which this screen reserves for errors.
-  const badgeColor = reductionPct >= 0 ? theme.statusGood : theme.statusWarn;
-  const badgeText =
-    reductionPct >= 0
-      ? `${Math.round(reductionPct)}% less waste than average`
-      : `${Math.round(-reductionPct)}% above average — check-ins close the gap`;
+  // lime on the stalk hero; doing worse is amber with the path forward —
+  // never destructive-red, which this screen reserves for errors.
+  const good = reductionPct >= 0;
+  const badgeText = good
+    ? `${Math.round(reductionPct)}% less waste than average`
+    : `${Math.round(-reductionPct)}% above average — check-ins close the gap`;
 
+  // Prototype 05's hero: stalk surface, Fraunces figure in floret-2, quiet
+  // paper metadata. Money stays the hook (PRD §1) but never nudges buying.
   return (
-    <ThemedView type="backgroundElement" style={styles.hero}>
-      <ThemedText type="small" themeColor="textSecondary">
+    <ThemedView style={[styles.hero, { backgroundColor: theme.stalk }]}>
+      <ThemedText
+        type="small"
+        style={[styles.heroLabel, { color: `${theme.background}80` }]}>
         Saved so far
       </ThemedText>
-      <ThemedText type="subtitle" style={styles.heroValue}>
+      <ThemedText type="display" style={{ color: theme.floret2 }}>
         {moneyWhole(saved)}
       </ThemedText>
       <ThemedView
-        style={[styles.badge, { backgroundColor: `${badgeColor}1A` }]}
-      >
-        <ThemedText type="small" style={{ color: badgeColor }}>
+        style={[
+          styles.badge,
+          { backgroundColor: good ? `${theme.floret}26` : `${theme.amber}33` },
+        ]}>
+        <ThemedText type="small" style={{ color: good ? theme.floret2 : theme.amber }}>
           {badgeText}
         </ThemedText>
       </ThemedView>
-      <ThemedText type="small" themeColor="textSecondary" style={styles.heroCaption}>
+      <ThemedText
+        type="small"
+        style={[styles.heroCaption, { color: `${theme.background}99` }]}>
         The average household wastes a third of the groceries it buys — that
         third is what these numbers measure you against.
       </ThemedText>
@@ -314,14 +321,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   hero: {
-    borderRadius: Spacing.four,
+    borderRadius: 14, // prototype 05's hero radius
     padding: Spacing.four,
     gap: Spacing.two,
     alignItems: 'center',
   },
-  heroValue: {
-    fontSize: 40,
-    lineHeight: 48,
+  // Prototype 05's hero label: 11px uppercase, tracked, quiet paper.
+  heroLabel: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: 1.8, // ~0.16em at 11px
   },
   badge: {
     borderRadius: Spacing.three,

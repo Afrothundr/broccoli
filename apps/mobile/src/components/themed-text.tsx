@@ -1,24 +1,35 @@
 import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
-import { Fonts, ThemeColor } from '@/constants/theme';
+import { FontFamilies, Fonts, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
+  type?:
+    | 'default'
+    | 'title'
+    | 'small'
+    | 'smallBold'
+    | 'subtitle'
+    | 'display'
+    | 'link'
+    | 'linkPrimary'
+    | 'code';
   themeColor?: ThemeColor;
 };
 
-// Geist (the dashboard's typeface) ships as one file per weight, so the
-// family is chosen by the type's weight. Loaded in the root layout; RN falls
-// back to the system font if a family isn't registered yet.
-const GeistByType: Record<NonNullable<ThemedTextProps['type']>, string | undefined> = {
-  default: 'Geist_500Medium',
-  small: 'Geist_500Medium',
-  smallBold: 'Geist_700Bold',
-  title: 'Geist_600SemiBold',
-  subtitle: 'Geist_600SemiBold',
-  link: 'Geist_400Regular',
-  linkPrimary: 'Geist_600SemiBold',
+// Produce Ledger type (planning/mobile-redesign-2026-08-28.md): Inter for UI
+// text, Fraunces for display figures and titles. Both ship as one file per
+// weight, so the family is chosen by the type's weight. Loaded in the root
+// layout; RN falls back to the system font if a family isn't registered yet.
+const FontByType: Record<NonNullable<ThemedTextProps['type']>, string | undefined> = {
+  default: FontFamilies.interMedium,
+  small: FontFamilies.interMedium,
+  smallBold: FontFamilies.interBold,
+  title: FontFamilies.frauncesSemiBold,
+  subtitle: FontFamilies.interSemiBold,
+  display: FontFamilies.frauncesSemiBold,
+  link: FontFamilies.interRegular,
+  linkPrimary: FontFamilies.interSemiBold,
   code: undefined, // stays monospace
 };
 
@@ -26,7 +37,7 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
   const theme = useTheme();
   // Links default to the brand primary; anything else to the text color.
   const defaultColor = type === 'linkPrimary' ? 'primary' : 'text';
-  const fontFamily = GeistByType[type];
+  const fontFamily = FontByType[type];
 
   return (
     <Text
@@ -37,6 +48,7 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
         type === 'small' && styles.small,
         type === 'smallBold' && styles.smallBold,
         type === 'subtitle' && styles.subtitle,
+        type === 'display' && styles.display,
         type === 'link' && styles.link,
         type === 'linkPrimary' && styles.linkPrimary,
         type === 'code' && styles.code,
@@ -73,6 +85,13 @@ const styles = StyleSheet.create({
     fontSize: 32,
     lineHeight: 44,
     fontWeight: 600,
+  },
+  display: {
+    fontSize: 36,
+    lineHeight: 40,
+    fontWeight: 600,
+    // Money/hero figures — Fraunces with tabular numerals (Produce Ledger).
+    fontVariant: ['tabular-nums'],
   },
   link: {
     lineHeight: 30,

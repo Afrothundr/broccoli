@@ -187,16 +187,20 @@ export function CheckInDeck({
   const last = records[records.length - 1] ?? null;
 
   return (
-    <ThemedView style={styles.container}>
+    // Prototype 04: the whole check-in sits on the stalk green; cards are
+    // paper on top of it.
+    <ThemedView style={[styles.container, { backgroundColor: theme.stalk }]}>
       <ThemedView style={styles.header}>
-        <ThemedText type="subtitle">Daily check-in</ThemedText>
+        <ThemedText type="subtitle" style={{ color: theme.background }}>
+          Daily check-in
+        </ThemedText>
         <Pressable
           onPress={onClose}
           hitSlop={Spacing.three}
           accessibilityRole="button"
           accessibilityLabel="Close check-in"
           style={({ pressed }) => pressed && styles.pressed}>
-          <Feather name="x" size={22} color={theme.textSecondary} />
+          <Feather name="x" size={22} color={`${theme.background}B3`} />
         </Pressable>
       </ThemedView>
 
@@ -212,26 +216,37 @@ export function CheckInDeck({
       {top ? (
         <>
           <ThemedView style={styles.progressRow}>
-            <ThemedView type="backgroundSelected" style={styles.progressTrack}>
+            <ThemedView style={[styles.progressTrack, { backgroundColor: `${theme.background}26` }]}>
               <ThemedView
                 style={[
                   styles.progressFill,
-                  { width: `${(records.length / total) * 100}%`, backgroundColor: theme.primary },
+                  { width: `${(records.length / total) * 100}%`, backgroundColor: theme.floret },
                 ]}
               />
             </ThemedView>
-            <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText
+              type="small"
+              style={[styles.progressCount, { color: `${theme.background}66` }]}>
               {records.length + 1} of {total}
             </ThemedText>
           </ThemedView>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
+          <ThemedText
+            type="small"
+            style={[styles.hint, { color: `${theme.background}B3` }]}>
             Swipe right if you ate it, left if you tossed it, down if it&apos;s
             still around — or tap a button.
           </ThemedText>
 
           <ThemedView style={styles.deckArea}>
             {deck[1] && (
-              <ThemedView type="backgroundElement" style={[styles.card, styles.cardBehind]} />
+              // Prototype 04's stacked look: the next card peeks out tilted.
+              <ThemedView
+                style={[
+                  styles.card,
+                  styles.cardBehind,
+                  { backgroundColor: theme.backgroundElement },
+                ]}
+              />
             )}
             <GestureDetector gesture={pan}>
               <Animated.View key={top.id} style={[styles.cardWrap, cardStyle]}>
@@ -239,8 +254,7 @@ export function CheckInDeck({
                     in a single summary instead of four separate swipes. The
                     action buttons below remain the accessible way to commit. */}
                 <ThemedView
-                  type="backgroundElement"
-                  style={styles.card}
+                  style={[styles.card, { backgroundColor: theme.background }]}
                   accessible
                   accessibilityLabel={[
                     top.name,
@@ -311,9 +325,9 @@ export function CheckInDeck({
               accessibilityRole="button"
               accessibilityLabel={`Tossed ${top.name}`}
               style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-              <ThemedView type="backgroundElement" style={styles.action}>
-                <Feather name="trash-2" size={16} color={theme.statusBad} />
-                <ThemedText type="smallBold" style={{ color: theme.statusBad }}>
+              <ThemedView style={[styles.action, { backgroundColor: `${theme.background}26` }]}>
+                <Feather name="x" size={16} color={`${theme.background}B3`} />
+                <ThemedText type="smallBold" style={{ color: `${theme.background}B3` }}>
                   Tossed
                 </ThemedText>
               </ThemedView>
@@ -323,8 +337,8 @@ export function CheckInDeck({
               accessibilityRole="button"
               accessibilityLabel={`Still have ${top.name}`}
               style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-              <ThemedView type="backgroundElement" style={styles.action}>
-                <ThemedText type="smallBold" themeColor="textSecondary">
+              <ThemedView style={[styles.action, { backgroundColor: `${theme.background}1A` }]}>
+                <ThemedText type="smallBold" style={{ color: `${theme.background}B3` }}>
                   Still have it
                 </ThemedText>
               </ThemedView>
@@ -334,9 +348,9 @@ export function CheckInDeck({
               accessibilityRole="button"
               accessibilityLabel={`Ate ${top.name}`}
               style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-              <ThemedView type="backgroundElement" style={styles.action}>
-                <Feather name="check" size={16} color={theme.statusGood} />
-                <ThemedText type="smallBold" style={{ color: theme.statusGood }}>
+              <ThemedView style={[styles.action, { backgroundColor: `${theme.floret}26` }]}>
+                <Feather name="check" size={16} color={theme.floret2} />
+                <ThemedText type="smallBold" style={{ color: theme.floret2 }}>
                   Ate it
                 </ThemedText>
               </ThemedView>
@@ -345,17 +359,19 @@ export function CheckInDeck({
         </>
       ) : (
         <ThemedView style={styles.doneArea}>
-          <ThemedText type="subtitle" style={styles.doneTitle}>
+          <ThemedText type="subtitle" style={[styles.doneTitle, { color: theme.background }]}>
             All caught up
           </ThemedText>
           {/* Peak-end: close on what the session kept in play, not a tally of
               failures. Tosses read as the thing the nudges exist to shrink. */}
           {keptValue != null && keptValue > 0 && (
-            <ThemedText type="smallBold" style={{ color: theme.primary }}>
+            <ThemedText type="smallBold" style={{ color: theme.floret2 }}>
               ${keptValue.toFixed(2)} kept in play
             </ThemedText>
           )}
-          <ThemedText type="small" themeColor="textSecondary" style={styles.doneSummary}>
+          <ThemedText
+            type="small"
+            style={[styles.doneSummary, { color: `${theme.background}B3` }]}>
             {eaten} eaten{kept > 0 ? ` · ${kept} still in your kitchen` : ''}
             {tossed > 0
               ? ` · ${tossed} tossed — the nudges are here to catch the next ones sooner`
@@ -369,8 +385,8 @@ export function CheckInDeck({
           most likely to be a slip (the deck vanishes mid-gesture), and it used
           to be the only unrecoverable one. */}
       {last && (
-        <ThemedView type="backgroundElement" style={styles.undoBar}>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.undoText} numberOfLines={1}>
+        <ThemedView style={[styles.undoBar, { backgroundColor: `${theme.background}1A` }]}>
+          <ThemedText type="small" style={[styles.undoText, { color: `${theme.background}B3` }]} numberOfLines={1}>
             {last.item.name} —{' '}
             {last.outcome === 'EATEN'
               ? 'eaten'
@@ -417,6 +433,9 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
   },
+  progressCount: {
+    fontVariant: ['tabular-nums'],
+  },
   hint: {
     textAlign: 'center',
   },
@@ -428,11 +447,17 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   card: {
-    borderRadius: Spacing.four,
-    padding: Spacing.five,
+    borderRadius: 14, // prototype 04's card radius
+    padding: Spacing.four,
     gap: Spacing.two,
     minHeight: 260,
     justifyContent: 'center',
+    // Paper card floating on the stalk background (prototype 04).
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
   },
   cardBehind: {
     position: 'absolute',
@@ -440,7 +465,10 @@ const styles = StyleSheet.create({
     right: Spacing.two,
     top: Spacing.three,
     bottom: -Spacing.three,
-    opacity: 0.5,
+    opacity: 0.4,
+    transform: [{ rotate: '4deg' }, { translateX: 8 }],
+    shadowOpacity: 0,
+    elevation: 0,
   },
   cardName: {
     fontWeight: '700',

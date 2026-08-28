@@ -53,6 +53,49 @@ function useParseStageMessage(active: boolean): string {
   return PARSE_STAGES[stage].message;
 }
 
+// Prototype 01's viewfinder, applied to the parse-wait preview (the camera
+// itself is the system picker, so this frame is where the design lives):
+// floret hairline border, four corner brackets, and a floret pill at the
+// bottom edge while the receipt is being read.
+function ViewfinderFrame({
+  processing,
+  children,
+}: {
+  processing: boolean;
+  children: React.ReactNode;
+}) {
+  const theme = useTheme();
+  const corner = {
+    position: 'absolute' as const,
+    width: 20,
+    height: 20,
+    borderColor: theme.floret,
+  };
+  return (
+    <ThemedView style={styles.viewfinder}>
+      {children}
+      {/* inner floret frame, floret/70 */}
+      <ThemedView
+        pointerEvents="none"
+        style={[styles.viewfinderBorder, { borderColor: `${theme.floret}B3` }]}
+      />
+      <ThemedView pointerEvents="none" style={[corner, styles.cornerTopLeft]} />
+      <ThemedView pointerEvents="none" style={[corner, styles.cornerTopRight]} />
+      <ThemedView pointerEvents="none" style={[corner, styles.cornerBottomLeft]} />
+      <ThemedView pointerEvents="none" style={[corner, styles.cornerBottomRight]} />
+      {processing && (
+        <ThemedView pointerEvents="none" style={styles.viewfinderPillWrap}>
+          <ThemedView style={[styles.viewfinderPill, { backgroundColor: theme.floret }]}>
+            <ThemedText type="small" style={{ color: theme.stalk }}>
+              Reading your receipt
+            </ThemedText>
+          </ThemedView>
+        </ThemedView>
+      )}
+    </ThemedView>
+  );
+}
+
 export default function CaptureScreen() {
   const theme = useTheme();
   const [uploaded, setUploaded] = useState<UploadedReceipt | null>(null);
@@ -240,7 +283,9 @@ export default function CaptureScreen() {
                   </ThemedText>
                 </ThemedView>
               ) : (
-                <Image source={{ uri: uploaded.url }} style={styles.preview} contentFit="cover" />
+                <ViewfinderFrame processing={parse.state.status === 'processing'}>
+                  <Image source={{ uri: uploaded.url }} style={styles.previewImage} contentFit="cover" />
+                </ViewfinderFrame>
               )}
               {parse.state.status === 'processing' && (
                 <>
@@ -373,6 +418,67 @@ const styles = StyleSheet.create({
     width: 220,
     aspectRatio: 3 / 4,
     borderRadius: Spacing.three,
+  },
+  // The viewfinder frame (prototype 01). The image fills it edge-to-edge;
+  // frame, brackets, and pill overlay on top.
+  viewfinder: {
+    width: 220,
+    aspectRatio: 3 / 4,
+    borderRadius: Spacing.three,
+    overflow: 'hidden',
+  },
+  previewImage: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  viewfinderBorder: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    bottom: 16,
+    left: 16,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
+  },
+  cornerTopLeft: {
+    top: 16,
+    left: 16,
+    borderLeftWidth: 2,
+    borderTopWidth: 2,
+  },
+  cornerTopRight: {
+    top: 16,
+    right: 16,
+    borderRightWidth: 2,
+    borderTopWidth: 2,
+  },
+  cornerBottomLeft: {
+    bottom: 16,
+    left: 16,
+    borderLeftWidth: 2,
+    borderBottomWidth: 2,
+  },
+  cornerBottomRight: {
+    bottom: 16,
+    right: 16,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
+  },
+  viewfinderPillWrap: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    left: 0,
+    alignItems: 'center',
+    paddingBottom: Spacing.three,
+  },
+  viewfinderPill: {
+    borderRadius: 999,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
   },
   pdfPreview: {
     alignItems: 'center',
