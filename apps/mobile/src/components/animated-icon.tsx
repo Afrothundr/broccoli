@@ -46,10 +46,9 @@ export function AnimatedSplashOverlay() {
 const styles = StyleSheet.create({
   backgroundSolidColor: {
     ...StyleSheet.absoluteFill,
-    // Continues the native splash (app.json backgroundColor #FFFFFF) so launch
-    // is one uninterrupted surface — the old Expo-template blue flashed an
-    // off-brand frame on every open of a green food app.
-    backgroundColor: '#FFFFFF',
+    // Continues the native splash (app.json backgroundColor #122117, the
+    // Produce Ledger shell) so launch is one uninterrupted surface.
+    backgroundColor: '#122117',
     zIndex: 1000,
   },
 });

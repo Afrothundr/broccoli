@@ -233,8 +233,8 @@ export function CheckInDeck({
           <ThemedText
             type="small"
             style={[styles.hint, { color: `${theme.background}B3` }]}>
-            Swipe right if you ate it, left if you tossed it, down if it&apos;s
-            still around — or tap a button.
+            What happened to each item this week? Swipe right for ate it, left
+            for tossed it, down if it&apos;s still around — or tap a button.
           </ThemedText>
 
           <ThemedView style={styles.deckArea}>
