@@ -325,9 +325,9 @@ export function CheckInDeck({
               accessibilityRole="button"
               accessibilityLabel={`Tossed ${top.name}`}
               style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-              <ThemedView style={[styles.action, { backgroundColor: `${theme.background}26` }]}>
-                <Feather name="x" size={16} color={`${theme.background}B3`} />
-                <ThemedText type="smallBold" style={{ color: `${theme.background}B3` }}>
+              <ThemedView style={[styles.action, { backgroundColor: `${theme.background}33` }]}>
+                <Feather name="x" size={16} color={`${theme.background}D9`} />
+                <ThemedText type="smallBold" style={{ color: `${theme.background}D9` }}>
                   Tossed
                 </ThemedText>
               </ThemedView>
@@ -337,8 +337,8 @@ export function CheckInDeck({
               accessibilityRole="button"
               accessibilityLabel={`Still have ${top.name}`}
               style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-              <ThemedView style={[styles.action, { backgroundColor: `${theme.background}1A` }]}>
-                <ThemedText type="smallBold" style={{ color: `${theme.background}B3` }}>
+              <ThemedView style={[styles.action, { backgroundColor: `${theme.background}2E` }]}>
+                <ThemedText type="smallBold" style={{ color: `${theme.background}D9` }}>
                   Still have it
                 </ThemedText>
               </ThemedView>
@@ -400,7 +400,9 @@ export function CheckInDeck({
             accessibilityRole="button"
             accessibilityLabel={`Undo ${last.item.name}`}
             style={({ pressed }) => pressed && styles.pressed}>
-            <ThemedText type="linkPrimary">Undo</ThemedText>
+            <ThemedText type="linkPrimary" style={{ color: theme.floret2 }}>
+              Undo
+            </ThemedText>
           </Pressable>
         </ThemedView>
       )}
@@ -417,11 +419,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    // ThemedView defaults to paper — these sit on the stalk surface, so opt out.
+    backgroundColor: 'transparent',
   },
   progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
+    backgroundColor: 'transparent',
   },
   progressTrack: {
     flex: 1,
@@ -442,6 +447,7 @@ const styles = StyleSheet.create({
   deckArea: {
     flex: 1,
     justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   cardWrap: {
     zIndex: 1,
@@ -463,10 +469,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: Spacing.two,
     right: Spacing.two,
-    top: Spacing.three,
-    bottom: -Spacing.three,
+    // Match the front card's footprint instead of stretching with the deck
+    // area (absolute top+bottom stretched it into a full-height slab).
+    height: 300,
+    top: '50%',
     opacity: 0.4,
-    transform: [{ rotate: '4deg' }, { translateX: 8 }],
+    transform: [{ translateY: -140 }, { translateX: 8 }, { rotate: '4deg' }],
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -496,6 +504,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: Spacing.three,
+    backgroundColor: 'transparent',
   },
   actionButton: {
     flex: 1,
