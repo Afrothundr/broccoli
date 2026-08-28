@@ -54,6 +54,12 @@ async function parseReceipt(receiptId: string, userId: string, imageUrl: string)
       // The explicit ItemType relation arrives in Phase 3; for now we store the
       // snapped name as a string, treating "Unknown"/blank as no category.
       category: item.category && item.category !== "Unknown" ? item.category : null,
+      // Gemini's self-assessed extraction confidence (0-1), clamped against
+      // junk values; null when the model didn't send one.
+      confidence:
+        typeof item.confidence === "number" && Number.isFinite(item.confidence)
+          ? Math.min(Math.max(item.confidence, 0), 1)
+          : null,
     }));
 
     // No line-item total comes back from the model, so approximate spend by
@@ -92,6 +98,9 @@ const confirmItemSchema = z.object({
   quantity: z.number().int().positive().default(1),
   unit: z.string().default(""),
   category: z.string().nullish(),
+  // Parser confidence passes through so it survives the delete + recreate;
+  // hand-added rows just omit it (stays null).
+  confidence: z.number().min(0).max(1).nullish(),
 });
 
 export const receiptRouter = router({
@@ -231,6 +240,7 @@ export const receiptRouter = router({
                   quantity: item.quantity,
                   unit: item.unit,
                   category: item.category ?? null,
+                  confidence: item.confidence ?? null,
                   ...expirationFor(item.category),
                 })),
               }),

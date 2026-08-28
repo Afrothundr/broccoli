@@ -17,6 +17,9 @@ export type ScrapedItem = {
   name: string;
   price: string;
   category: string;
+  // Gemini's self-assessed extraction confidence (0-1). Optional: older
+  // broccoli-model deployments omit it.
+  confidence?: number;
 };
 
 // The `data` payload broccoli-model returns from /ocr. All fields are
