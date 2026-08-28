@@ -1,10 +1,11 @@
+import { Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import {
-  Geist_400Regular,
-  Geist_500Medium,
-  Geist_600SemiBold,
-  Geist_700Bold,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
   useFonts,
-} from '@expo-google-fonts/geist';
+} from '@expo-google-fonts/inter';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, useColorScheme } from 'react-native';
@@ -28,13 +29,15 @@ export default function TabLayout() {
   // cookie landed in secure storage.
   const { data: session, isPending, refetch } = authClient.useSession();
 
-  // Brand typeface (styling epic 3nl.3). If loading errors we render anyway —
-  // ThemedText falls back to the system font for unregistered families.
+  // Brand typeface — Produce Ledger (styling, planning/mobile-redesign-2026-08-28.md).
+  // If loading errors we render anyway — ThemedText falls back to the system
+  // font for unregistered families.
   const [fontsLoaded, fontError] = useFonts({
-    Geist_400Regular,
-    Geist_500Medium,
-    Geist_600SemiBold,
-    Geist_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Fraunces_600SemiBold,
   });
   const fontsReady = fontsLoaded || fontError != null;
 
