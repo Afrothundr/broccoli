@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import type { StatsOverview } from '@/hooks/use-stats';
+import { useTheme } from '@/hooks/use-theme';
 
 // Weekly value USED vs wasted — the positive framing: most weeks the green
 // "you ate what you bought" bar should dominate. Paired bars, one shared $
@@ -36,6 +37,7 @@ function weekLabel(iso: string): string {
 
 export function UsageChart({ weekly }: { weekly: Week[] }) {
   const scheme = useColorScheme();
+  const theme = useTheme();
   const colors = SERIES[scheme === 'dark' ? 'dark' : 'light'];
   // Start on the latest week that has anything to say.
   const lastActive = weekly.reduce(
@@ -75,7 +77,17 @@ export function UsageChart({ weekly }: { weekly: Week[] }) {
             style={styles.group}>
             <ThemedView type="backgroundElement" style={styles.bars}>
               <ThemedView
-                style={[styles.bar, { height: barHeight(week.eaten), backgroundColor: colors.used }]}
+                style={[
+                  styles.bar,
+                  {
+                    height: barHeight(week.eaten),
+                    // Prototype 05: the week you're reading (the current one,
+                    // on open) lights up in floret lime. Color never carries
+                    // identity alone — the selector rail and caption also
+                    // mark the selection.
+                    backgroundColor: index === selected ? theme.floret : colors.used,
+                  },
+                ]}
               />
               <ThemedView
                 style={[styles.bar, { height: barHeight(week.wasted), backgroundColor: colors.wasted }]}

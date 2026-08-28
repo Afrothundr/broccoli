@@ -21,6 +21,9 @@ type EditableItem = {
   name: string;
   price: string;
   category: string | null;
+  // Parser's self-assessed extraction confidence (0-1). Only parser-produced
+  // rows have one — hand-added rows don't, and the chip stays hidden for them.
+  confidence?: number | null;
 };
 
 // "$12.98" / "1,234.5" -> number, anything unparseable -> null.
@@ -32,6 +35,29 @@ function parsePrice(raw: string): number | null {
 }
 
 let nextLocalKey = 0;
+
+// Prototype 02: confidence chip right of each row. Good sits on floret lime
+// (stalk-2 text), low sits on amber (amber-ink text) — same thresholds the
+// parser prompt uses ("below 0.7" is the check-me zone).
+const CONFIDENCE_LOW = 0.7;
+
+function ConfidenceChip({ confidence }: { confidence: number }) {
+  const theme = useTheme();
+  const low = confidence < CONFIDENCE_LOW;
+  return (
+    <ThemedView
+      style={[
+        styles.confidenceChip,
+        { backgroundColor: low ? `${theme.amber}40` : `${theme.floret}33` },
+      ]}>
+      <ThemedText
+        type="small"
+        style={{ color: low ? theme.statusWarn : theme.statusGood }}>
+        {Math.round(confidence * 100)}%
+      </ThemedText>
+    </ThemedView>
+  );
+}
 
 export function ReceiptReview({
   receipt,
@@ -48,6 +74,7 @@ export function ReceiptReview({
       name: item.name,
       price: item.price != null ? item.price.toFixed(2) : '',
       category: item.category,
+      confidence: item.confidence,
     }))
   );
   const [saving, setSaving] = useState(false);
@@ -113,6 +140,7 @@ export function ReceiptReview({
           name: i.name.trim(),
           price: parsePrice(i.price),
           category: i.category,
+          confidence: i.confidence ?? null,
         })),
       });
       onSaved(saved);
@@ -154,6 +182,7 @@ export function ReceiptReview({
                 accessibilityLabel={item.name ? `Price for ${item.name}` : 'Item price'}
                 keyboardType="decimal-pad"
               />
+              {item.confidence != null && <ConfidenceChip confidence={item.confidence} />}
               <Pressable
                 onPress={() => remove(item.localKey)}
                 hitSlop={Spacing.three}
@@ -264,6 +293,11 @@ const styles = StyleSheet.create({
   priceInput: {
     width: 90,
     textAlign: 'right',
+  },
+  confidenceChip: {
+    borderRadius: 999, // full-round, like the prototype's pills
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.half,
   },
   footer: {
     gap: Spacing.two,
