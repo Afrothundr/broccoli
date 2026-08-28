@@ -66,18 +66,20 @@ function toSections(items: InventoryItem[]): Section[] {
   return sections;
 }
 
+// Prototype 03 chip tones (planning/mobile-redesign-2026-08-28.md): good sits
+// on floret lime, warn on amber, bad on terracotta — all full-round pills with
+// the text color carrying the status, background at low opacity.
 function FreshnessChip({ freshness }: { freshness: Freshness }) {
   const theme = useTheme();
-  const color =
+  const { color, bg } =
     freshness.level === 'bad'
-      ? theme.statusBad
+      ? { color: theme.statusBad, bg: `${theme.statusBad}26` } // danger-broc/15
       : freshness.level === 'warn'
-        ? theme.statusWarn
-        : theme.statusGood;
+        ? { color: theme.statusWarn, bg: `${theme.amber}40` } // amber/25
+        : { color: theme.statusGood, bg: `${theme.floret}33` }; // floret/20
 
   return (
-    // 8-digit hex: chip background is the status color at ~10% opacity.
-    <ThemedView style={[styles.chip, { backgroundColor: `${color}1A` }]}>
+    <ThemedView style={[styles.chip, { backgroundColor: bg }]}>
       <ThemedText type="small" style={{ color }}>
         {freshness.chip}
       </ThemedText>
@@ -176,6 +178,13 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
             {metaLine}
           </ThemedText>
         )}
+        {/* Prototype 03 shows the reason on every collapsed card; the expanded
+            detail rows below carry the same sentence, so skip it there. */}
+        {!expanded && freshness && (
+          <ThemedText type="small" themeColor="textSecondary" style={styles.reason}>
+            {freshness.detail}
+          </ThemedText>
+        )}
       </Pressable>
       {expanded && (
         <ThemedView
@@ -264,6 +273,13 @@ export default function InventoryScreen() {
   const theme = useTheme();
   const { items, error, refreshing, refresh, reload } = useInventory();
   const [checkingIn, setCheckingIn] = useState(false);
+  // Prototype 03's badge: anything not `good` is "needs attention" — the same
+  // set that lifts into the "Use these first" section.
+  const attentionCount =
+    items?.filter((item) => {
+      const f = estimateFreshness(item);
+      return f !== null && f.level !== 'good';
+    }).length ?? 0;
 
   // Android hardware back dismisses the deck instead of exiting the app.
   const closeCheckIn = useCallback(() => {
@@ -287,7 +303,19 @@ export default function InventoryScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="subtitle">Your kitchen</ThemedText>
+        <ThemedView style={styles.titleRow}>
+          <ThemedText type="subtitle">Your kitchen</ThemedText>
+          {/* Prototype 03: "N need attention" pill beside the section label. */}
+          {items !== null && attentionCount > 0 && (
+            <ThemedView
+              accessibilityLabel={`${attentionCount} items need attention`}
+              style={[styles.attentionBadge, { backgroundColor: `${theme.statusBad}26` }]}>
+              <ThemedText type="small" style={{ color: theme.statusBad }}>
+                {attentionCount} need attention
+              </ThemedText>
+            </ThemedView>
+          )}
+        </ThemedView>
 
         {items !== null && items.length > 0 && (
           <Button title="Daily check-in" onPress={() => setCheckingIn(true)} />
@@ -334,7 +362,10 @@ export default function InventoryScreen() {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
             renderSectionHeader={({ section }) => (
               <ThemedView style={styles.sectionHeader}>
-                <ThemedText type="smallBold" themeColor="textSecondary">
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  style={styles.sectionLabel}>
                   {section.title}
                 </ThemedText>
               </ThemedView>
@@ -399,6 +430,27 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingBottom: Spacing.one,
   },
+  // Prototype header pattern: 11px uppercase, tracked, ink-2 metadata.
+  sectionLabel: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: 2.4, // ~0.22em at 11px
+    fontVariant: ['tabular-nums'],
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  attentionBadge: {
+    borderRadius: 999,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.half,
+  },
   row: {
     borderRadius: Spacing.two,
     paddingHorizontal: Spacing.three,
@@ -414,9 +466,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chip: {
-    borderRadius: Spacing.three,
+    borderRadius: 999, // full-round, like the prototype's pills
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
+  },
+  reason: {
+    fontSize: 12,
+    lineHeight: 18,
   },
   rowDetail: {
     gap: Spacing.two,
