@@ -73,9 +73,9 @@ function FreshnessChip({ freshness }: { freshness: Freshness }) {
   const theme = useTheme();
   const { color, bg } =
     freshness.level === 'bad'
-      ? { color: theme.statusBad, bg: `${theme.statusBad}26` } // danger-broc/15
+      ? { color: theme.statusBadInk, bg: `${theme.statusBad}26` } // danger-broc/15
       : freshness.level === 'warn'
-        ? { color: theme.statusWarn, bg: `${theme.amber}40` } // amber/25
+        ? { color: theme.statusWarnInk, bg: `${theme.amber}40` } // amber/25
         : { color: theme.statusGood, bg: `${theme.floret}33` }; // floret/20
 
   return (
@@ -312,7 +312,7 @@ export default function InventoryScreen() {
             <ThemedView
               accessibilityLabel={`${attentionCount} items need attention`}
               style={[styles.attentionBadge, { backgroundColor: `${theme.statusBad}26` }]}>
-              <ThemedText type="small" style={{ color: theme.statusBad }}>
+              <ThemedText type="small" style={{ color: theme.statusBadInk }}>
                 {attentionCount} need attention
               </ThemedText>
             </ThemedView>

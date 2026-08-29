@@ -52,7 +52,7 @@ function ConfidenceChip({ confidence }: { confidence: number }) {
       ]}>
       <ThemedText
         type="small"
-        style={{ color: low ? theme.statusWarn : theme.statusGood }}>
+        style={{ color: low ? theme.statusWarnInk : theme.statusGood }}>
         {Math.round(confidence * 100)}%
       </ThemedText>
     </ThemedView>

@@ -11,6 +11,8 @@ export default function AppTabs() {
     <NativeTabs
       backgroundColor={colors.background}
       indicatorColor={colors.backgroundElement}
+      // Default iOS tint is system blue — keep the bar in the brand palette.
+      iconColor={{ default: colors.textSecondary, selected: colors.primary }}
       labelStyle={{ selected: { color: colors.text } }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>

@@ -326,8 +326,8 @@ export function CheckInDeck({
               accessibilityLabel={`Tossed ${top.name}`}
               style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
               <ThemedView style={[styles.action, { backgroundColor: `${theme.background}33` }]}>
-                <Feather name="x" size={16} color={`${theme.background}D9`} />
-                <ThemedText type="smallBold" style={{ color: `${theme.background}D9` }}>
+                <Feather name="x" size={16} color={`${theme.background}EB`} />
+                <ThemedText type="smallBold" style={{ color: `${theme.background}EB` }}>
                   Tossed
                 </ThemedText>
               </ThemedView>
@@ -338,7 +338,7 @@ export function CheckInDeck({
               accessibilityLabel={`Still have ${top.name}`}
               style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
               <ThemedView style={[styles.action, { backgroundColor: `${theme.background}2E` }]}>
-                <ThemedText type="smallBold" style={{ color: `${theme.background}D9` }}>
+                <ThemedText type="smallBold" style={{ color: `${theme.background}EB` }}>
                   Still have it
                 </ThemedText>
               </ThemedView>
