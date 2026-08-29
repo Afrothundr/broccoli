@@ -33,6 +33,11 @@ export const Colors = {
     statusGood: '#2F5A39', // stalk-2
     statusWarn: '#8A5A17', // amber-ink
     statusBad: '#BE5B38', // danger-broc (terracotta)
+    // Ink variants for status CHIPS — the plain status colors drop below
+    // 4.5:1 as small text on their tinted chip backgrounds (CVD audit
+    // 2026-08-28). Dark enough to pass AA on the chip fill in both themes.
+    statusWarnInk: '#7A4E13',
+    statusBadInk: '#8F3E22',
     // Extended Produce Ledger tokens — hero surfaces and accents.
     stalk: '#254527',
     floret: '#8FD25A',
@@ -53,6 +58,8 @@ export const Colors = {
     statusGood: '#5E9943',
     statusWarn: '#E0A83E',
     statusBad: '#E08A6A', // danger-broc, lightened for dark bg
+    statusWarnInk: '#E0A83E',
+    statusBadInk: '#E08A6A',
     stalk: '#122117',
     floret: '#8FD25A',
     floret2: '#A8DF7E',

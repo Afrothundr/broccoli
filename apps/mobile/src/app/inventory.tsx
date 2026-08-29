@@ -73,9 +73,9 @@ function FreshnessChip({ freshness }: { freshness: Freshness }) {
   const theme = useTheme();
   const { color, bg } =
     freshness.level === 'bad'
-      ? { color: theme.statusBad, bg: `${theme.statusBad}26` } // danger-broc/15
+      ? { color: theme.statusBadInk, bg: `${theme.statusBad}26` } // danger-broc/15
       : freshness.level === 'warn'
-        ? { color: theme.statusWarn, bg: `${theme.amber}40` } // amber/25
+        ? { color: theme.statusWarnInk, bg: `${theme.amber}40` } // amber/25
         : { color: theme.statusGood, bg: `${theme.floret}33` }; // floret/20
 
   return (
@@ -290,10 +290,12 @@ export default function InventoryScreen() {
 
   // The daily check-in takes over the screen (same pattern as capture →
   // review); closing it refetches so resolved items drop out of the list.
+  // The stalk surface must wrap the SafeAreaView too — the deck paints its
+  // own background, and a paper shell would show around it.
   if (checkingIn && items && items.length > 0) {
     return (
-      <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
+      <ThemedView style={[styles.container, { backgroundColor: theme.stalk }]}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
           <CheckInDeck items={items} onClose={closeCheckIn} />
         </SafeAreaView>
       </ThemedView>
@@ -310,7 +312,7 @@ export default function InventoryScreen() {
             <ThemedView
               accessibilityLabel={`${attentionCount} items need attention`}
               style={[styles.attentionBadge, { backgroundColor: `${theme.statusBad}26` }]}>
-              <ThemedText type="small" style={{ color: theme.statusBad }}>
+              <ThemedText type="small" style={{ color: theme.statusBadInk }}>
                 {attentionCount} need attention
               </ThemedText>
             </ThemedView>

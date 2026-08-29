@@ -67,7 +67,8 @@ export function estimateFreshness(item: InventoryItem, now = Date.now()): Freshn
     return {
       daysLeft,
       level: 'warn',
-      chip: 'use soon',
+      // Prototype tone: the last-day chip says what to do, not how long.
+      chip: daysLeft === 1 ? 'eat by tomorrow' : 'use soon',
       detail: `About ${Math.max(daysLeft, 1)} ${daysLeft === 1 ? 'day' : 'days'} left${suffix}.`,
       sourceLabel,
     };
