@@ -28,6 +28,15 @@ export const appRouter = router({
   // Inventory & daily check-in: list current items, swipe eaten/tossed, undo.
   item: itemRouter,
 
+  // The full ItemType catalog (name + broad category), for the review
+  // screen's category quick-pick — 162 rows, cheap to ship whole.
+  itemTypes: protectedProcedure.query(async () =>
+    prisma.itemType.findMany({
+      select: { name: true, category: true },
+      orderBy: { name: "asc" as const },
+    })
+  ),
+
   // Push registration + nudge preferences (Phase 4).
   push: pushRouter,
 
