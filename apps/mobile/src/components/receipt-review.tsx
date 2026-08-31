@@ -132,8 +132,17 @@ export function ReceiptReview({
   );
   const pickCategory = (name: string) => {
     if (pickerFor) edit(pickerFor, { category: name });
+    closePicker();
+  };
+  // One close path so the next open starts clean, and a failed catalog fetch
+  // retries instead of caching the error for the session.
+  const closePicker = () => {
     setPickerFor(null);
     setTypeSearch('');
+  };
+  const closeAndRetry = () => {
+    setTypesError(false);
+    closePicker();
   };
 
   const edit = (localKey: string, patch: Partial<EditableItem>) =>
@@ -320,7 +329,7 @@ export function ReceiptReview({
       <Modal
         visible={pickerFor !== null}
         animationType="slide"
-        onRequestClose={() => setPickerFor(null)}
+        onRequestClose={closeAndRetry}
         accessibilityViewIsModal>
         <ThemedView style={styles.modalPage}>
           <ThemedView type="backgroundElement" style={styles.modalCard}>
@@ -371,7 +380,7 @@ export function ReceiptReview({
                 }
               />
             )}
-            <Button title="Done" onPress={() => setPickerFor(null)} style={styles.stretch} />
+            <Button title="Done" onPress={closeAndRetry} style={styles.stretch} />
           </ThemedView>
         </ThemedView>
       </Modal>
