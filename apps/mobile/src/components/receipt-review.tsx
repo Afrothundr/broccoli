@@ -164,8 +164,11 @@ export function ReceiptReview({
         </ThemedText>
 
         {items.map((item) => (
-          <ThemedView key={item.localKey} style={styles.itemRow}>
-            <ThemedView style={styles.itemFields}>
+          <ThemedView
+            key={item.localKey}
+            type="backgroundElement"
+            style={[styles.itemRow, { borderColor: theme.border }]}>
+            <ThemedView type="backgroundElement" style={styles.itemFields}>
               <Input
                 style={styles.nameInput}
                 value={item.name}
@@ -192,11 +195,12 @@ export function ReceiptReview({
                 <Feather name="x" size={18} color={theme.textSecondary} />
               </Pressable>
             </ThemedView>
-            {item.category && (
-              <ThemedText type="small" themeColor="textSecondary">
-                {item.category}
+            <ThemedView type="backgroundElement" style={styles.categoryRow}>
+              <Feather name="tag" size={12} color={theme.textSecondary} />
+              <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                {item.category ?? 'Uncategorized'}
               </ThemedText>
-            )}
+            </ThemedView>
           </ThemedView>
         ))}
 
@@ -274,13 +278,25 @@ const styles = StyleSheet.create({
   removedText: {
     flexShrink: 1,
   },
+  // Each item is a card (prototype 02): fields on top, its category tucked
+  // inside the card below — the category belongs to this item and nothing
+  // else, so it can't be misread against a neighbouring row.
   itemRow: {
     gap: Spacing.one,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
+    padding: Spacing.two,
   },
   itemFields: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingLeft: Spacing.half,
   },
   addRow: {
     flexDirection: 'row',

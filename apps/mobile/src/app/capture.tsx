@@ -24,6 +24,10 @@ type UploadedReceipt = {
   url: string;
   key: string;
   isPdf: boolean;
+  // Real pixel aspect (width/height) when we have it, so the parse-wait
+  // preview can shape itself to the photo instead of letterboxing a tall
+  // receipt into a 3:4 box (which read as an empty white frame).
+  aspect?: number;
 };
 
 // The parse wait is the app's longest silence (the poll allows up to 90s), so
@@ -59,12 +63,17 @@ function useParseStageMessage(active: boolean): string {
 // bottom edge while the receipt is being read.
 function ViewfinderFrame({
   processing,
+  aspect,
   children,
 }: {
   processing: boolean;
+  // width/height of the photo; the frame shapes itself to it (clamped so
+  // extreme panoramas/tall scans stay on-screen). Falls back to 3:4.
+  aspect?: number;
   children: React.ReactNode;
 }) {
   const theme = useTheme();
+  const clampedAspect = Math.min(0.9, Math.max(0.55, aspect ?? 3 / 4));
   const corner = {
     position: 'absolute' as const,
     width: 20,
@@ -72,7 +81,7 @@ function ViewfinderFrame({
     borderColor: theme.floret,
   };
   return (
-    <ThemedView style={styles.viewfinder}>
+    <ThemedView style={[styles.viewfinder, { aspectRatio: clampedAspect }]}>
       {children}
       {/* inner floret frame, floret/70 */}
       <ThemedView
@@ -99,6 +108,8 @@ function ViewfinderFrame({
 export default function CaptureScreen() {
   const theme = useTheme();
   const [uploaded, setUploaded] = useState<UploadedReceipt | null>(null);
+  // Picked photo's width/height ratio, for the parse-wait preview shape.
+  const [photoAspect, setPhotoAspect] = useState<number | undefined>(undefined);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [saved, setSaved] = useState<ParsedReceipt | null>(null);
   // Whether the in-flight upload is a PDF. A ref, not state: it's read inside
@@ -179,6 +190,10 @@ export default function CaptureScreen() {
 
     const asset = result.assets[0];
     pdfInFlight.current = false;
+    // Aspect carried through to the parse-wait preview (see UploadedReceipt).
+    setPhotoAspect(
+      asset.width && asset.height && asset.height > 0 ? asset.width / asset.height : undefined
+    );
     const file = {
       uri: asset.uri,
       name: asset.fileName ?? asset.uri.split('/').pop() ?? 'receipt.jpg',
@@ -245,6 +260,10 @@ export default function CaptureScreen() {
 
   const error = uploadError ?? (parse.state.status === 'error' ? parse.state.message : null);
   const busy = isUploading || parse.state.status === 'processing';
+  // True only while the parse itself runs (not during upload): the viewfinder
+  // + pill are showing, so the capture buttons step aside and Cancel is the
+  // only action.
+  const parsing = parse.state.status === 'processing';
 
   const cancelParse = () => {
     parse.reset();
@@ -283,18 +302,24 @@ export default function CaptureScreen() {
                   </ThemedText>
                 </ThemedView>
               ) : (
-                <ViewfinderFrame processing={parse.state.status === 'processing'}>
-                  <Image source={{ uri: uploaded.url }} style={styles.previewImage} contentFit="cover" />
+                <ViewfinderFrame processing={parsing} aspect={photoAspect}>
+                  {/* contain, not cover: a tall camera-roll receipt center-cropped
+                      to 3:4 shows a meaningless middle slice. Letterbox instead so
+                      the user can confirm the whole photo is the right receipt. */}
+                  <Image
+                    source={{ uri: uploaded.url }}
+                    style={[styles.previewImage, { backgroundColor: theme.backgroundElement }]}
+                    contentFit="contain"
+                  />
                 </ViewfinderFrame>
               )}
-              {parse.state.status === 'processing' && (
+              {parsing && (
                 <>
-                  <ThemedView style={styles.statusRow}>
-                    <ActivityIndicator size="small" />
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {parseMessage}
-                    </ThemedText>
-                  </ThemedView>
+                  {/* The in-frame pill already says "Reading your receipt" —
+                      no spinner here, just the rotating detail + Cancel. */}
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.title}>
+                    {parseMessage}
+                  </ThemedText>
                   <Pressable
                     onPress={cancelParse}
                     hitSlop={Spacing.two}
@@ -354,32 +379,36 @@ export default function CaptureScreen() {
           </ThemedView>
         )}
 
-        <Button
-          title={saved !== null || uploaded !== null ? 'Snap another receipt' : 'Open camera'}
-          loading={busy}
-          onPress={() => capture('camera')}
-          style={styles.stretch}
-        />
+        {!parsing && (
+          <>
+            <Button
+              title={saved !== null || uploaded !== null ? 'Snap another receipt' : 'Open camera'}
+              loading={busy}
+              onPress={() => capture('camera')}
+              style={styles.stretch}
+            />
 
-        <Pressable
-          onPress={() => capture('library')}
-          disabled={busy}
-          hitSlop={Spacing.two}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: busy }}
-          style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
-          <ThemedText type="linkPrimary">Choose from your photos</ThemedText>
-        </Pressable>
+            <Pressable
+              onPress={() => capture('library')}
+              disabled={busy}
+              hitSlop={Spacing.two}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: busy }}
+              style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
+              <ThemedText type="linkPrimary">Choose from your photos</ThemedText>
+            </Pressable>
 
-        <Pressable
-          onPress={pickPdf}
-          disabled={busy}
-          hitSlop={Spacing.two}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: busy }}
-          style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
-          <ThemedText type="linkPrimary">Upload a PDF receipt</ThemedText>
-        </Pressable>
+            <Pressable
+              onPress={pickPdf}
+              disabled={busy}
+              hitSlop={Spacing.two}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: busy }}
+              style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
+              <ThemedText type="linkPrimary">Upload a PDF receipt</ThemedText>
+            </Pressable>
+          </>
+        )}
       </SafeAreaView>
     </ThemedView>
   );
@@ -415,14 +444,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   preview: {
-    width: 220,
+    width: 260,
     aspectRatio: 3 / 4,
     borderRadius: Spacing.three,
   },
   // The viewfinder frame (prototype 01). The image fills it edge-to-edge;
   // frame, brackets, and pill overlay on top.
   viewfinder: {
-    width: 220,
+    width: 260,
     aspectRatio: 3 / 4,
     borderRadius: Spacing.three,
     overflow: 'hidden',
@@ -434,6 +463,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
   },
+  // Overlays must be transparent: ThemedView defaults to a paper background,
+  // and viewfinderBorder is a full-size rectangle that would otherwise paint
+  // paper over the photo, leaving only the outer ring visible.
   viewfinderBorder: {
     position: 'absolute',
     top: 16,
@@ -442,30 +474,35 @@ const styles = StyleSheet.create({
     left: 16,
     borderRadius: Spacing.two,
     borderWidth: 1,
+    backgroundColor: 'transparent',
   },
   cornerTopLeft: {
     top: 16,
     left: 16,
     borderLeftWidth: 2,
     borderTopWidth: 2,
+    backgroundColor: 'transparent',
   },
   cornerTopRight: {
     top: 16,
     right: 16,
     borderRightWidth: 2,
     borderTopWidth: 2,
+    backgroundColor: 'transparent',
   },
   cornerBottomLeft: {
     bottom: 16,
     left: 16,
     borderLeftWidth: 2,
     borderBottomWidth: 2,
+    backgroundColor: 'transparent',
   },
   cornerBottomRight: {
     bottom: 16,
     right: 16,
     borderRightWidth: 2,
     borderBottomWidth: 2,
+    backgroundColor: 'transparent',
   },
   viewfinderPillWrap: {
     position: 'absolute',
@@ -474,6 +511,7 @@ const styles = StyleSheet.create({
     left: 0,
     alignItems: 'center',
     paddingBottom: Spacing.three,
+    backgroundColor: 'transparent',
   },
   viewfinderPill: {
     borderRadius: 999,
