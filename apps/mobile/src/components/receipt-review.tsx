@@ -1,6 +1,14 @@
 import { Feather } from '@expo/vector-icons';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -41,6 +49,12 @@ let nextLocalKey = 0;
 // parser prompt uses ("below 0.7" is the check-me zone).
 const CONFIDENCE_LOW = 0.7;
 
+// Parser lines below this never reach the review list (a garbled 40% line is
+// noise the user would just X out; it's re-addable by hand if it was real).
+const CONFIDENCE_FLOOR = 0.75;
+
+type ItemTypeOption = { name: string; category: string };
+
 function ConfidenceChip({ confidence }: { confidence: number }) {
   const theme = useTheme();
   const low = confidence < CONFIDENCE_LOW;
@@ -67,15 +81,23 @@ export function ReceiptReview({
   onSaved: (saved: ParsedReceipt) => void;
 }) {
   const theme = useTheme();
+  // Parser lines under this confidence are dropped before they ever reach the
+  // review list — a garbled 40% line is noise the user would just X out, and
+  // it's re-addable by hand if it was real. Chips still show for ≥floor rows.
+  const droppedCount = receipt.items.filter(
+    (i) => i.confidence != null && i.confidence < CONFIDENCE_FLOOR
+  ).length;
   const [items, setItems] = useState<EditableItem[]>(() =>
-    receipt.items.map((item) => ({
-      localKey: item.id,
-      id: item.id,
-      name: item.name,
-      price: item.price != null ? item.price.toFixed(2) : '',
-      category: item.category,
-      confidence: item.confidence,
-    }))
+    receipt.items
+      .filter((i) => i.confidence == null || i.confidence >= CONFIDENCE_FLOOR)
+      .map((item) => ({
+        localKey: item.id,
+        id: item.id,
+        name: item.name,
+        price: item.price != null ? item.price.toFixed(2) : '',
+        category: item.category,
+        confidence: item.confidence,
+      }))
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +107,34 @@ export function ReceiptReview({
   const [lastRemoved, setLastRemoved] = useState<{ item: EditableItem; index: number } | null>(
     null
   );
+
+  // Category quick-pick: tapping a card's category row opens a searchable
+  // modal over the ItemType catalog (the same 162 names the parser snaps to,
+  // so a picked name always resolves to shelf-life data server-side).
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
+  const [typeSearch, setTypeSearch] = useState('');
+  const [typeOptions, setTypeOptions] = useState<ItemTypeOption[] | null>(null);
+  const [typesError, setTypesError] = useState(false);
+  useEffect(() => {
+    if (!pickerFor || typeOptions) return;
+    let active = true;
+    trpc.itemTypes
+      .query()
+      .then((rows) => active && setTypeOptions(rows))
+      .catch(() => active && setTypesError(true));
+    return () => {
+      active = false;
+    };
+  }, [pickerFor, typeOptions]);
+  const pickerItem = items.find((i) => i.localKey === pickerFor) ?? null;
+  const filteredTypes = (typeOptions ?? []).filter((t) =>
+    t.name.toLowerCase().includes(typeSearch.trim().toLowerCase())
+  );
+  const pickCategory = (name: string) => {
+    if (pickerFor) edit(pickerFor, { category: name });
+    setPickerFor(null);
+    setTypeSearch('');
+  };
 
   const edit = (localKey: string, patch: Partial<EditableItem>) =>
     setItems((prev) => prev.map((i) => (i.localKey === localKey ? { ...i, ...patch } : i)));
@@ -160,8 +210,14 @@ export function ReceiptReview({
         keyboardShouldPersistTaps="handled">
         <ThemedText type="subtitle">Check your items</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Fix anything the scan got wrong — tap a name or price to edit.
+          Fix anything the scan got wrong — tap a name, price, or category to edit.
         </ThemedText>
+        {droppedCount > 0 && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {droppedCount} low-confidence {droppedCount === 1 ? 'line' : 'lines'} from the scan
+            were left out — add them by hand if they're real.
+          </ThemedText>
+        )}
 
         {items.map((item) => (
           <ThemedView
@@ -195,12 +251,19 @@ export function ReceiptReview({
                 <Feather name="x" size={18} color={theme.textSecondary} />
               </Pressable>
             </ThemedView>
-            <ThemedView type="backgroundElement" style={styles.categoryRow}>
+            <Pressable
+              onPress={() => setPickerFor(item.localKey)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                item.category ? `Change category, currently ${item.category}` : 'Set category'
+              }
+              style={({ pressed }) => [styles.categoryRow, pressed && styles.pressed]}>
               <Feather name="tag" size={12} color={theme.textSecondary} />
               <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
                 {item.category ?? 'Uncategorized'}
               </ThemedText>
-            </ThemedView>
+              <Feather name="chevron-right" size={12} color={theme.textSecondary} />
+            </Pressable>
           </ThemedView>
         ))}
 
@@ -253,6 +316,65 @@ export function ReceiptReview({
         </ThemedView>
         <Button title="Add to kitchen" loading={saving} onPress={save} />
       </ThemedView>
+
+      <Modal
+        visible={pickerFor !== null}
+        animationType="slide"
+        onRequestClose={() => setPickerFor(null)}
+        accessibilityViewIsModal>
+        <ThemedView style={styles.modalPage}>
+          <ThemedView type="backgroundElement" style={styles.modalCard}>
+            <ThemedText type="smallBold" numberOfLines={1}>
+              Category for {pickerItem?.name.trim() || 'item'}
+            </ThemedText>
+            <Input
+              value={typeSearch}
+              onChangeText={setTypeSearch}
+              placeholder="Search categories…"
+              accessibilityLabel="Search categories"
+            />
+            {typesError ? (
+              <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                Couldn't load categories. Close and try again.
+              </ThemedText>
+            ) : !typeOptions ? (
+              <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                Loading…
+              </ThemedText>
+            ) : (
+              <FlatList
+                data={filteredTypes}
+                keyExtractor={(t) => t.name}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item: t }) => (
+                  <Pressable
+                    onPress={() => pickCategory(t.name)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Set category to ${t.name}`}
+                    style={({ pressed }) => [
+                      styles.typeRow,
+                      pressed && styles.pressed,
+                      pickerItem?.category === t.name && styles.typeRowCurrent,
+                    ]}>
+                    <ThemedText type="small" numberOfLines={1} style={styles.typeName}>
+                      {t.name}
+                    </ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                      {t.category}
+                    </ThemedText>
+                  </Pressable>
+                )}
+                ListEmptyComponent={
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                    No match — leave it uncategorized.
+                  </ThemedText>
+                }
+              />
+            )}
+            <Button title="Done" onPress={() => setPickerFor(null)} style={styles.stretch} />
+          </ThemedView>
+        </ThemedView>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -297,6 +419,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.one,
     paddingLeft: Spacing.half,
+  },
+  // Category quick-pick modal
+  modalPage: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    gap: Spacing.two,
+    borderTopLeftRadius: Spacing.three,
+    borderTopRightRadius: Spacing.three,
+    padding: Spacing.four,
+    paddingBottom: BottomTabInset + Spacing.four,
+    maxHeight: '85%',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  modalStatus: {
+    textAlign: 'center',
+    paddingVertical: Spacing.four,
+  },
+  typeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.one,
+    borderRadius: Spacing.one,
+  },
+  typeRowCurrent: {
+    backgroundColor: 'rgba(0,0,0,0.04)',
+  },
+  typeName: {
+    flexShrink: 1,
+  },
+  stretch: {
+    alignSelf: 'stretch',
   },
   addRow: {
     flexDirection: 'row',
