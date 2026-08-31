@@ -245,6 +245,10 @@ export default function CaptureScreen() {
 
   const error = uploadError ?? (parse.state.status === 'error' ? parse.state.message : null);
   const busy = isUploading || parse.state.status === 'processing';
+  // True only while the parse itself runs (not during upload): the viewfinder
+  // + pill are showing, so the capture buttons step aside and Cancel is the
+  // only action.
+  const parsing = parse.state.status === 'processing';
 
   const cancelParse = () => {
     parse.reset();
@@ -294,14 +298,13 @@ export default function CaptureScreen() {
                   />
                 </ViewfinderFrame>
               )}
-              {parse.state.status === 'processing' && (
+              {parsing && (
                 <>
-                  <ThemedView style={styles.statusRow}>
-                    <ActivityIndicator size="small" />
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {parseMessage}
-                    </ThemedText>
-                  </ThemedView>
+                  {/* The in-frame pill already says "Reading your receipt" —
+                      no spinner here, just the rotating detail + Cancel. */}
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.title}>
+                    {parseMessage}
+                  </ThemedText>
                   <Pressable
                     onPress={cancelParse}
                     hitSlop={Spacing.two}
@@ -361,32 +364,36 @@ export default function CaptureScreen() {
           </ThemedView>
         )}
 
-        <Button
-          title={saved !== null || uploaded !== null ? 'Snap another receipt' : 'Open camera'}
-          loading={busy}
-          onPress={() => capture('camera')}
-          style={styles.stretch}
-        />
+        {!parsing && (
+          <>
+            <Button
+              title={saved !== null || uploaded !== null ? 'Snap another receipt' : 'Open camera'}
+              loading={busy}
+              onPress={() => capture('camera')}
+              style={styles.stretch}
+            />
 
-        <Pressable
-          onPress={() => capture('library')}
-          disabled={busy}
-          hitSlop={Spacing.two}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: busy }}
-          style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
-          <ThemedText type="linkPrimary">Choose from your photos</ThemedText>
-        </Pressable>
+            <Pressable
+              onPress={() => capture('library')}
+              disabled={busy}
+              hitSlop={Spacing.two}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: busy }}
+              style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
+              <ThemedText type="linkPrimary">Choose from your photos</ThemedText>
+            </Pressable>
 
-        <Pressable
-          onPress={pickPdf}
-          disabled={busy}
-          hitSlop={Spacing.two}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: busy }}
-          style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
-          <ThemedText type="linkPrimary">Upload a PDF receipt</ThemedText>
-        </Pressable>
+            <Pressable
+              onPress={pickPdf}
+              disabled={busy}
+              hitSlop={Spacing.two}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: busy }}
+              style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
+              <ThemedText type="linkPrimary">Upload a PDF receipt</ThemedText>
+            </Pressable>
+          </>
+        )}
       </SafeAreaView>
     </ThemedView>
   );
@@ -422,14 +429,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   preview: {
-    width: 220,
+    width: 260,
     aspectRatio: 3 / 4,
     borderRadius: Spacing.three,
   },
   // The viewfinder frame (prototype 01). The image fills it edge-to-edge;
   // frame, brackets, and pill overlay on top.
   viewfinder: {
-    width: 220,
+    width: 260,
     aspectRatio: 3 / 4,
     borderRadius: Spacing.three,
     overflow: 'hidden',
