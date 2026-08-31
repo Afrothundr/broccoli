@@ -284,7 +284,14 @@ export default function CaptureScreen() {
                 </ThemedView>
               ) : (
                 <ViewfinderFrame processing={parse.state.status === 'processing'}>
-                  <Image source={{ uri: uploaded.url }} style={styles.previewImage} contentFit="cover" />
+                  {/* contain, not cover: a tall camera-roll receipt center-cropped
+                      to 3:4 shows a meaningless middle slice. Letterbox instead so
+                      the user can confirm the whole photo is the right receipt. */}
+                  <Image
+                    source={{ uri: uploaded.url }}
+                    style={[styles.previewImage, { backgroundColor: theme.backgroundElement }]}
+                    contentFit="contain"
+                  />
                 </ViewfinderFrame>
               )}
               {parse.state.status === 'processing' && (
