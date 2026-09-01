@@ -168,7 +168,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <ThemedView style={styles.headerRow}>
-            <ThemedText type="subtitle">Your savings</ThemedText>
+            <ThemedText type="title">Your savings</ThemedText>
             <Pressable
               onPress={() => setSettingsOpen(true)}
               hitSlop={Spacing.three}
