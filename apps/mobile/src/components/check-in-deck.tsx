@@ -191,7 +191,7 @@ export function CheckInDeck({
     // paper on top of it.
     <ThemedView style={[styles.container, { backgroundColor: theme.stalk }]}>
       <ThemedView style={styles.header}>
-        <ThemedText type="subtitle" style={{ color: theme.background }}>
+        <ThemedText type="title" style={{ color: theme.background }}>
           Daily check-in
         </ThemedText>
         <Pressable
@@ -359,7 +359,7 @@ export function CheckInDeck({
         </>
       ) : (
         <ThemedView style={styles.doneArea}>
-          <ThemedText type="subtitle" style={[styles.doneTitle, { color: theme.background }]}>
+          <ThemedText type="title" style={[styles.doneTitle, { color: theme.background }]}>
             All caught up
           </ThemedText>
           {/* Peak-end: close on what the session kept in play, not a tally of

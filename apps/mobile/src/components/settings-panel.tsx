@@ -18,7 +18,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
-        <ThemedText type="subtitle">Settings</ThemedText>
+        <ThemedText type="title">Settings</ThemedText>
         <Pressable
           onPress={onClose}
           hitSlop={Spacing.three}
