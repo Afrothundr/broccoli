@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ReceiptReview } from '@/components/receipt-review';
@@ -277,7 +277,7 @@ export default function CaptureScreen() {
           {saved ? (
             <>
               <Feather name="check-circle" size={44} color={theme.statusGood} />
-              <ThemedText type="subtitle" style={styles.title}>
+              <ThemedText type="title" style={styles.title}>
                 Saved
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.title}>
@@ -335,9 +335,8 @@ export default function CaptureScreen() {
             </>
           ) : (
             <>
-              {/* subtitle, not title: Home and Kitchen head with 32px — the
-                  top-level screens share one headline scale. */}
-              <ThemedText type="subtitle" style={styles.title}>
+              {/* Shared page-header type — Fraunces, same scale as Kitchen. */}
+              <ThemedText type="title" style={styles.title}>
                 Snap a receipt
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.title}>

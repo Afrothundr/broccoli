@@ -217,14 +217,14 @@ export function ReceiptReview({
         style={styles.flex}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled">
-        <ThemedText type="subtitle">Check your items</ThemedText>
+        <ThemedText type="title">Check your items</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           Fix anything the scan got wrong — tap a name, price, or category to edit.
         </ThemedText>
         {droppedCount > 0 && (
           <ThemedText type="small" themeColor="textSecondary">
             {droppedCount} low-confidence {droppedCount === 1 ? 'line' : 'lines'} from the scan
-            were left out — add them by hand if they're real.
+            were left out — add them by hand if they&apos;re real.
           </ThemedText>
         )}
 
@@ -344,7 +344,7 @@ export function ReceiptReview({
             />
             {typesError ? (
               <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
-                Couldn't load categories. Close and try again.
+                Couldn&apos;t load categories. Close and try again.
               </ThemedText>
             ) : !typeOptions ? (
               <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>

@@ -381,7 +381,7 @@ export default function InventoryScreen() {
         <ThemedView style={styles.titleRow}>
           {/* Screen header: same Inter family as the rest of the UI, sized
               down from the prototype's display treatment. */}
-          <ThemedText type="subtitle" style={styles.screenTitle}>Your kitchen</ThemedText>
+          <ThemedText type="title">Your kitchen</ThemedText>
           {/* Prototype 03: the pill beside the h1 carries the money at stake.
               Falls back to a count when prices are missing. */}
           {items !== null && attentionCount > 0 && (
@@ -545,12 +545,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
-  },
-  screenTitle: {
-    // subtitle's Inter weight, one step under its default 32px — the h1
-    // shouldn't shout from the tab bar up.
-    fontSize: 26,
-    lineHeight: 32,
   },
   rowName: {
     flex: 1,

@@ -77,9 +77,10 @@ const styles = StyleSheet.create({
     fontWeight: 500,
   },
   title: {
-    fontSize: 48,
-    fontWeight: 600,
-    lineHeight: 52,
+    // The one page-header style: Fraunces display, aligned across screens
+    // (kitchen, capture, review, settings, check-in deck all use this).
+    fontSize: 26,
+    lineHeight: 32,
   },
   subtitle: {
     fontSize: 32,
