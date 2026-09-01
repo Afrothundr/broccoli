@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -337,6 +337,8 @@ export default function InventoryScreen() {
   const theme = useTheme();
   const { items, error, refreshing, refresh, reload } = useInventory();
   const [checkingIn, setCheckingIn] = useState(false);
+  // For the at-risk pill's tap-to-jump: scroll the urgent section into view.
+  const listRef = useRef<SectionList<Row, Section>>(null);
   // Prototype 03's badge: anything not `good` is "needs attention" — the same
   // set that lifts into the "Use these first" section.
   const attentionCount =
@@ -379,25 +381,39 @@ export default function InventoryScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedView style={styles.titleRow}>
-          {/* Screen header: same Inter family as the rest of the UI, sized
-              down from the prototype's display treatment. */}
           <ThemedText type="title">Your kitchen</ThemedText>
-          {/* Prototype 03: the pill beside the h1 carries the money at stake.
-              Falls back to a count when prices are missing. */}
+          {/* Prototype 03: "$X.XX AT RISK" beside the h1 — the money at stake
+              in the items that need attention. Tapping it jumps to the urgent
+              section, so the pill is a shortcut, not just a stat. Falls back
+              to a count when the items carry no prices. */}
           {items !== null && attentionCount > 0 && (
-            <ThemedView
+            <Pressable
+              onPress={() => {
+                listRef.current?.scrollToLocation({
+                  sectionIndex: 0,
+                  itemIndex: 0,
+                  animated: true,
+                  viewPosition: 0,
+                });
+              }}
+              accessibilityRole="button"
               accessibilityLabel={
                 atRisk > 0
-                  ? `$${atRisk.toFixed(2)} of food at risk of going to waste`
-                  : `${attentionCount} items need attention`
+                  ? `$${atRisk.toFixed(2)} of food at risk of going to waste — jump to those items`
+                  : `${attentionCount} items need attention — jump to those items`
               }
-              style={[styles.attentionBadge, { backgroundColor: `${theme.statusBad}26` }]}>
-              <ThemedText type="smallBold" style={{ color: theme.statusBadInk }}>
-                {atRisk > 0
-                  ? `$${atRisk.toFixed(2)} at risk`
-                  : `${attentionCount} need attention`}
-              </ThemedText>
-            </ThemedView>
+              style={({ pressed }) => pressed && styles.pressed}>
+              <ThemedView
+                style={[styles.attentionBadge, { backgroundColor: `${theme.statusBad}26` }]}>
+                <ThemedText
+                  type="smallBold"
+                  style={[styles.attentionText, { color: theme.statusBadInk }]}>
+                  {atRisk > 0
+                    ? `$${atRisk.toFixed(2)} at risk`
+                    : `${attentionCount} need attention`}
+                </ThemedText>
+              </ThemedView>
+            </Pressable>
           )}
         </ThemedView>
 
@@ -439,6 +455,7 @@ export default function InventoryScreen() {
           </ThemedView>
         ) : (
           <SectionList
+            ref={listRef}
             sections={toSections(items)}
             keyExtractor={(row) => row.item.id}
             style={styles.list}
@@ -534,6 +551,11 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
+  },
+  // Prototype 03 tone: uppercase, tracked; ink color comes from the theme.
+  attentionText: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   row: {
     borderRadius: Spacing.two,
