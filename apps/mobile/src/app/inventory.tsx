@@ -14,7 +14,7 @@ import { CheckInDeck } from '@/components/check-in-deck';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
-import { BottomTabInset, FontFamilies, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useBackHandler } from '@/hooks/use-back-handler';
 import { InventoryItem, useInventory } from '@/hooks/use-inventory';
 import { useTheme } from '@/hooks/use-theme';
@@ -197,7 +197,9 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
         )}
       </Pressable>
 
-      {/* EXP row: date chip left, urgency callout + date nudges right. */}
+      {/* EXP row: date chip left, urgency callout right. Date nudges live in
+          the expanded card — the collapsed card stays a read-and-decide
+          surface, not a control panel. */}
       {(expiresOn || statusLabel) && (
         <ThemedView type="backgroundElement" style={styles.controlRow}>
           {expiresOn && (
@@ -213,22 +215,6 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
               {statusLabel}
             </ThemedText>
           )}
-          <ThemedView type="backgroundElement" style={styles.flexSpacer} />
-          {ADJUSTMENTS.map(({ label, days, a11y }) => (
-            <Pressable
-              key={label}
-              onPress={() => adjustBy(days)}
-              disabled={busy}
-              hitSlop={Spacing.two}
-              accessibilityRole="button"
-              accessibilityLabel={a11y}
-              accessibilityState={{ disabled: busy }}
-              style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
-              <ThemedView type="backgroundSelected" style={styles.controlChip}>
-                <ThemedText type="smallBold">{label}</ThemedText>
-              </ThemedView>
-            </Pressable>
-          ))}
         </ThemedView>
       )}
 
@@ -280,6 +266,30 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
                 </ThemedText>
               </ThemedView>
             )}
+
+            <ThemedView type="backgroundElement" style={styles.controlRow}>
+              <Feather name="calendar" size={14} color={theme.textSecondary} />
+              {expiresOn && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {expiresOn}
+                </ThemedText>
+              )}
+              {ADJUSTMENTS.map(({ label, days, a11y }) => (
+                <Pressable
+                  key={label}
+                  onPress={() => adjustBy(days)}
+                  disabled={busy}
+                  hitSlop={Spacing.two}
+                  accessibilityRole="button"
+                  accessibilityLabel={a11y}
+                  accessibilityState={{ disabled: busy }}
+                  style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
+                  <ThemedView type="backgroundSelected" style={styles.controlChip}>
+                    <ThemedText type="small">{label}</ThemedText>
+                  </ThemedView>
+                </Pressable>
+              ))}
+            </ThemedView>
 
             <ThemedView type="backgroundElement" style={styles.controlRow}>
               <Feather name="map-pin" size={14} color={theme.textSecondary} />
@@ -369,8 +379,9 @@ export default function InventoryScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedView style={styles.titleRow}>
-          {/* Prototype 03: the screen h1 — Fraunces display, not UI weight. */}
-          <ThemedText type="title">Your kitchen</ThemedText>
+          {/* Screen header: same Inter family as the rest of the UI, sized
+              down from the prototype's display treatment. */}
+          <ThemedText type="subtitle" style={styles.screenTitle}>Your kitchen</ThemedText>
           {/* Prototype 03: the pill beside the h1 carries the money at stake.
               Falls back to a count when prices are missing. */}
           {items !== null && attentionCount > 0 && (
@@ -527,20 +538,22 @@ const styles = StyleSheet.create({
   row: {
     borderRadius: Spacing.two,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two + Spacing.one,
-    gap: Spacing.half,
+    paddingVertical: Spacing.three,
+    gap: Spacing.two,
   },
   rowMain: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
   },
+  screenTitle: {
+    // subtitle's Inter weight, one step under its default 32px — the h1
+    // shouldn't shout from the tab bar up.
+    fontSize: 26,
+    lineHeight: 32,
+  },
   rowName: {
     flex: 1,
-    // Prototype 03: item names set in the display serif, like the h1.
-    fontFamily: FontFamilies.frauncesSemiBold,
-    fontSize: 20,
-    lineHeight: 26,
   },
   statusDot: {
     width: 10,
@@ -555,13 +568,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
   },
-  flexSpacer: {
-    flex: 1,
-  },
   actionRow: {
     flexDirection: 'row',
     gap: Spacing.two,
-    marginTop: Spacing.one,
+    marginTop: Spacing.two,
   },
   actionButton: {
     flex: 1,
