@@ -14,7 +14,7 @@ import { CheckInDeck } from '@/components/check-in-deck';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, FontFamilies, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useBackHandler } from '@/hooks/use-back-handler';
 import { InventoryItem, useInventory } from '@/hooks/use-inventory';
 import { useTheme } from '@/hooks/use-theme';
@@ -66,35 +66,13 @@ function toSections(items: InventoryItem[]): Section[] {
   return sections;
 }
 
-// Prototype 03 chip tones (planning/mobile-redesign-2026-08-28.md): good sits
-// on floret lime, warn on amber, bad on terracotta — all full-round pills with
-// the text color carrying the status, background at low opacity.
-function FreshnessChip({ freshness }: { freshness: Freshness }) {
-  const theme = useTheme();
-  const { color, bg } =
-    freshness.level === 'bad'
-      ? { color: theme.statusBadInk, bg: `${theme.statusBad}26` } // danger-broc/15
-      : freshness.level === 'warn'
-        ? { color: theme.statusWarnInk, bg: `${theme.amber}40` } // amber/25
-        : { color: theme.statusGood, bg: `${theme.floret}33` }; // floret/20
-
-  return (
-    <ThemedView style={[styles.chip, { backgroundColor: bg }]}>
-      <ThemedText type="small" style={{ color }}>
-        {freshness.chip}
-      </ThemedText>
-    </ThemedView>
-  );
-}
-
 const LOCATIONS = ['PANTRY', 'FRIDGE', 'FREEZER'] as const;
-// Worded, not "−1d/+1w" shorthand — a first-timer shouldn't need a key to
-// read a date control. Three options, not four: the ±1 pair covers small
-// corrections and "+1 week" covers "I froze it / it keeps".
-const ADJUSTMENTS: { label: string; days: number }[] = [
-  { label: '− 1 day', days: -1 },
-  { label: '+ 1 day', days: 1 },
-  { label: '+ 1 week', days: 7 },
+// Compact prototype labels on the card (− / + / +1w); the accessible names
+// spell them out so no one needs a key to read the control.
+const ADJUSTMENTS: { label: string; days: number; a11y: string }[] = [
+  { label: '−', days: -1, a11y: 'Move expiration up by 1 day' },
+  { label: '+', days: 1, a11y: 'Extend expiration by 1 day' },
+  { label: '+1w', days: 7, a11y: 'Extend expiration by 1 week' },
 ];
 
 function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }) {
@@ -137,8 +115,24 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
     }
   };
 
-  // Two-line hierarchy: the name leads at full size; everything else is one
-  // quiet meta line. The expanded card is icon-led — no text labels.
+  // Prototype 03: check-in without the deck — one tap on the card, right here.
+  const resolve = async (outcome: 'EATEN' | 'TOSSED') => {
+    if (busy) return;
+    setBusy(true);
+    setRowError(null);
+    try {
+      await trpc.item.resolve.mutate({ id: item.id, outcome });
+      onChanged();
+    } catch {
+      setRowError("Couldn't save that. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Two-line hierarchy: the name leads in the display serif; everything else
+  // is one quiet meta line. Actions sit right on the card — no expansion
+  // needed for the common "ate it / tossed it" decision.
   const metaLine = [
     item.price != null ? `$${item.price.toFixed(2)}` : null,
     quantity,
@@ -151,10 +145,20 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
     freshness == null
       ? theme.textSecondary
       : freshness.level === 'bad'
-        ? theme.statusBad
+        ? theme.statusBadInk
         : freshness.level === 'warn'
-          ? theme.statusWarn
+          ? theme.statusWarnInk
           : theme.statusGood;
+  // Short urgency callout on the EXP row, prototype tone. Only when it
+  // changes what you do today — calm items get no label.
+  const statusLabel =
+    freshness == null || freshness.level === 'good'
+      ? null
+      : freshness.daysLeft < 0
+        ? 'CHECK IT'
+        : freshness.daysLeft === 0
+          ? 'EXPIRING TODAY'
+          : 'USE SOON';
 
   // The toggle Pressable wraps only the header lines. It used to wrap the
   // expanded controls too — a button role containing seven more buttons, which
@@ -171,21 +175,99 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
           <ThemedText style={styles.rowName} numberOfLines={expanded ? undefined : 1}>
             {item.name}
           </ThemedText>
-          {freshness?.chip != null && <FreshnessChip freshness={freshness} />}
+          {/* Status dot carries the freshness level — color-only is backed up
+              by the reason line and the EXP row below. */}
+          {freshness && (
+            <ThemedView
+              accessibilityLabel={`Freshness: ${freshness.chip ?? 'fine'}`}
+              style={[styles.statusDot, { backgroundColor: freshnessColor }]}
+            />
+          )}
         </ThemedView>
         {metaLine.length > 0 && (
           <ThemedText type="small" themeColor="textSecondary">
             {metaLine}
           </ThemedText>
         )}
-        {/* Prototype 03 shows the reason on every collapsed card; the expanded
-            detail rows below carry the same sentence, so skip it there. */}
-        {!expanded && freshness && (
+        {/* The reason only earns its line when it asks something of you. */}
+        {!expanded && freshness && freshness.level !== 'good' && (
           <ThemedText type="small" themeColor="textSecondary" style={styles.reason}>
             {freshness.detail}
           </ThemedText>
         )}
       </Pressable>
+
+      {/* EXP row: date chip left, urgency callout + date nudges right. */}
+      {(expiresOn || statusLabel) && (
+        <ThemedView type="backgroundElement" style={styles.controlRow}>
+          {expiresOn && (
+            <ThemedView type="backgroundSelected" style={styles.expChip}>
+              <ThemedText type="small" themeColor="textSecondary">
+                EXP
+              </ThemedText>
+              <ThemedText type="smallBold">{expiresOn}</ThemedText>
+            </ThemedView>
+          )}
+          {statusLabel && (
+            <ThemedText type="smallBold" style={{ color: freshnessColor }}>
+              {statusLabel}
+            </ThemedText>
+          )}
+          <ThemedView type="backgroundElement" style={styles.flexSpacer} />
+          {ADJUSTMENTS.map(({ label, days, a11y }) => (
+            <Pressable
+              key={label}
+              onPress={() => adjustBy(days)}
+              disabled={busy}
+              hitSlop={Spacing.two}
+              accessibilityRole="button"
+              accessibilityLabel={a11y}
+              accessibilityState={{ disabled: busy }}
+              style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
+              <ThemedView type="backgroundSelected" style={styles.controlChip}>
+                <ThemedText type="smallBold">{label}</ThemedText>
+              </ThemedView>
+            </Pressable>
+          ))}
+        </ThemedView>
+      )}
+
+      {/* Action row — the card's whole point: resolve it here, in one tap. */}
+      <ThemedView type="backgroundElement" style={styles.actionRow}>
+        <Pressable
+          onPress={() => resolve('EATEN')}
+          disabled={busy}
+          accessibilityRole="button"
+          accessibilityLabel={`Mark ${item.name} as eaten`}
+          accessibilityState={{ disabled: busy }}
+          style={({ pressed }) => [
+            styles.actionButton,
+            { backgroundColor: theme.primary },
+            busy && styles.dim,
+            pressed && styles.pressed,
+          ]}>
+          <Feather name="check" size={14} color={theme.primaryForeground} />
+          <ThemedText type="smallBold" style={{ color: theme.primaryForeground }}>
+            ATE IT
+          </ThemedText>
+        </Pressable>
+        <Pressable
+          onPress={() => resolve('TOSSED')}
+          disabled={busy}
+          accessibilityRole="button"
+          accessibilityLabel={`Mark ${item.name} as tossed`}
+          accessibilityState={{ disabled: busy }}
+          style={({ pressed }) => [
+            styles.actionButton,
+            { borderColor: theme.border },
+            busy && styles.dim,
+            pressed && styles.pressed,
+          ]}>
+          <Feather name="x" size={14} color={theme.text} />
+          <ThemedText type="smallBold">TOSSED</ThemedText>
+        </Pressable>
+      </ThemedView>
+
       {expanded && (
         <ThemedView
           type="backgroundElement"
@@ -198,34 +280,6 @@ function ItemRow({ item, freshness, onChanged }: Row & { onChanged: () => void }
                 </ThemedText>
               </ThemedView>
             )}
-
-            <ThemedView type="backgroundElement" style={styles.controlRow}>
-              <Feather name="calendar" size={14} color={theme.textSecondary} />
-              {expiresOn && (
-                <ThemedText type="small" themeColor="textSecondary">
-                  {expiresOn}
-                </ThemedText>
-              )}
-              {ADJUSTMENTS.map(({ label, days }) => (
-                <Pressable
-                  key={label}
-                  onPress={() => adjustBy(days)}
-                  disabled={busy}
-                  hitSlop={Spacing.two}
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    days > 0
-                      ? `Extend expiration by ${days} ${days === 1 ? 'day' : 'days'}`
-                      : 'Move expiration up by 1 day'
-                  }
-                  accessibilityState={{ disabled: busy }}
-                  style={({ pressed }) => [busy && styles.dim, pressed && styles.pressed]}>
-                  <ThemedView type="backgroundSelected" style={styles.controlChip}>
-                    <ThemedText type="small">{label}</ThemedText>
-                  </ThemedView>
-                </Pressable>
-              ))}
-            </ThemedView>
 
             <ThemedView type="backgroundElement" style={styles.controlRow}>
               <Feather name="map-pin" size={14} color={theme.textSecondary} />
@@ -280,6 +334,15 @@ export default function InventoryScreen() {
       const f = estimateFreshness(item);
       return f !== null && f.level !== 'good';
     }).length ?? 0;
+  // Prototype 03's pill is money, not a count: the price of everything that
+  // needs attention. Falls back to the count when prices are missing.
+  const atRisk =
+    items
+      ?.filter((item) => {
+        const f = estimateFreshness(item);
+        return f !== null && f.level !== 'good';
+      })
+      .reduce((sum, item) => sum + (item.price ?? 0), 0) ?? 0;
 
   // Android hardware back dismisses the deck instead of exiting the app.
   const closeCheckIn = useCallback(() => {
@@ -306,14 +369,22 @@ export default function InventoryScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedView style={styles.titleRow}>
-          <ThemedText type="subtitle">Your kitchen</ThemedText>
-          {/* Prototype 03: "N need attention" pill beside the section label. */}
+          {/* Prototype 03: the screen h1 — Fraunces display, not UI weight. */}
+          <ThemedText type="title">Your kitchen</ThemedText>
+          {/* Prototype 03: the pill beside the h1 carries the money at stake.
+              Falls back to a count when prices are missing. */}
           {items !== null && attentionCount > 0 && (
             <ThemedView
-              accessibilityLabel={`${attentionCount} items need attention`}
+              accessibilityLabel={
+                atRisk > 0
+                  ? `$${atRisk.toFixed(2)} of food at risk of going to waste`
+                  : `${attentionCount} items need attention`
+              }
               style={[styles.attentionBadge, { backgroundColor: `${theme.statusBad}26` }]}>
-              <ThemedText type="small" style={{ color: theme.statusBadInk }}>
-                {attentionCount} need attention
+              <ThemedText type="smallBold" style={{ color: theme.statusBadInk }}>
+                {atRisk > 0
+                  ? `$${atRisk.toFixed(2)} at risk`
+                  : `${attentionCount} need attention`}
               </ThemedText>
             </ThemedView>
           )}
@@ -466,11 +537,41 @@ const styles = StyleSheet.create({
   },
   rowName: {
     flex: 1,
+    // Prototype 03: item names set in the display serif, like the h1.
+    fontFamily: FontFamilies.frauncesSemiBold,
+    fontSize: 20,
+    lineHeight: 26,
   },
-  chip: {
-    borderRadius: 999, // full-round, like the prototype's pills
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  expChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    borderRadius: Spacing.two,
     paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
+    paddingVertical: Spacing.one,
+  },
+  flexSpacer: {
+    flex: 1,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    paddingVertical: Spacing.two + Spacing.one,
+    borderRadius: Spacing.two,
+    minHeight: 44,
   },
   reason: {
     fontSize: 12,
