@@ -26,6 +26,7 @@ export const Colors = {
     textSecondary: '#6E6A5C', // ink-2
     primary: '#2F5A39', // stalk-2
     primaryForeground: '#F6F3EA', // paper
+    onStalk: '#F6F3EA', // fixed paper on stalk — does NOT flip with scheme
     border: '#E0DAC8',
     destructive: RED_LIGHT,
     // Freshness chips: good = brand green, so "fresh" reads as broccoli.
@@ -33,6 +34,12 @@ export const Colors = {
     statusGood: '#2F5A39', // stalk-2
     statusWarn: '#8A5A17', // amber-ink
     statusBad: '#BE5B38', // danger-broc (terracotta)
+    // Paper ink for text/icons sitting on `stalk` (hero, check-in deck).
+    // FIXED light paper in both schemes — it must not flip with the scheme,
+    // unlike `background`, whose dark value turns these inks near-black on
+    // dark green (dark-mode audit 2026-09-01). Append hex alpha as needed
+    // (`${theme.onStalk}80` etc.); paper on stalk passes ≥4.5:1 down to
+    // ~40% alpha.
     // Ink variants for status CHIPS — the plain status colors drop below
     // 4.5:1 as small text on their tinted chip backgrounds (CVD audit
     // 2026-08-28). Dark enough to pass AA on the chip fill in both themes.
@@ -64,7 +71,8 @@ export const Colors = {
     floret: '#8FD25A',
     floret2: '#A8DF7E',
     amber: '#DCA23A',
-    shell: '#0D1610',
+    shell: '#0D1610', // verified identical to light-shell intent 2026-09-01
+    onStalk: '#F6F3EA', // fixed paper on stalk — does NOT flip with scheme
   },
 } as const;
 

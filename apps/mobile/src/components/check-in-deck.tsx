@@ -191,7 +191,7 @@ export function CheckInDeck({
     // paper on top of it.
     <ThemedView style={[styles.container, { backgroundColor: theme.stalk }]}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title" style={{ color: theme.background }}>
+        <ThemedText type="title" style={{ color: theme.onStalk }}>
           Daily check-in
         </ThemedText>
         <Pressable

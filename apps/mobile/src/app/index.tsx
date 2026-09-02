@@ -66,7 +66,7 @@ function SavingsHero({ stats }: { stats: StatsOverview }) {
     <ThemedView style={[styles.hero, { backgroundColor: theme.stalk }]}>
       <ThemedText
         type="small"
-        style={[styles.heroLabel, { color: `${theme.background}80` }]}>
+        style={[styles.heroLabel, { color: `${theme.onStalk}80` }]}>
         Saved so far
       </ThemedText>
       <ThemedText type="display" style={{ color: theme.floret2 }}>
@@ -83,7 +83,7 @@ function SavingsHero({ stats }: { stats: StatsOverview }) {
       </ThemedView>
       <ThemedText
         type="small"
-        style={[styles.heroCaption, { color: `${theme.background}99` }]}>
+        style={[styles.heroCaption, { color: `${theme.onStalk}99` }]}>
         The average household wastes a third of the groceries it buys — that
         third is what these numbers measure you against.
       </ThemedText>
