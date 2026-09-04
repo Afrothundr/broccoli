@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsPanel } from '@/components/settings-panel';
+import { StorageTips } from '@/components/storage-tips';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import { UsageChart } from '@/components/usage-chart';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useBackHandler } from '@/hooks/use-back-handler';
 import { type StatsOverview, useStats } from '@/hooks/use-stats';
+import { useStorageTips } from '@/hooks/use-storage-tips';
 import { useTheme } from '@/hooks/use-theme';
 
 // Home = the savings dashboard (PRD §7 Phase 5, reframed per feedback):
@@ -141,6 +143,7 @@ function CategoryInsights({
 export default function HomeScreen() {
   const theme = useTheme();
   const { stats, error, retry } = useStats();
+  const storageTips = useStorageTips();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Android hardware back dismisses settings instead of exiting the app.
@@ -210,6 +213,13 @@ export default function HomeScreen() {
           ) : hasData ? (
             <>
               <SavingsHero stats={stats} />
+
+              {/* Beta feedback 2026-09-04: the 1/3-waste hero statistic gets
+                  an actionable partner — storage advice for what's actually
+                  in the kitchen (and what keeps getting tossed). */}
+              {storageTips && storageTips.length > 0 && (
+                <StorageTips tips={storageTips} />
+              )}
 
               <ThemedView style={styles.tiles}>
                 <ThemedView type="backgroundElement" style={styles.tile}>

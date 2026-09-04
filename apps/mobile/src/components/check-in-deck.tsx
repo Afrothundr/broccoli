@@ -188,7 +188,9 @@ export function CheckInDeck({
 
   return (
     // Prototype 04: the whole check-in sits on the stalk green; cards are
-    // paper on top of it.
+    // paper on top of it. Every ink/fill on that surface uses the FIXED
+    // onStalk paper — `background` flips to near-black in dark mode, which
+    // made this text unreadable (dark-mode audit 2026-09-04).
     <ThemedView style={[styles.container, { backgroundColor: theme.stalk }]}>
       <ThemedView style={styles.header}>
         <ThemedText type="title" style={{ color: theme.onStalk }}>
@@ -200,7 +202,7 @@ export function CheckInDeck({
           accessibilityRole="button"
           accessibilityLabel="Close check-in"
           style={({ pressed }) => pressed && styles.pressed}>
-          <Feather name="x" size={22} color={`${theme.background}B3`} />
+          <Feather name="x" size={22} color={`${theme.onStalk}B3`} />
         </Pressable>
       </ThemedView>
 
@@ -216,7 +218,7 @@ export function CheckInDeck({
       {top ? (
         <>
           <ThemedView style={styles.progressRow}>
-            <ThemedView style={[styles.progressTrack, { backgroundColor: `${theme.background}26` }]}>
+            <ThemedView style={[styles.progressTrack, { backgroundColor: `${theme.onStalk}26` }]}>
               <ThemedView
                 style={[
                   styles.progressFill,
@@ -226,13 +228,13 @@ export function CheckInDeck({
             </ThemedView>
             <ThemedText
               type="small"
-              style={[styles.progressCount, { color: `${theme.background}66` }]}>
+              style={[styles.progressCount, { color: `${theme.onStalk}66` }]}>
               {records.length + 1} of {total}
             </ThemedText>
           </ThemedView>
           <ThemedText
             type="small"
-            style={[styles.hint, { color: `${theme.background}B3` }]}>
+            style={[styles.hint, { color: `${theme.onStalk}B3` }]}>
             What happened to each item this week? Swipe right for ate it, left
             for tossed it, down if it&apos;s still around — or tap a button.
           </ThemedText>
@@ -325,9 +327,9 @@ export function CheckInDeck({
               accessibilityRole="button"
               accessibilityLabel={`Tossed ${top.name}`}
               style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-              <ThemedView style={[styles.action, { backgroundColor: `${theme.background}33` }]}>
-                <Feather name="x" size={16} color={`${theme.background}EB`} />
-                <ThemedText type="smallBold" style={{ color: `${theme.background}EB` }}>
+              <ThemedView style={[styles.action, { backgroundColor: `${theme.onStalk}33` }]}>
+                <Feather name="x" size={16} color={`${theme.onStalk}EB`} />
+                <ThemedText type="smallBold" style={{ color: `${theme.onStalk}EB` }}>
                   Tossed
                 </ThemedText>
               </ThemedView>
@@ -337,8 +339,8 @@ export function CheckInDeck({
               accessibilityRole="button"
               accessibilityLabel={`Still have ${top.name}`}
               style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-              <ThemedView style={[styles.action, { backgroundColor: `${theme.background}2E` }]}>
-                <ThemedText type="smallBold" style={{ color: `${theme.background}EB` }}>
+              <ThemedView style={[styles.action, { backgroundColor: `${theme.onStalk}2E` }]}>
+                <ThemedText type="smallBold" style={{ color: `${theme.onStalk}EB` }}>
                   Still have it
                 </ThemedText>
               </ThemedView>
@@ -359,7 +361,7 @@ export function CheckInDeck({
         </>
       ) : (
         <ThemedView style={styles.doneArea}>
-          <ThemedText type="title" style={[styles.doneTitle, { color: theme.background }]}>
+          <ThemedText type="title" style={[styles.doneTitle, { color: theme.onStalk }]}>
             All caught up
           </ThemedText>
           {/* Peak-end: close on what the session kept in play, not a tally of
@@ -371,7 +373,7 @@ export function CheckInDeck({
           )}
           <ThemedText
             type="small"
-            style={[styles.doneSummary, { color: `${theme.background}B3` }]}>
+            style={[styles.doneSummary, { color: `${theme.onStalk}B3` }]}>
             {eaten} eaten{kept > 0 ? ` · ${kept} still in your kitchen` : ''}
             {tossed > 0
               ? ` · ${tossed} tossed — the nudges are here to catch the next ones sooner`
@@ -385,8 +387,8 @@ export function CheckInDeck({
           most likely to be a slip (the deck vanishes mid-gesture), and it used
           to be the only unrecoverable one. */}
       {last && (
-        <ThemedView style={[styles.undoBar, { backgroundColor: `${theme.background}1A` }]}>
-          <ThemedText type="small" style={[styles.undoText, { color: `${theme.background}B3` }]} numberOfLines={1}>
+        <ThemedView style={[styles.undoBar, { backgroundColor: `${theme.onStalk}1A` }]}>
+          <ThemedText type="small" style={[styles.undoText, { color: `${theme.onStalk}B3` }]} numberOfLines={1}>
             {last.item.name} —{' '}
             {last.outcome === 'EATEN'
               ? 'eaten'

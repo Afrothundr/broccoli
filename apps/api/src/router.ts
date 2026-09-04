@@ -9,6 +9,7 @@ import { itemRouter } from "./item";
 import { pushRouter } from "./push";
 import { mealWindowsRouter, sendMealNudges } from "./meal-windows";
 import { statsRouter } from "./stats";
+import { adviceRouter } from "./advice";
 import { sendNudges } from "./nudges";
 import { prisma } from "./db";
 
@@ -45,6 +46,10 @@ export const appRouter = router({
 
   // Spend & waste dashboard (Phase 5).
   stats: statsRouter,
+
+  // Storage advice for the home screen (beta feedback 2026-09-04): FoodKeeper
+  // backfill grounded in the user's kitchen, optionally rewritten by Gemini.
+  advice: adviceRouter,
 
   // Internal namespace — called by broccoli-scheduler over tRPC with the
   // service token, so broccoli-api stays the single DB writer (PRD §4).

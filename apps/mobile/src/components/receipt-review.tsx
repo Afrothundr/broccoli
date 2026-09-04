@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  View,
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -101,6 +102,25 @@ export function ReceiptReview({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Beta feedback 2026-09-04: with a tall receipt it wasn't clear the list
+  // kept going below the fold. Every item row reports its frame; on each
+  // scroll we count rows below the visible window and surface that as a
+  // floating "N more below" pill that disappears when you reach the bottom.
+  const [moreBelow, setMoreBelow] = useState(0);
+  const rowFrames = useRef(new Map<string, { y: number; height: number }>());
+  const viewport = useRef({ offset: 0, height: 0 });
+
+  const recountBelow = () => {
+    const { offset, height } = viewport.current;
+    if (!height) return;
+    const edge = offset + height - 8; // a row peeking in counts as visible
+    let below = 0;
+    for (const frame of rowFrames.current.values()) {
+      if (frame.y + frame.height > edge) below++;
+    }
+    setMoreBelow((prev) => (prev === below ? prev : below));
+  };
+
   // Last removed row, so a slip of the X isn't permanent. One level deep —
   // removing another row replaces it — which covers the actual mistake
   // (fat-fingering the X beside the price field) without a full undo stack.
@@ -153,6 +173,9 @@ export function ReceiptReview({
       const index = prev.findIndex((i) => i.localKey === localKey);
       if (index === -1) return prev;
       setLastRemoved({ item: prev[index], index });
+      // Drop the row's frame too — a stale entry would keep being counted as
+      // "more below" by the scroll pill.
+      rowFrames.current.delete(localKey);
       return prev.filter((i) => i.localKey !== localKey);
     });
 
@@ -213,11 +236,22 @@ export function ReceiptReview({
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        style={styles.flex}
-        contentContainerStyle={styles.list}
-        keyboardShouldPersistTaps="handled">
-        <ThemedText type="title">Check your items</ThemedText>
+      <View style={styles.flex}>
+        <ScrollView
+          style={styles.flex}
+          contentContainerStyle={styles.list}
+          keyboardShouldPersistTaps="handled"
+          onScroll={(e) => {
+            viewport.current.offset = e.nativeEvent.contentOffset.y;
+            recountBelow();
+          }}
+          scrollEventThrottle={16}
+          onLayout={(e) => {
+            viewport.current.height = e.nativeEvent.layout.height;
+            recountBelow();
+          }}
+          onContentSizeChange={recountBelow}>
+          <ThemedText type="title">Check your items</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           Fix anything the scan got wrong — tap a name, price, or category to edit.
         </ThemedText>
@@ -232,7 +266,11 @@ export function ReceiptReview({
           <ThemedView
             key={item.localKey}
             type="backgroundElement"
-            style={[styles.itemRow, { borderColor: theme.border }]}>
+            style={[styles.itemRow, { borderColor: theme.border }]}
+            onLayout={(e) => {
+              const { y, height } = e.nativeEvent.layout;
+              rowFrames.current.set(item.localKey, { y, height });
+            }}>
             <ThemedView type="backgroundElement" style={styles.itemFields}>
               <Input
                 style={styles.nameInput}
@@ -241,6 +279,10 @@ export function ReceiptReview({
                 placeholder="Item name"
                 accessibilityLabel={item.name ? `Name for ${item.name}` : 'Item name'}
                 autoCapitalize="words"
+                // Beta feedback 2026-09-04: long OCR lines (a whole product
+                // description off the receipt) made rows unreadable. Receipt
+                // names rarely run past this, and the text stays editable.
+                maxLength={60}
               />
               <Input
                 style={styles.priceInput}
@@ -306,7 +348,25 @@ export function ReceiptReview({
             <ThemedText type="linkPrimary">Add an item</ThemedText>
           </ThemedView>
         </Pressable>
-      </ScrollView>
+        </ScrollView>
+
+        {/* Beta feedback 2026-09-04: a floating "more below" affordance —
+            tells the user how many rows are waiting past the fold without
+            making them try to scroll first. pointerEvents="none" so it never
+            blocks the last visible row's controls. */}
+        {moreBelow > 0 && (
+          <View style={styles.moreBelowWrap} pointerEvents="none">
+            <ThemedView
+              type="backgroundElement"
+              style={[styles.moreBelowPill, { borderColor: theme.border }]}>
+              <Feather name="chevron-down" size={14} color={theme.primary} />
+              <ThemedText type="small" style={styles.moreBelowText}>
+                {moreBelow} more {moreBelow === 1 ? 'item' : 'items'} below
+              </ThemedText>
+            </ThemedView>
+          </View>
+        )}
+      </View>
 
       <ThemedView style={styles.footer}>
         {error && (
@@ -331,58 +391,67 @@ export function ReceiptReview({
         animationType="slide"
         onRequestClose={closeAndRetry}
         accessibilityViewIsModal>
-        <ThemedView style={styles.modalPage}>
-          <ThemedView type="backgroundElement" style={styles.modalCard}>
-            <ThemedText type="smallBold" numberOfLines={1}>
-              Category for {pickerItem?.name.trim() || 'item'}
-            </ThemedText>
-            <Input
-              value={typeSearch}
-              onChangeText={setTypeSearch}
-              placeholder="Search categories…"
-              accessibilityLabel="Search categories"
-            />
-            {typesError ? (
-              <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
-                Couldn&apos;t load categories. Close and try again.
+        {/* Beta feedback 2026-09-04: the native keyboard slides up over the
+            bottom-anchored sheet and blocks the results. Avoiding it keeps the
+            search box and list above the keyboard; autoFocus means the layout
+            settles once, before results render, instead of jumping mid-pick. */}
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ThemedView style={styles.modalPage}>
+            <ThemedView type="backgroundElement" style={styles.modalCard}>
+              <ThemedText type="smallBold" numberOfLines={1}>
+                Category for {pickerItem?.name.trim() || 'item'}
               </ThemedText>
-            ) : !typeOptions ? (
-              <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
-                Loading…
-              </ThemedText>
-            ) : (
-              <FlatList
-                data={filteredTypes}
-                keyExtractor={(t) => t.name}
-                keyboardShouldPersistTaps="handled"
-                renderItem={({ item: t }) => (
-                  <Pressable
-                    onPress={() => pickCategory(t.name)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Set category to ${t.name}`}
-                    style={({ pressed }) => [
-                      styles.typeRow,
-                      pressed && styles.pressed,
-                      pickerItem?.category === t.name && styles.typeRowCurrent,
-                    ]}>
-                    <ThemedText type="small" numberOfLines={1} style={styles.typeName}>
-                      {t.name}
-                    </ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-                      {t.category}
-                    </ThemedText>
-                  </Pressable>
-                )}
-                ListEmptyComponent={
-                  <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
-                    No match — leave it uncategorized.
-                  </ThemedText>
-                }
+              <Input
+                value={typeSearch}
+                onChangeText={setTypeSearch}
+                placeholder="Search categories…"
+                accessibilityLabel="Search categories"
+                autoFocus
               />
-            )}
-            <Button title="Done" onPress={closeAndRetry} style={styles.stretch} />
+              {typesError ? (
+                <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                  Couldn&apos;t load categories. Close and try again.
+                </ThemedText>
+              ) : !typeOptions ? (
+                <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                  Loading…
+                </ThemedText>
+              ) : (
+                <FlatList
+                  data={filteredTypes}
+                  keyExtractor={(t) => t.name}
+                  keyboardShouldPersistTaps="handled"
+                  renderItem={({ item: t }) => (
+                    <Pressable
+                      onPress={() => pickCategory(t.name)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Set category to ${t.name}`}
+                      style={({ pressed }) => [
+                        styles.typeRow,
+                        pressed && styles.pressed,
+                        pickerItem?.category === t.name && styles.typeRowCurrent,
+                      ]}>
+                      <ThemedText type="small" numberOfLines={1} style={styles.typeName}>
+                        {t.name}
+                      </ThemedText>
+                      <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                        {t.category}
+                      </ThemedText>
+                    </Pressable>
+                  )}
+                  ListEmptyComponent={
+                    <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                      No match — leave it uncategorized.
+                    </ThemedText>
+                  }
+                />
+              )}
+              <Button title="Done" onPress={closeAndRetry} style={styles.stretch} />
+            </ThemedView>
           </ThemedView>
-        </ThemedView>
+        </KeyboardAvoidingView>
       </Modal>
     </KeyboardAvoidingView>
   );
@@ -391,6 +460,35 @@ export function ReceiptReview({
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
+  },
+  // Floating "more below" pill (beta feedback 2026-09-04): pinned above the
+  // footer, centered over the list, out of the touch path.
+  moreBelowWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: Spacing.two,
+  },
+  moreBelowPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.half,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  moreBelowText: {
+    fontVariant: ['tabular-nums'],
   },
   list: {
     gap: Spacing.three,
