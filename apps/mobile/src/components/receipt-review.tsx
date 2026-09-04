@@ -284,15 +284,30 @@ export function ReceiptReview({
                 // names rarely run past this, and the text stays editable.
                 maxLength={60}
               />
-              <Input
-                style={styles.priceInput}
-                value={item.price}
-                onChangeText={(price) => edit(item.localKey, { price })}
-                placeholder="0.00"
-                accessibilityLabel={item.name ? `Price for ${item.name}` : 'Item price'}
-                keyboardType="decimal-pad"
-              />
-              {item.confidence != null && <ConfidenceChip confidence={item.confidence} />}
+              {/* Field labels (beta feedback 2026-09-04): a bare "0.00" and a
+                  bare "72%" only make sense once you know the app — label
+                  both columns in the hero-label style. */}
+              <ThemedView type="backgroundElement" style={styles.priceColumn}>
+                <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
+                  Price
+                </ThemedText>
+                <Input
+                  style={styles.priceInput}
+                  value={item.price}
+                  onChangeText={(price) => edit(item.localKey, { price })}
+                  placeholder="0.00"
+                  accessibilityLabel={item.name ? `Price for ${item.name}` : 'Item price'}
+                  keyboardType="decimal-pad"
+                />
+              </ThemedView>
+              {item.confidence != null && (
+                <ThemedView type="backgroundElement" style={styles.confidenceColumn}>
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
+                    Confidence
+                  </ThemedText>
+                  <ConfidenceChip confidence={item.confidence} />
+                </ThemedView>
+              )}
               <Pressable
                 onPress={() => remove(item.localKey)}
                 hitSlop={Spacing.three}
@@ -518,8 +533,25 @@ const styles = StyleSheet.create({
   },
   itemFields: {
     flexDirection: 'row',
-    alignItems: 'center',
+    // Bottom-align: the name input stands alone while price/confidence are
+    // columns with a label on top, so the inputs themselves share a baseline.
+    alignItems: 'flex-end',
     gap: Spacing.two,
+  },
+  // Tiny uppercase column labels (hero-label style): PRICE / CONFIDENCE.
+  fieldLabel: {
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: Spacing.half,
+  },
+  priceColumn: {
+    backgroundColor: 'transparent',
+  },
+  confidenceColumn: {
+    backgroundColor: 'transparent',
   },
   categoryRow: {
     flexDirection: 'row',
