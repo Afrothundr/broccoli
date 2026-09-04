@@ -272,21 +272,27 @@ export function ReceiptReview({
               rowFrames.current.set(item.localKey, { y, height });
             }}>
             <ThemedView type="backgroundElement" style={styles.itemFields}>
-              <Input
-                style={styles.nameInput}
-                value={item.name}
-                onChangeText={(name) => edit(item.localKey, { name })}
-                placeholder="Item name"
-                accessibilityLabel={item.name ? `Name for ${item.name}` : 'Item name'}
-                autoCapitalize="words"
-                // Beta feedback 2026-09-04: long OCR lines (a whole product
-                // description off the receipt) made rows unreadable. Receipt
-                // names rarely run past this, and the text stays editable.
-                maxLength={60}
-              />
               {/* Field labels (beta feedback 2026-09-04): a bare "0.00" and a
                   bare "72%" only make sense once you know the app — label
-                  both columns in the hero-label style. */}
+                  every column in the hero-label style so Name, Price, and
+                  Confidence read as one aligned row instead of an odd one out. */}
+              <ThemedView type="backgroundElement" style={styles.nameColumn}>
+                <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
+                  Name
+                </ThemedText>
+                <Input
+                  style={styles.nameInput}
+                  value={item.name}
+                  onChangeText={(name) => edit(item.localKey, { name })}
+                  placeholder="Item name"
+                  accessibilityLabel={item.name ? `Name for ${item.name}` : 'Item name'}
+                  autoCapitalize="words"
+                  // Beta feedback 2026-09-04: long OCR lines (a whole product
+                  // description off the receipt) made rows unreadable. Receipt
+                  // names rarely run past this, and the text stays editable.
+                  maxLength={60}
+                />
+              </ThemedView>
               <ThemedView type="backgroundElement" style={styles.priceColumn}>
                 <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
                   Price
@@ -312,27 +318,42 @@ export function ReceiptReview({
                   </ThemedView>
                 </ThemedView>
               )}
+              {/* Extra marginLeft (on top of the row's own gap) sets this apart
+                  as the destructive action, not just another data field —
+                  the fat-finger risk the card's other rows are built to avoid. */}
               <Pressable
                 onPress={() => remove(item.localKey)}
                 hitSlop={Spacing.three}
                 accessibilityRole="button"
                 accessibilityLabel={item.name ? `Remove ${item.name}` : 'Remove item'}
-                style={({ pressed }) => [styles.controlLine, pressed && styles.pressed]}>
+                style={({ pressed }) => [
+                  styles.controlLine,
+                  styles.removeButton,
+                  pressed && styles.pressed,
+                ]}>
                 <Feather name="x" size={18} color={theme.textSecondary} />
               </Pressable>
             </ThemedView>
+            {/* Hairline + its own padding split the card into two legible
+                zones: editable fields above, category metadata below —
+                rather than one dense stack. Padding also gives this its own
+                comfortable tap target, where before it was just a text line. */}
             <Pressable
               onPress={() => setPickerFor(item.localKey)}
               accessibilityRole="button"
               accessibilityLabel={
                 item.category ? `Change category, currently ${item.category}` : 'Set category'
               }
-              style={({ pressed }) => [styles.categoryRow, pressed && styles.pressed]}>
-              <Feather name="tag" size={12} color={theme.textSecondary} />
+              style={({ pressed }) => [
+                styles.categoryRow,
+                { borderTopColor: theme.border },
+                pressed && styles.pressed,
+              ]}>
+              <Feather name="tag" size={14} color={theme.textSecondary} />
               <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
                 {item.category ?? 'Uncategorized'}
               </ThemedText>
-              <Feather name="chevron-right" size={12} color={theme.textSecondary} />
+              <Feather name="chevron-right" size={14} color={theme.textSecondary} />
             </Pressable>
           </ThemedView>
         ))}
@@ -528,12 +549,13 @@ const styles = StyleSheet.create({
   },
   // Each item is a card (prototype 02): fields on top, its category tucked
   // inside the card below — the category belongs to this item and nothing
-  // else, so it can't be misread against a neighbouring row.
+  // else, so it can't be misread against a neighbouring row. Padding bumped
+  // from Spacing.two so the card's own border has room to breathe around the
+  // bordered inputs it holds — at 8px the two boundaries collided.
   itemRow: {
-    gap: Spacing.one,
     borderRadius: Spacing.two,
     borderWidth: 1,
-    padding: Spacing.two,
+    padding: Spacing.three,
   },
   // Beta feedback 2026-09-04: the three controls had three different natural
   // heights (input ~54, chip ~24, bare icon), so bottom-aligning them left the
@@ -558,17 +580,30 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: Spacing.half,
   },
+  nameColumn: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
   priceColumn: {
     backgroundColor: 'transparent',
   },
   confidenceColumn: {
     backgroundColor: 'transparent',
   },
+  removeButton: {
+    marginLeft: Spacing.one,
+  },
+  // Divider + its own padding, not the card's shared `gap`, so the two zones
+  // read as separate even though they're one card: fields you type into
+  // above the line, the category you pick below it.
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.one,
-    paddingLeft: Spacing.half,
+    marginTop: Spacing.two,
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.one,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   // Category quick-pick modal
   modalPage: {
@@ -613,7 +648,6 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   nameInput: {
-    flex: 1,
     height: 48,
     paddingVertical: 0,
     textAlignVertical: 'center',
