@@ -305,7 +305,11 @@ export function ReceiptReview({
                   <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
                     Confidence
                   </ThemedText>
-                  <ConfidenceChip confidence={item.confidence} />
+                  {/* Centered inside the shared control-height line so the chip
+                      lines up with the price input instead of hanging low. */}
+                  <ThemedView type="backgroundElement" style={styles.controlLine}>
+                    <ConfidenceChip confidence={item.confidence} />
+                  </ThemedView>
                 </ThemedView>
               )}
               <Pressable
@@ -313,7 +317,7 @@ export function ReceiptReview({
                 hitSlop={Spacing.three}
                 accessibilityRole="button"
                 accessibilityLabel={item.name ? `Remove ${item.name}` : 'Remove item'}
-                style={({ pressed }) => pressed && styles.pressed}>
+                style={({ pressed }) => [styles.controlLine, pressed && styles.pressed]}>
                 <Feather name="x" size={18} color={theme.textSecondary} />
               </Pressable>
             </ThemedView>
@@ -531,12 +535,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: Spacing.two,
   },
+  // Beta feedback 2026-09-04: the three controls had three different natural
+  // heights (input ~54, chip ~24, bare icon), so bottom-aligning them left the
+  // chip and X hanging low. Everything now shares one 48px control line;
+  // single-line text and the chip/X are centered inside it.
   itemFields: {
     flexDirection: 'row',
-    // Bottom-align: the name input stands alone while price/confidence are
-    // columns with a label on top, so the inputs themselves share a baseline.
     alignItems: 'flex-end',
     gap: Spacing.two,
+  },
+  controlLine: {
+    height: 48,
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   // Tiny uppercase column labels (hero-label style): PRICE / CONFIDENCE.
   fieldLabel: {
@@ -603,9 +614,15 @@ const styles = StyleSheet.create({
   },
   nameInput: {
     flex: 1,
+    height: 48,
+    paddingVertical: 0,
+    textAlignVertical: 'center',
   },
   priceInput: {
     width: 90,
+    height: 48,
+    paddingVertical: 0,
+    textAlignVertical: 'center',
     textAlign: 'right',
   },
   confidenceChip: {
