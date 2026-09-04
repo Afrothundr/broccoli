@@ -391,58 +391,67 @@ export function ReceiptReview({
         animationType="slide"
         onRequestClose={closeAndRetry}
         accessibilityViewIsModal>
-        <ThemedView style={styles.modalPage}>
-          <ThemedView type="backgroundElement" style={styles.modalCard}>
-            <ThemedText type="smallBold" numberOfLines={1}>
-              Category for {pickerItem?.name.trim() || 'item'}
-            </ThemedText>
-            <Input
-              value={typeSearch}
-              onChangeText={setTypeSearch}
-              placeholder="Search categories…"
-              accessibilityLabel="Search categories"
-            />
-            {typesError ? (
-              <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
-                Couldn&apos;t load categories. Close and try again.
+        {/* Beta feedback 2026-09-04: the native keyboard slides up over the
+            bottom-anchored sheet and blocks the results. Avoiding it keeps the
+            search box and list above the keyboard; autoFocus means the layout
+            settles once, before results render, instead of jumping mid-pick. */}
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ThemedView style={styles.modalPage}>
+            <ThemedView type="backgroundElement" style={styles.modalCard}>
+              <ThemedText type="smallBold" numberOfLines={1}>
+                Category for {pickerItem?.name.trim() || 'item'}
               </ThemedText>
-            ) : !typeOptions ? (
-              <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
-                Loading…
-              </ThemedText>
-            ) : (
-              <FlatList
-                data={filteredTypes}
-                keyExtractor={(t) => t.name}
-                keyboardShouldPersistTaps="handled"
-                renderItem={({ item: t }) => (
-                  <Pressable
-                    onPress={() => pickCategory(t.name)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Set category to ${t.name}`}
-                    style={({ pressed }) => [
-                      styles.typeRow,
-                      pressed && styles.pressed,
-                      pickerItem?.category === t.name && styles.typeRowCurrent,
-                    ]}>
-                    <ThemedText type="small" numberOfLines={1} style={styles.typeName}>
-                      {t.name}
-                    </ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-                      {t.category}
-                    </ThemedText>
-                  </Pressable>
-                )}
-                ListEmptyComponent={
-                  <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
-                    No match — leave it uncategorized.
-                  </ThemedText>
-                }
+              <Input
+                value={typeSearch}
+                onChangeText={setTypeSearch}
+                placeholder="Search categories…"
+                accessibilityLabel="Search categories"
+                autoFocus
               />
-            )}
-            <Button title="Done" onPress={closeAndRetry} style={styles.stretch} />
+              {typesError ? (
+                <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                  Couldn&apos;t load categories. Close and try again.
+                </ThemedText>
+              ) : !typeOptions ? (
+                <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                  Loading…
+                </ThemedText>
+              ) : (
+                <FlatList
+                  data={filteredTypes}
+                  keyExtractor={(t) => t.name}
+                  keyboardShouldPersistTaps="handled"
+                  renderItem={({ item: t }) => (
+                    <Pressable
+                      onPress={() => pickCategory(t.name)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Set category to ${t.name}`}
+                      style={({ pressed }) => [
+                        styles.typeRow,
+                        pressed && styles.pressed,
+                        pickerItem?.category === t.name && styles.typeRowCurrent,
+                      ]}>
+                      <ThemedText type="small" numberOfLines={1} style={styles.typeName}>
+                        {t.name}
+                      </ThemedText>
+                      <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                        {t.category}
+                      </ThemedText>
+                    </Pressable>
+                  )}
+                  ListEmptyComponent={
+                    <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                      No match — leave it uncategorized.
+                    </ThemedText>
+                  }
+                />
+              )}
+              <Button title="Done" onPress={closeAndRetry} style={styles.stretch} />
+            </ThemedView>
           </ThemedView>
-        </ThemedView>
+        </KeyboardAvoidingView>
       </Modal>
     </KeyboardAvoidingView>
   );
