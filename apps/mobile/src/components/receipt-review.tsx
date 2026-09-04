@@ -582,6 +582,11 @@ const styles = StyleSheet.create({
   },
   nameColumn: {
     flex: 1,
+    // Flex items default their minimum size to their content's natural
+    // width, not 0 — without this, a long unwrapped OCR name (e.g.
+    // "R-CUCUMBERS PERSIAN 1 LB") refuses to shrink and pushes the whole
+    // row, and the card itself, past the right edge of the screen.
+    minWidth: 0,
     backgroundColor: 'transparent',
   },
   priceColumn: {
