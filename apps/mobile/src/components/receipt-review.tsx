@@ -16,7 +16,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BottomTabInset, Spacing } from '@/constants/theme';
-import { ParsedReceipt } from '@/hooks/use-receipt-parse';
+import type { ParsedReceipt } from '@/hooks/use-receipt-parse';
 import { useTheme } from '@/hooks/use-theme';
 import { trpc } from '@/lib/trpc';
 
@@ -64,10 +64,12 @@ function ConfidenceChip({ confidence }: { confidence: number }) {
       style={[
         styles.confidenceChip,
         { backgroundColor: low ? `${theme.amber}40` : `${theme.floret}33` },
-      ]}>
+      ]}
+    >
       <ThemedText
         type="small"
-        style={{ color: low ? theme.statusWarnInk : theme.statusGood }}>
+        style={{ color: low ? theme.statusWarnInk : theme.statusGood }}
+      >
         {Math.round(confidence * 100)}%
       </ThemedText>
     </ThemedView>
@@ -86,7 +88,7 @@ export function ReceiptReview({
   // review list — a garbled 40% line is noise the user would just X out, and
   // it's re-addable by hand if it was real. Chips still show for ≥floor rows.
   const droppedCount = receipt.items.filter(
-    (i) => i.confidence != null && i.confidence < CONFIDENCE_FLOOR
+    (i) => i.confidence != null && i.confidence < CONFIDENCE_FLOOR,
   ).length;
   const [items, setItems] = useState<EditableItem[]>(() =>
     receipt.items
@@ -98,7 +100,7 @@ export function ReceiptReview({
         price: item.price != null ? item.price.toFixed(2) : '',
         category: item.category,
         confidence: item.confidence,
-      }))
+      })),
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,9 +126,10 @@ export function ReceiptReview({
   // Last removed row, so a slip of the X isn't permanent. One level deep —
   // removing another row replaces it — which covers the actual mistake
   // (fat-fingering the X beside the price field) without a full undo stack.
-  const [lastRemoved, setLastRemoved] = useState<{ item: EditableItem; index: number } | null>(
-    null
-  );
+  const [lastRemoved, setLastRemoved] = useState<{
+    item: EditableItem;
+    index: number;
+  } | null>(null);
 
   // Category quick-pick: tapping a card's category row opens a searchable
   // modal over the ItemType catalog (the same 162 names the parser snaps to,
@@ -148,7 +151,7 @@ export function ReceiptReview({
   }, [pickerFor, typeOptions]);
   const pickerItem = items.find((i) => i.localKey === pickerFor) ?? null;
   const filteredTypes = (typeOptions ?? []).filter((t) =>
-    t.name.toLowerCase().includes(typeSearch.trim().toLowerCase())
+    t.name.toLowerCase().includes(typeSearch.trim().toLowerCase()),
   );
   const pickCategory = (name: string) => {
     if (pickerFor) edit(pickerFor, { category: name });
@@ -166,7 +169,9 @@ export function ReceiptReview({
   };
 
   const edit = (localKey: string, patch: Partial<EditableItem>) =>
-    setItems((prev) => prev.map((i) => (i.localKey === localKey ? { ...i, ...patch } : i)));
+    setItems((prev) =>
+      prev.map((i) => (i.localKey === localKey ? { ...i, ...patch } : i)),
+    );
 
   const remove = (localKey: string) =>
     setItems((prev) => {
@@ -183,7 +188,11 @@ export function ReceiptReview({
     if (!lastRemoved) return;
     setItems((prev) => {
       const next = [...prev];
-      next.splice(Math.min(lastRemoved.index, next.length), 0, lastRemoved.item);
+      next.splice(
+        Math.min(lastRemoved.index, next.length),
+        0,
+        lastRemoved.item,
+      );
       return next;
     });
     setLastRemoved(null);
@@ -192,10 +201,17 @@ export function ReceiptReview({
   const add = () =>
     setItems((prev) => [
       ...prev,
-      { localKey: `new-${nextLocalKey++}`, name: '', price: '', category: null },
+      {
+        localKey: `new-${nextLocalKey++}`,
+        name: '',
+        price: '',
+        category: null,
+      },
     ]);
 
-  const prices = items.map((i) => parsePrice(i.price)).filter((p): p is number => p !== null);
+  const prices = items
+    .map((i) => parsePrice(i.price))
+    .filter((p): p is number => p !== null);
   const total = prices.length ? prices.reduce((a, b) => a + b, 0) : null;
 
   const save = async () => {
@@ -235,7 +251,8 @@ export function ReceiptReview({
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.flex}>
         <ScrollView
           style={styles.flex}
@@ -250,144 +267,188 @@ export function ReceiptReview({
             viewport.current.height = e.nativeEvent.layout.height;
             recountBelow();
           }}
-          onContentSizeChange={recountBelow}>
+          onContentSizeChange={recountBelow}
+        >
           <ThemedText type="title">Check your items</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          Fix anything the scan got wrong — tap a name, price, or category to edit.
-        </ThemedText>
-        {droppedCount > 0 && (
           <ThemedText type="small" themeColor="textSecondary">
-            {droppedCount} low-confidence {droppedCount === 1 ? 'line' : 'lines'} from the scan
-            were left out — add them by hand if they&apos;re real.
+            Fix anything the scan got wrong — tap a name, price, or category to
+            edit.
           </ThemedText>
-        )}
+          {droppedCount > 0 && (
+            <ThemedText type="small" themeColor="textSecondary">
+              {droppedCount} low-confidence{' '}
+              {droppedCount === 1 ? 'line' : 'lines'} from the scan were left
+              out — add them by hand if they&apos;re real.
+            </ThemedText>
+          )}
 
-        {items.map((item) => (
-          <ThemedView
-            key={item.localKey}
-            type="backgroundElement"
-            style={[styles.itemRow, { borderColor: theme.border }]}
-            onLayout={(e) => {
-              const { y, height } = e.nativeEvent.layout;
-              rowFrames.current.set(item.localKey, { y, height });
-            }}>
-            <ThemedView type="backgroundElement" style={styles.itemFields}>
-              {/* Field labels (beta feedback 2026-09-04): a bare "0.00" and a
-                  bare "72%" only make sense once you know the app — label
-                  every column in the hero-label style so Name, Price, and
-                  Confidence read as one aligned row instead of an odd one out. */}
-              <ThemedView type="backgroundElement" style={styles.nameColumn}>
-                <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
-                  Name
-                </ThemedText>
-                <Input
-                  style={styles.nameInput}
-                  value={item.name}
-                  onChangeText={(name) => edit(item.localKey, { name })}
-                  placeholder="Item name"
-                  accessibilityLabel={item.name ? `Name for ${item.name}` : 'Item name'}
-                  autoCapitalize="words"
-                  // Beta feedback 2026-09-04: long OCR lines (a whole product
-                  // description off the receipt) made rows unreadable. Receipt
-                  // names rarely run past this, and the text stays editable.
-                  maxLength={60}
-                />
-              </ThemedView>
-              <ThemedView type="backgroundElement" style={styles.priceColumn}>
-                <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
-                  Price
-                </ThemedText>
-                <Input
-                  style={styles.priceInput}
-                  value={item.price}
-                  onChangeText={(price) => edit(item.localKey, { price })}
-                  placeholder="0.00"
-                  accessibilityLabel={item.name ? `Price for ${item.name}` : 'Item price'}
-                  keyboardType="decimal-pad"
-                />
-              </ThemedView>
-              {item.confidence != null && (
-                <ThemedView type="backgroundElement" style={styles.confidenceColumn}>
-                  <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
-                    Confidence
+          {items.map((item) => (
+            <ThemedView
+              key={item.localKey}
+              type="backgroundElement"
+              style={[styles.itemRow, { borderColor: theme.border }]}
+              onLayout={(e) => {
+                const { y, height } = e.nativeEvent.layout;
+                rowFrames.current.set(item.localKey, { y, height });
+              }}
+            >
+              <ThemedView type="backgroundElement" style={styles.itemFields}>
+                {/* Field labels (beta feedback 2026-09-04): a bare "0.00"
+                  only makes sense once you know the app — label both
+                  columns in the hero-label style. Confidence lives in its
+                  own badge in the card's bottom row (below), so Name and
+                  Price get the whole top row to themselves. */}
+                <ThemedView type="backgroundElement" style={styles.nameColumn}>
+                  <ThemedText
+                    type="small"
+                    themeColor="textSecondary"
+                    style={styles.fieldLabel}
+                  >
+                    Name
                   </ThemedText>
-                  {/* Centered inside the shared control-height line so the chip
-                      lines up with the price input instead of hanging low. */}
-                  <ThemedView type="backgroundElement" style={styles.controlLine}>
+                  <Input
+                    style={styles.nameInput}
+                    value={item.name}
+                    onChangeText={(name) => edit(item.localKey, { name })}
+                    placeholder="Item name"
+                    accessibilityLabel={
+                      item.name ? `Name for ${item.name}` : 'Item name'
+                    }
+                    autoCapitalize="words"
+                    // Beta feedback 2026-09-04: long OCR lines (a whole product
+                    // description off the receipt) made rows unreadable. Receipt
+                    // names rarely run past this, and the text stays editable.
+                    maxLength={60}
+                  />
+                </ThemedView>
+                <ThemedView type="backgroundElement" style={styles.priceColumn}>
+                  <ThemedText
+                    type="small"
+                    themeColor="textSecondary"
+                    style={styles.fieldLabel}
+                  >
+                    Price
+                  </ThemedText>
+                  <Input
+                    style={styles.priceInput}
+                    value={item.price}
+                    onChangeText={(price) => edit(item.localKey, { price })}
+                    placeholder="0.00"
+                    accessibilityLabel={
+                      item.name ? `Price for ${item.name}` : 'Item price'
+                    }
+                    keyboardType="decimal-pad"
+                  />
+                </ThemedView>
+                {/* Extra marginLeft (on top of the row's own gap) sets this
+                  apart as the destructive action, not just another data
+                  field — the fat-finger risk the card's other rows are
+                  built to avoid. */}
+                <Pressable
+                  onPress={() => remove(item.localKey)}
+                  hitSlop={Spacing.three}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    item.name ? `Remove ${item.name}` : 'Remove item'
+                  }
+                  style={({ pressed }) => [
+                    styles.controlLine,
+                    styles.removeButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Feather name="x" size={18} color={theme.textSecondary} />
+                </Pressable>
+              </ThemedView>
+              {/* Hairline + its own padding split the card into two legible
+                zones: editable fields above, category + confidence below —
+                rather than one dense stack. Category keeps a comfortable
+                tap target on the left; confidence is now a compact badge
+                tucked into the lower-right corner, clear of the category
+                pressable, so Name and Price get the top row to themselves. */}
+              <ThemedView
+                style={[styles.bottomRow, { borderTopColor: theme.border }]}
+              >
+                <Pressable
+                  onPress={() => setPickerFor(item.localKey)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    item.category
+                      ? `Change category, currently ${item.category}`
+                      : 'Set category'
+                  }
+                  style={({ pressed }) => [
+                    styles.categoryRow,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Feather name="tag" size={14} color={theme.textSecondary} />
+                  <ThemedText
+                    type="small"
+                    themeColor="textSecondary"
+                    numberOfLines={1}
+                    style={styles.categoryText}
+                  >
+                    {item.category ?? 'Uncategorized'}
+                  </ThemedText>
+                  <Feather
+                    name="chevron-right"
+                    size={14}
+                    color={theme.textSecondary}
+                  />
+                </Pressable>
+                {item.confidence != null && (
+                  <ThemedView
+                    type="backgroundElement"
+                    style={styles.confidenceBadge}
+                  >
+                    <ThemedText
+                      type="small"
+                      themeColor="textSecondary"
+                      style={styles.confidenceLabel}
+                    >
+                      Confidence
+                    </ThemedText>
                     <ConfidenceChip confidence={item.confidence} />
                   </ThemedView>
-                </ThemedView>
-              )}
-              {/* Extra marginLeft (on top of the row's own gap) sets this apart
-                  as the destructive action, not just another data field —
-                  the fat-finger risk the card's other rows are built to avoid. */}
+                )}
+              </ThemedView>
+            </ThemedView>
+          ))}
+
+          {lastRemoved && (
+            <ThemedView type="backgroundElement" style={styles.removedRow}>
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                style={styles.removedText}
+                numberOfLines={1}
+              >
+                Removed {lastRemoved.item.name.trim() || 'item'}
+              </ThemedText>
               <Pressable
-                onPress={() => remove(item.localKey)}
+                onPress={restoreRemoved}
                 hitSlop={Spacing.three}
                 accessibilityRole="button"
-                accessibilityLabel={item.name ? `Remove ${item.name}` : 'Remove item'}
-                style={({ pressed }) => [
-                  styles.controlLine,
-                  styles.removeButton,
-                  pressed && styles.pressed,
-                ]}>
-                <Feather name="x" size={18} color={theme.textSecondary} />
+                accessibilityLabel={`Undo removing ${lastRemoved.item.name.trim() || 'item'}`}
+                style={({ pressed }) => pressed && styles.pressed}
+              >
+                <ThemedText type="linkPrimary">Undo</ThemedText>
               </Pressable>
             </ThemedView>
-            {/* Hairline + its own padding split the card into two legible
-                zones: editable fields above, category metadata below —
-                rather than one dense stack. Padding also gives this its own
-                comfortable tap target, where before it was just a text line. */}
-            <Pressable
-              onPress={() => setPickerFor(item.localKey)}
-              accessibilityRole="button"
-              accessibilityLabel={
-                item.category ? `Change category, currently ${item.category}` : 'Set category'
-              }
-              style={({ pressed }) => [
-                styles.categoryRow,
-                { borderTopColor: theme.border },
-                pressed && styles.pressed,
-              ]}>
-              <Feather name="tag" size={14} color={theme.textSecondary} />
-              <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-                {item.category ?? 'Uncategorized'}
-              </ThemedText>
-              <Feather name="chevron-right" size={14} color={theme.textSecondary} />
-            </Pressable>
-          </ThemedView>
-        ))}
+          )}
 
-        {lastRemoved && (
-          <ThemedView type="backgroundElement" style={styles.removedRow}>
-            <ThemedText
-              type="small"
-              themeColor="textSecondary"
-              style={styles.removedText}
-              numberOfLines={1}>
-              Removed {lastRemoved.item.name.trim() || 'item'}
-            </ThemedText>
-            <Pressable
-              onPress={restoreRemoved}
-              hitSlop={Spacing.three}
-              accessibilityRole="button"
-              accessibilityLabel={`Undo removing ${lastRemoved.item.name.trim() || 'item'}`}
-              style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedText type="linkPrimary">Undo</ThemedText>
-            </Pressable>
-          </ThemedView>
-        )}
-
-        <Pressable
-          onPress={add}
-          hitSlop={Spacing.two}
-          accessibilityRole="button"
-          style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedView style={styles.addRow}>
-            <Feather name="plus" size={16} color={theme.primary} />
-            <ThemedText type="linkPrimary">Add an item</ThemedText>
-          </ThemedView>
-        </Pressable>
+          <Pressable
+            onPress={add}
+            hitSlop={Spacing.two}
+            accessibilityRole="button"
+            style={({ pressed }) => pressed && styles.pressed}
+          >
+            <ThemedView style={styles.addRow}>
+              <Feather name="plus" size={16} color={theme.primary} />
+              <ThemedText type="linkPrimary">Add an item</ThemedText>
+            </ThemedView>
+          </Pressable>
         </ScrollView>
 
         {/* Beta feedback 2026-09-04: a floating "more below" affordance —
@@ -398,7 +459,8 @@ export function ReceiptReview({
           <View style={styles.moreBelowWrap} pointerEvents="none">
             <ThemedView
               type="backgroundElement"
-              style={[styles.moreBelowPill, { borderColor: theme.border }]}>
+              style={[styles.moreBelowPill, { borderColor: theme.border }]}
+            >
               <Feather name="chevron-down" size={14} color={theme.primary} />
               <ThemedText type="small" style={styles.moreBelowText}>
                 {moreBelow} more {moreBelow === 1 ? 'item' : 'items'} below
@@ -413,7 +475,8 @@ export function ReceiptReview({
           <ThemedText
             type="small"
             accessibilityRole="alert"
-            style={[styles.error, { color: theme.destructive }]}>
+            style={[styles.error, { color: theme.destructive }]}
+          >
             {error}
           </ThemedText>
         )}
@@ -421,7 +484,9 @@ export function ReceiptReview({
           <ThemedText type="small" themeColor="textSecondary">
             {items.length} {items.length === 1 ? 'item' : 'items'}
           </ThemedText>
-          <ThemedText type="smallBold">{total != null ? `$${total.toFixed(2)}` : '—'}</ThemedText>
+          <ThemedText type="smallBold">
+            {total != null ? `$${total.toFixed(2)}` : '—'}
+          </ThemedText>
         </ThemedView>
         <Button title="Add to kitchen" loading={saving} onPress={save} />
       </ThemedView>
@@ -430,14 +495,16 @@ export function ReceiptReview({
         visible={pickerFor !== null}
         animationType="slide"
         onRequestClose={closeAndRetry}
-        accessibilityViewIsModal>
+        accessibilityViewIsModal
+      >
         {/* Beta feedback 2026-09-04: the native keyboard slides up over the
             bottom-anchored sheet and blocks the results. Avoiding it keeps the
             search box and list above the keyboard; autoFocus means the layout
             settles once, before results render, instead of jumping mid-pick. */}
         <KeyboardAvoidingView
           style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <ThemedView style={styles.modalPage}>
             <ThemedView type="backgroundElement" style={styles.modalCard}>
               <ThemedText type="smallBold" numberOfLines={1}>
@@ -451,11 +518,19 @@ export function ReceiptReview({
                 autoFocus
               />
               {typesError ? (
-                <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  style={styles.modalStatus}
+                >
                   Couldn&apos;t load categories. Close and try again.
                 </ThemedText>
               ) : !typeOptions ? (
-                <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  style={styles.modalStatus}
+                >
                   Loading…
                 </ThemedText>
               ) : (
@@ -471,24 +546,42 @@ export function ReceiptReview({
                       style={({ pressed }) => [
                         styles.typeRow,
                         pressed && styles.pressed,
-                        pickerItem?.category === t.name && styles.typeRowCurrent,
-                      ]}>
-                      <ThemedText type="small" numberOfLines={1} style={styles.typeName}>
+                        pickerItem?.category === t.name &&
+                          styles.typeRowCurrent,
+                      ]}
+                    >
+                      <ThemedText
+                        type="small"
+                        numberOfLines={1}
+                        style={styles.typeName}
+                      >
                         {t.name}
                       </ThemedText>
-                      <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                      <ThemedText
+                        type="small"
+                        themeColor="textSecondary"
+                        numberOfLines={1}
+                      >
                         {t.category}
                       </ThemedText>
                     </Pressable>
                   )}
                   ListEmptyComponent={
-                    <ThemedText type="small" themeColor="textSecondary" style={styles.modalStatus}>
+                    <ThemedText
+                      type="small"
+                      themeColor="textSecondary"
+                      style={styles.modalStatus}
+                    >
                       No match — leave it uncategorized.
                     </ThemedText>
                   }
                 />
               )}
-              <Button title="Done" onPress={closeAndRetry} style={styles.stretch} />
+              <Button
+                title="Done"
+                onPress={closeAndRetry}
+                style={styles.stretch}
+              />
             </ThemedView>
           </ThemedView>
         </KeyboardAvoidingView>
@@ -592,23 +685,50 @@ const styles = StyleSheet.create({
   priceColumn: {
     backgroundColor: 'transparent',
   },
-  confidenceColumn: {
-    backgroundColor: 'transparent',
-  },
   removeButton: {
     marginLeft: Spacing.one,
   },
   // Divider + its own padding, not the card's shared `gap`, so the two zones
   // read as separate even though they're one card: fields you type into
-  // above the line, the category you pick below it.
+  // above the line, category + confidence below it.
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+    marginTop: Spacing.two,
+    paddingTop: Spacing.two,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  // flexShrink + minWidth: 0 let a long category name truncate instead of
+  // fighting the confidence badge for space (the same overflow trap the
+  // name field hit — see nameColumn).
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.one,
-    marginTop: Spacing.two,
-    paddingTop: Spacing.two,
-    paddingBottom: Spacing.one,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    flexShrink: 1,
+    minWidth: 0,
+    paddingVertical: Spacing.one,
+  },
+  categoryText: {
+    flexShrink: 1,
+  },
+  // Confidence, demoted from a full labeled column (beta feedback
+  // 2026-09-04) to a compact badge in the card's lower-right corner —
+  // freeing the top row for just Name and Price.
+  confidenceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.half,
+    flexShrink: 0,
+    backgroundColor: 'transparent',
+  },
+  confidenceLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   // Category quick-pick modal
   modalPage: {
