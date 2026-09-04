@@ -367,6 +367,7 @@ export function ReceiptReview({
                 tucked into the lower-right corner, clear of the category
                 pressable, so Name and Price get the top row to themselves. */}
               <ThemedView
+                type="backgroundElement"
                 style={[styles.bottomRow, { borderTopColor: theme.border }]}
               >
                 <Pressable
